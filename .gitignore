@@ -1,3 +1,4 @@
-.gitignore.txt
+.gitignore
 Model/.ipynb_checkpoints
-Model/.ipynb_checkpoints/Progress_notebook_KB-checkpoint.ipynb
+Model/pinchout_simple.pdf
+Model/simple_pinchout_diagram.jpg
