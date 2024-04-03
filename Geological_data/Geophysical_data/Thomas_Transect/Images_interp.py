@@ -10,19 +10,128 @@ import scipy as sp
 import pylab as plt
 from skimage.measure import label
 
+class transect:
+    
+    def __init__(self,coord,px0,px1,z1,z2,pz1,pz2):
+        self.coord = coord
+        self.px0 = px0
+        self.px1 = px1
+        self.z1 = z1
+        self.z2 = z2
+        self.pz1 = pz1
+        self.pz2 = pz2
+        self.dzdp = (z2-z1)/(pz2-pz1)
+        
+        L = []
+
+        for i in range(len(coords)-1):
+            L.append(np.sqrt((coords[i,0]-coords[i+1,0])**2 + 
+                             (coords[i,1]-coords[i+1,1])**2))
+
+        L = np.array(L)
+        self.L = np.cumsum(L)/np.sum(L)    
+        
+    def xyz(self,px,pz):
+        frac = (px - self.px0)/(self.px1 - self.px0)
+        n = np.argmin(np.abs(self.L-frac))
+        if self.L[n]> frac: n-=1
+        if n< 0: n = 0
+        frac2 = (frac-self.L[n])/(self.L[n+1]-self.L[n])
+        x = (1.-frac2) * self.coord[n ,0] + frac2 * self.coord[n+1,0]
+        y = (1.-frac2) * self.coord[n ,1] + frac2 * self.coord[n+1,1]
+        z = self.z1 + (pz - self.pz1) * self.dzdp
+        return(x,y,z)
+        
+                
+        
+        
+        
+        
+
 im = plt.imread('Figure_11.png')
 
 #plt.imshow(im)
 
+#print(ljhvljv)
+
 dum = np.zeros(np.shape(im)[:2])
 
-dum = im[:,:,2]
+dum = np.copy(im[:,:,2])
 
 dum[dum == 1] = 0.9
 
 dum[dum <= 0.01] = 1.
 
 dum[dum < 1] = 0
+
+dum2 = np.copy(im[:,:,2])
+dum2[dum2 < 0.134] = 1.01
+dum2[dum2<1] = 0
+dum3 = np.copy(im[:,:,0])
+dum2[dum3 < 0.874] = 0.
+dum4 = np.copy(im[:,:,1])
+dum2[dum4 != 0] = 0
+
+#plt.imshow(dum2) 
+
+BU = []
+for i in range(np.shape(dum)[0]):
+    for j in range(np.shape(dum)[1]):
+        if dum2[i,j] > 0.1:
+            BU.append([j,i])
+BU = np.array(BU)
+
+dum2 = np.copy(im[:,:,0])
+dum3 = np.copy(im[:,:,1])
+dum4 = np.copy(im[:,:,2])
+
+
+#print(jhl)
+dum2[dum3>0.075] = 0
+dum2[dum3<0.073] = 0
+#plt.imshow(dum2)
+dum2[dum4>0.39] = 0
+dum2[dum4<0.3] = 0
+
+
+dum2[dum2>0.19] = 1
+#plt.imshow(dum2) 
+SPS = []
+
+for i in range(np.shape(dum)[0]):
+    for j in range(np.shape(dum)[1]):
+        if dum2[i,j] > 0.1:
+            SPS.append([j,i])
+            
+SPS = np.array(SPS)
+
+dum2 = np.copy(im[:,:,0])
+dum3 = np.copy(im[:,:,1])
+dum4 = np.copy(im[:,:,2])
+
+
+#print(jhl)
+dum2[dum3<0.95] = 0
+dum2[dum3>0.96] = 0
+plt.imshow(dum2)
+dum2[dum4<0.51] = 0
+dum2[dum4>0.52] = 0
+
+
+dum2[dum2>0.96] = 1
+
+plt.imshow(dum2)
+
+YAR = []
+
+for i in range(np.shape(dum)[0]):
+    for j in range(np.shape(dum)[1]):
+        if dum2[i,j] > 0.1:
+            YAR.append([j,i])
+            
+YAR = np.array(YAR)
+
+#print(ugvvluv)
 
 #dum[279:283,68] = 0
 
@@ -49,7 +158,7 @@ Faults[labs == 39] = 8
 Faults[labs == 41] = 9
 Faults[labs == 40] = 10 #Muchea
 
-#plt.imshow(Faults)
+plt.imshow(Faults)
 F1 = []
 F2 = []
 F3 = []
@@ -87,7 +196,7 @@ for i in range(62, np.shape(Faults)[0],1):
             F10.append([j,i])                
 
 F1 = np.array(F1)
-#plt.plot(F1[:,0], F1[:,1],'r-', lw = 3)
+plt.plot(F1[:,0], F1[:,1],'r-', lw = 3)
 
 F2 = np.array(F2)
 #plt.plot(F2[:,0], F2[:,1],'r-', lw = 3)
@@ -114,10 +223,10 @@ F9 = np.array(F9)
 #plt.plot(F9[:,0], F9[:,1],'r-', lw = 3)
 
 F10 = np.array(F10)
-#plt.plot(F10[:,0], F10[:,1],'r-', lw = 3)
+plt.plot(F10[:,0], F10[:,1],'r-', lw = 3)
 
 
-im = plt.imread('plan_view.png')
+"""im = plt.imread('plan_view.png')
 plt.imshow(im)
 
 x = [573,590,590,614,611,629,629,636,636,651,662,688]
@@ -136,7 +245,7 @@ coord = np.zeros((len(x),2))
 coord[:,0] = x
 coord[:,1] = -y
 
-plt.savetxt('transect_points.dat', coord)
+plt.savetxt('transect_points.dat', coord)"""
 
 coords = np.array([[359431.7876,	6523505.397],
                    [366261.0667,	6525047.184],
@@ -151,3 +260,42 @@ coords = np.array([[359431.7876,	6523505.397],
                    [395029.9163,	6549090.553],
                    [405497.1961,	6552577.244]])
 
+px0 = 68
+px1 = 815
+
+BoorP = 184
+AM3P = 119
+Boorz = 0 - 2333.
+AM3z = 27. - 729.
+
+T = transect(coords,px0,px1,Boorz,AM3z,BoorP,AM3P)
+x,y,z = T.xyz(69,AM3P)
+
+x,y,z = [],[],[]
+for i in range(len(F3)):
+    xx,yy,zz = T.xyz(F3[i,0],F3[i,1])
+    x.append(xx)
+    y.append(yy)
+    z.append(zz)
+
+X = []
+for i in range(len(BU)):
+    x,y,z = T.xyz(BU[i,0],BU[i,1])
+    X.append([x,y,z])
+X = np.array(X)
+plt.savetxt('BU_thomas.dat',X)
+
+X = []
+for i in range(len(YAR)):
+    x,y,z = T.xyz(YAR[i,0],YAR[i,1])
+    X.append([x,y,z])
+X = np.array(X)
+plt.savetxt('Yar_base_thomas.dat',X)
+
+
+X = []
+for i in range(len(SPS)):
+    x,y,z = T.xyz(SPS[i,0],SPS[i,1])
+    X.append([x,y,z])
+X = np.array(X)
+plt.savetxt('Top_SPS_thomas.dat',X)
