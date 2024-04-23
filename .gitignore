@@ -1,4 +1,4 @@
-.gitignore
-Model/.ipynb_checkpoints
-Model/pinchout_simple.pdf
-Model/simple_pinchout_diagram.jpg
+scripts/.ipynb_checkpoints
+scripts/pinchout_simple.pdf
+scripts/simple_pinchout_diagram.jpg
+/modelfiles
