@@ -1,0 +1,538 @@
+/3.2
+(ODB.1
+	FirstRootClassName:	"Legend"
+	Roots:	2
+	Version:	32
+)
+
+(Legend.2
+	SymType:	0x02
+	LegType:	0x08
+	ClassType:	0x03
+	FieldNames:	3
+	Symbols:	4
+	Class:	64
+	Class:	65
+	Class:	66
+	Class:	67
+	Class:	68
+	Class:	69
+	Class:	70
+	Class:	71
+	Class:	72
+	Class:	73
+	Class:	74
+	Class:	75
+	Class:	76
+	StdDevs:	1.00000000000000
+	NullSym:	77
+	NullValues:	81
+	StatValues:	82
+	Precision:	-3
+)
+
+(AVStr.3
+	S:	"code"
+)
+
+(SymList.4
+	Child:	5
+	Child:	10
+	Child:	14
+	Child:	19
+	Child:	24
+	Child:	28
+	Child:	33
+	Child:	38
+	Child:	43
+	Child:	48
+	Child:	52
+	Child:	56
+	Child:	60
+)
+
+(BShSym.5
+	Color:	6
+	Outline:	1
+	OutlineColor:	7
+	BgColor:	8
+	Style:	0x03
+	Stipple:	9
+)
+
+(TClr.6
+	Green:	0x8500
+	Blue:	0xd900
+)
+
+(TClr.7
+)
+
+(TClr.8
+	Red:	0xc600
+	Green:	0xff00
+	Blue:	0xb200
+)
+
+(Stipple.9
+	Columns:	16
+	Rows:	16
+	Bits:	50082102 04280a00 44910028 12102884 
+	Bits:	90000222 08854152 00800842 02082014 
+
+)
+
+(BShSym.10
+	Color:	11
+	Outline:	1
+	OutlineColor:	12
+	OutlineWidth:	0.10000000000000
+	BgColor:	13
+)
+
+(TClr.11
+	Red:	0xc600
+	Green:	0xff00
+	Blue:	0xb200
+)
+
+(TClr.12
+)
+
+(TClr.13
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.14
+	Color:	15
+	Outline:	1
+	OutlineColor:	16
+	BgColor:	17
+	Style:	0x03
+	Stipple:	18
+)
+
+(TClr.15
+	Red:	0xb300
+	Green:	0xff00
+	Blue:	0x9900
+)
+
+(TClr.16
+)
+
+(TClr.17
+	Red:	0xc600
+	Green:	0xff00
+	Blue:	0xb200
+)
+
+(Stipple.18
+	Columns:	16
+	Rows:	16
+	Bits:	20200000 00000000 02020000 00000000 
+	Bits:	20200000 00000000 02020000 00000000 
+
+)
+
+(BShSym.19
+	Color:	20
+	Outline:	1
+	OutlineColor:	21
+	BgColor:	22
+	Style:	0x03
+	Stipple:	23
+)
+
+(TClr.20
+	Red:	0xb300
+	Green:	0xff00
+	Blue:	0x9900
+)
+
+(TClr.21
+)
+
+(TClr.22
+	Red:	0xc600
+	Green:	0xff00
+	Blue:	0xb200
+)
+
+(Stipple.23
+	Columns:	8
+	Rows:	8
+	Bits:	22008800 22008800 
+)
+
+(BShSym.24
+	Color:	25
+	Outline:	1
+	OutlineColor:	26
+	OutlineWidth:	0.10000000000000
+	BgColor:	27
+)
+
+(TClr.25
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0x7f00
+)
+
+(TClr.26
+)
+
+(TClr.27
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.28
+	Color:	29
+	Outline:	1
+	OutlineColor:	30
+	BgColor:	31
+	Style:	0x03
+	Stipple:	32
+)
+
+(TClr.29
+	Red:	0xff00
+	Green:	0xcf00
+	Blue:	0x9900
+)
+
+(TClr.30
+)
+
+(TClr.31
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0x7f00
+)
+
+(Stipple.32
+	Columns:	16
+	Rows:	16
+	Bits:	50082102 04280a00 44910028 12102884 
+	Bits:	90000222 08854152 00800842 02082014 
+
+)
+
+(BShSym.33
+	Color:	34
+	Outline:	1
+	OutlineColor:	35
+	BgColor:	36
+	Style:	0x03
+	Stipple:	37
+)
+
+(TClr.34
+	Red:	0xd900
+	Green:	0x5200
+	Blue:	0x3300
+)
+
+(TClr.35
+)
+
+(TClr.36
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0x7f00
+)
+
+(Stipple.37
+	Columns:	8
+	Rows:	8
+	Bits:	40ff0404 04ff4040 
+)
+
+(BShSym.38
+	Color:	39
+	Outline:	1
+	OutlineColor:	40
+	BgColor:	41
+	Style:	0x03
+	Stipple:	42
+)
+
+(TClr.39
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xff00
+)
+
+(TClr.40
+)
+
+(TClr.41
+	Red:	0xff00
+	Green:	0xcf00
+	Blue:	0x9900
+)
+
+(Stipple.42
+	Columns:	8
+	Rows:	8
+	Bits:	40ff0404 04ff4040 
+)
+
+(BShSym.43
+	Color:	44
+	Outline:	1
+	OutlineColor:	45
+	BgColor:	46
+	Style:	0x03
+	Stipple:	47
+)
+
+(TClr.44
+	Red:	0xd900
+	Green:	0x5200
+	Blue:	0x3300
+)
+
+(TClr.45
+)
+
+(TClr.46
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0x3f00
+)
+
+(Stipple.47
+	Columns:	16
+	Rows:	16
+	Bits:	20200000 00000000 02020000 00000000 
+	Bits:	20200000 00000000 02020000 00000000 
+
+)
+
+(BShSym.48
+	Color:	49
+	Outline:	1
+	OutlineColor:	50
+	OutlineWidth:	0.10000000000000
+	BgColor:	51
+)
+
+(TClr.49
+	Red:	0xff00
+	Green:	0xdb00
+	Blue:	0xb200
+)
+
+(TClr.50
+)
+
+(TClr.51
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.52
+	Color:	53
+	Outline:	1
+	OutlineColor:	54
+	OutlineWidth:	0.10000000000000
+	BgColor:	55
+)
+
+(TClr.53
+	Red:	0xf200
+	Green:	0xf800
+	Blue:	0xfd00
+)
+
+(TClr.54
+)
+
+(TClr.55
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.56
+	Color:	57
+	Outline:	1
+	OutlineColor:	58
+	OutlineWidth:	0.10000000000000
+	BgColor:	59
+)
+
+(TClr.57
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xff00
+)
+
+(TClr.58
+)
+
+(TClr.59
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.60
+	Color:	61
+	Outline:	1
+	OutlineColor:	62
+	OutlineWidth:	0.10000000000000
+	BgColor:	63
+)
+
+(TClr.61
+	Name:	"Transparent"
+)
+
+(TClr.62
+	Name:	"Transparent"
+)
+
+(TClr.63
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(LClass.64
+	IsText:	1
+	Label:	"Qhw"
+	MinStr:	"Qhw"
+	MaxStr:	"Qhw"
+	Precision:	-3
+)
+
+(LClass.65
+	IsText:	1
+	Label:	"Qha"
+	MinStr:	"Qha"
+	MaxStr:	"Qha"
+	Precision:	-3
+)
+
+(LClass.66
+	IsText:	1
+	Label:	"Qhs"
+	MinStr:	"Qhs"
+	MaxStr:	"Qhs"
+	Precision:	-3
+)
+
+(LClass.67
+	IsText:	1
+	Label:	"Qhsm"
+	MinStr:	"Qhsm"
+	MaxStr:	"Qhsm"
+	Precision:	-3
+)
+
+(LClass.68
+	IsText:	1
+	Label:	"Qt"
+	MinStr:	"Qt"
+	MaxStr:	"Qt"
+	Precision:	-3
+)
+
+(LClass.69
+	IsText:	1
+	Label:	"Qts"
+	MinStr:	"Qts"
+	MaxStr:	"Qts"
+	Precision:	-3
+)
+
+(LClass.70
+	IsText:	1
+	Label:	"Qtl"
+	MinStr:	"Qtl"
+	MaxStr:	"Qtl"
+	Precision:	-3
+)
+
+(LClass.71
+	IsText:	1
+	Label:	"Qpm"
+	MinStr:	"Qpm"
+	MaxStr:	"Qpm"
+	Precision:	-3
+)
+
+(LClass.72
+	IsText:	1
+	Label:	"Qpb"
+	MinStr:	"Qpb"
+	MaxStr:	"Qpb"
+	Precision:	-3
+)
+
+(LClass.73
+	IsText:	1
+	Label:	"Qpa"
+	MinStr:	"Qpa"
+	MaxStr:	"Qpa"
+	Precision:	-3
+)
+
+(LClass.74
+	IsText:	1
+	Label:	"Ocean"
+	MinStr:	"Ocean"
+	MaxStr:	"Ocean"
+	Precision:	-3
+)
+
+(LClass.75
+	IsText:	1
+	Label:	"Quarry"
+	MinStr:	"Quarry"
+	MaxStr:	"Quarry"
+	Precision:	-3
+)
+
+(LClass.76
+	IsNoData:	1
+	IsText:	1
+	Label:	"No Data"
+	Precision:	-3
+)
+
+(BShSym.77
+	Color:	78
+	Outline:	1
+	OutlineColor:	79
+	OutlineWidth:	0.10000000000000
+	BgColor:	80
+)
+
+(TClr.78
+	Name:	"Transparent"
+)
+
+(TClr.79
+	Name:	"Transparent"
+)
+
+(TClr.80
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(NameDict.81
+)
+
+(NameDict.82
+)
+

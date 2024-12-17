@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PROJECT xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="1:500k tectonic units of Western Australia, 2017">
+  <MAP title="1:500k tectonic units of Western Australia, 2017" mapunits="" extent="-7.96993219,89.973584064,-39.02200395,145.595476914" gridhorizno="1" gridvertno="1" gridvisible="False" gridlinestyle="dotline" gridlinesize="1" gridcolour="0,0,0" graticulegrid="False" coordcode="GDA94 ">
+    <LAYER name="1:500k tectonic units of Western Australia, 2017" displayed="True" visible="True" expanded="True" position="0" group="Geology" maxscale="0.00" minscale="0.00" coordcode="GDA94 " rendertype="unique" displayfield="TECTNAME" layerdatatype="GisLayer" displayOthers="True">
+      <DATASET name="500k_tectonicp17_1" lookupfield="SYMBOL">
+        <DATASOURCE name="Main" datapath="..\ARCMAP\SHAPEFILES" datafile="500k_tectonicp17.shp" datatable="500k_tectonicp17.dbf" />
+        <DATASOURCE name="summary" datapath="..\DATABASES\geol_lut.mdb" datatable="Qry_500k_tectonicp17_lut_summary" linkchildfield="Tectonic code" linkparentfield="TECTCODE" visible="False" ShowChildLinkField="True" />
+        <DATASOURCE name="More details" datapath="..\DATABASES\geol_lut.mdb" datatable="Qry_500k_tectonicp17_lut_detailed" linkchildfield="Tectonic code" linkparentfield="TECTCODE" visible="True" ShowChildLinkField="True" />
+      </DATASET>
+      <VALUEMAPRENDERER casesensitive="0">
+        <EXACT value="CENOZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,253,196" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="212,254,161" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="218,229,159" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="181,233,254" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="146,207,243" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="Cambrian; mafic/ultramafic intrusive/extrusive rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="116,224,127" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOZOIC; mafic/ultramafic intrusive/extrusive rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="69,213,85" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PROTEROZOIC; mafic/ultramafic intrusive/extrusive rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="74,227,187" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC; mafic/ultramafic intrusive/extrusive rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="98,231,196" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC; mafic/ultramafic intrusive/extrusive rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="49,224,178" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOARCHEAN; mafic/ultramafic intrusive/extrusive rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="148,197,93" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOPROTEROZOIC-PALEOZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="211,160,79" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOPROTEROZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="238,228,164" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOPROTEROZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="237,213,204" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC-NEOPROTEROZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="234,221,142" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC-NEOPROTEROZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="228,192,178" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="230,214,119" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="216,180,154" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="226,192,137" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="202,152,117" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOPROTEROZOIC; granitic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,226,253" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC; granitic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="253,211,253" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC; igneous, sedimentary, and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="241,209,219" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC; igneous, sedimentary, and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="237,198,210" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="249,101,249" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOPROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="252,178,252" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC-MESOPROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="251,149,251" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOPROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="250,140,251" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOARCHEAN-PALEOPROTEROZOIC; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="107,195,249" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOARCHEAN; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="213,165,182" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOARCHEAN; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="214,205,201" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN; sedimentary and volcanic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="219,171,153" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN; sedimentary rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="200,188,184" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOARCHEAN; granite-greenstones">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="211,250,214" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN-NEOARCHEAN; granite-greenstones">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="189,248,194" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN; granite-greenstones">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="156,244,163" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOARCHEAN; granite-greenstones">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="91,236,102" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN; granite-greenstones">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="124,240,133" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="NEOARCHEAN; granitic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="255,223,221" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN; granitic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,174,169" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="PALEOARCHEAN; granitic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,142,135" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN; granitic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,207,203" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN-PROTEROZOIC; igneous, sedimentary, and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="226,163,182" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN-NEOARCHEAN; igneous, sedimentary and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="231,147,201" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN-PROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="253,167,242" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN-MESOPROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,183,220" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN-PALEOPROTEROZOIC; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,152,204" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="MESOARCHEAN; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="254,111,184" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <EXACT value="ARCHEAN; igneous and metamorphic rocks">
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="253,90,174" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </EXACT>
+        <othersymbol>
+          <SIMPLEPOLYGONSYMBOL fillstyle="solid" fillcolour="102,105,118" linestyle="solidline" linecolour="0,0,0" innercolour="255,255,255" size="1" />
+        </othersymbol>
+      </VALUEMAPRENDERER>
+    </LAYER>
+  </MAP>
+</PROJECT>

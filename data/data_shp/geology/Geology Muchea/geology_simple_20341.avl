@@ -1,0 +1,626 @@
+/3.2
+(ODB.1
+	FirstRootClassName:	"Legend"
+	Roots:	2
+	Version:	32
+)
+
+(Legend.2
+	SymType:	0x02
+	LegType:	0x08
+	ClassType:	0x03
+	FieldNames:	3
+	Symbols:	4
+	Class:	78
+	Class:	79
+	Class:	80
+	Class:	81
+	Class:	82
+	Class:	83
+	Class:	84
+	Class:	85
+	Class:	86
+	Class:	87
+	Class:	88
+	Class:	89
+	Class:	90
+	Class:	91
+	Class:	92
+	Class:	93
+	Class:	94
+	StdDevs:	1.00000000000000
+	NullSym:	74
+	NullValues:	95
+	StatValues:	96
+	Precision:	-3
+)
+
+(AVStr.3
+	S:	"code"
+)
+
+(SymList.4
+	Child:	5
+	Child:	10
+	Child:	14
+	Child:	18
+	Child:	22
+	Child:	27
+	Child:	31
+	Child:	35
+	Child:	39
+	Child:	44
+	Child:	48
+	Child:	52
+	Child:	56
+	Child:	60
+	Child:	64
+	Child:	69
+	Child:	74
+)
+
+(BShSym.5
+	Color:	6
+	Outline:	1
+	OutlineColor:	7
+	BgColor:	8
+	Style:	0x03
+	Stipple:	9
+)
+
+(TClr.6
+	Red:	0xb300
+	Green:	0xff00
+	Blue:	0x9900
+)
+
+(TClr.7
+)
+
+(TClr.8
+	Red:	0xef00
+	Green:	0xff00
+	Blue:	0xea00
+)
+
+(Stipple.9
+	Columns:	8
+	Rows:	8
+	Bits:	44001100 44001100 
+)
+
+(BShSym.10
+	Color:	11
+	Outline:	1
+	OutlineColor:	12
+	OutlineWidth:	0.10000000000000
+	BgColor:	13
+)
+
+(TClr.11
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xcc00
+)
+
+(TClr.12
+)
+
+(TClr.13
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.14
+	Color:	15
+	Outline:	1
+	OutlineColor:	16
+	OutlineWidth:	0.10000000000000
+	BgColor:	17
+)
+
+(TClr.15
+	Red:	0xff00
+	Green:	0xce00
+	Blue:	0x7f00
+)
+
+(TClr.16
+)
+
+(TClr.17
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.18
+	Color:	19
+	Outline:	1
+	OutlineColor:	20
+	OutlineWidth:	0.10000000000000
+	BgColor:	21
+)
+
+(TClr.19
+	Red:	0xff00
+	Green:	0xcb00
+	Blue:	0xd100
+)
+
+(TClr.20
+)
+
+(TClr.21
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.22
+	Color:	23
+	Outline:	1
+	OutlineColor:	24
+	BgColor:	25
+	Style:	0x03
+	Stipple:	26
+)
+
+(TClr.23
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xff00
+)
+
+(TClr.24
+)
+
+(TClr.25
+	Red:	0xff00
+	Green:	0xff00
+)
+
+(Stipple.26
+	Columns:	16
+	Rows:	16
+	Bits:	03000780 07800318 003c183c 3c183c00 
+	Bits:	18000003 80078307 07830780 03000000 
+
+)
+
+(BShSym.27
+	Color:	28
+	Outline:	1
+	OutlineColor:	29
+	OutlineWidth:	0.10000000000000
+	BgColor:	30
+)
+
+(TClr.28
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xcc00
+)
+
+(TClr.29
+)
+
+(TClr.30
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.31
+	Color:	32
+	Outline:	1
+	OutlineColor:	33
+	OutlineWidth:	0.10000000000000
+	BgColor:	34
+)
+
+(TClr.32
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0x7f00
+)
+
+(TClr.33
+)
+
+(TClr.34
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.35
+	Color:	36
+	Outline:	1
+	OutlineColor:	37
+	OutlineWidth:	0.10000000000000
+	BgColor:	38
+)
+
+(TClr.36
+	Red:	0xb200
+	Green:	0xda00
+	Blue:	0xf300
+)
+
+(TClr.37
+)
+
+(TClr.38
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.39
+	Color:	40
+	Outline:	1
+	OutlineColor:	41
+	BgColor:	42
+	Style:	0x03
+	Stipple:	43
+)
+
+(TClr.40
+	Red:	0xb300
+	Green:	0xff00
+	Blue:	0x9900
+)
+
+(TClr.41
+)
+
+(TClr.42
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xff00
+)
+
+(Stipple.43
+	Columns:	8
+	Rows:	8
+	Bits:	44001100 44001100 
+)
+
+(BShSym.44
+	Color:	45
+	Outline:	1
+	OutlineColor:	46
+	OutlineWidth:	0.10000000000000
+	BgColor:	47
+)
+
+(TClr.45
+	Red:	0xef00
+	Green:	0xff00
+	Blue:	0xea00
+)
+
+(TClr.46
+)
+
+(TClr.47
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.48
+	Color:	49
+	Outline:	1
+	OutlineColor:	50
+	OutlineWidth:	0.10000000000000
+	BgColor:	51
+)
+
+(TClr.49
+	Red:	0xb200
+	Green:	0xda00
+	Blue:	0xf300
+)
+
+(TClr.50
+)
+
+(TClr.51
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.52
+	Color:	53
+	Outline:	1
+	OutlineColor:	54
+	OutlineWidth:	0.10000000000000
+	BgColor:	55
+)
+
+(TClr.53
+	Red:	0xff00
+	Green:	0xe100
+	Blue:	0xb200
+)
+
+(TClr.54
+)
+
+(TClr.55
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.56
+	Color:	57
+	Outline:	1
+	OutlineColor:	58
+	OutlineWidth:	0.10000000000000
+	BgColor:	59
+)
+
+(TClr.57
+	Red:	0xcc00
+	Green:	0xec00
+	Blue:	0xd600
+)
+
+(TClr.58
+)
+
+(TClr.59
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.60
+	Color:	61
+	Outline:	1
+	OutlineColor:	62
+	OutlineWidth:	0.10000000000000
+	BgColor:	63
+)
+
+(TClr.61
+	Red:	0x9900
+	Green:	0xda00
+	Blue:	0xad00
+)
+
+(TClr.62
+)
+
+(TClr.63
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(BShSym.64
+	Color:	65
+	Outline:	1
+	OutlineColor:	66
+	BgColor:	67
+	Style:	0x03
+	Stipple:	68
+)
+
+(TClr.65
+	Green:	0xa300
+	Blue:	0x3300
+)
+
+(TClr.66
+)
+
+(TClr.67
+	Red:	0xff00
+	Green:	0xff00
+	Blue:	0xff00
+)
+
+(Stipple.68
+	Columns:	8
+	Rows:	8
+	Bits:	55aa55aa 55aa55aa 
+)
+
+(BShSym.69
+	Color:	70
+	Outline:	1
+	OutlineColor:	71
+	BgColor:	72
+	Style:	0x03
+	Stipple:	73
+)
+
+(TClr.70
+	Green:	0xa300
+	Blue:	0x3300
+)
+
+(TClr.71
+)
+
+(TClr.72
+	Red:	0xef00
+	Green:	0xff00
+	Blue:	0xea00
+)
+
+(Stipple.73
+	Columns:	8
+	Rows:	8
+	Bits:	55aa55aa 55aa55aa 
+)
+
+(BShSym.74
+	Color:	75
+	Outline:	1
+	OutlineColor:	76
+	OutlineWidth:	0.10000000000000
+	BgColor:	77
+)
+
+(TClr.75
+	Name:	"Transparent"
+)
+
+(TClr.76
+	Name:	"Transparent"
+)
+
+(TClr.77
+	Red:	0xffff
+	Green:	0xffff
+	Blue:	0xffff
+)
+
+(LClass.78
+	IsText:	1
+	Label:	"Cf"
+	MinStr:	"Cf"
+	MaxStr:	"Cf"
+	Precision:	-3
+)
+
+(LClass.79
+	IsText:	1
+	Label:	"Cs"
+	MinStr:	"Cs"
+	MaxStr:	"Cs"
+	Precision:	-3
+)
+
+(LClass.80
+	IsText:	1
+	Label:	"Dp"
+	MinStr:	"Dp"
+	MaxStr:	"Dp"
+	Precision:	-3
+)
+
+(LClass.81
+	IsText:	1
+	Label:	"Ds"
+	MinStr:	"Ds"
+	MaxStr:	"Ds"
+	Precision:	-3
+)
+
+(LClass.82
+	IsText:	1
+	Label:	"Ed1"
+	MinStr:	"Ed1"
+	MaxStr:	"Ed1"
+	Precision:	-3
+)
+
+(LClass.83
+	IsText:	1
+	Label:	"Ed2"
+	MinStr:	"Ed2"
+	MaxStr:	"Ed2"
+	Precision:	-3
+)
+
+(LClass.84
+	IsText:	1
+	Label:	"Ed3"
+	MinStr:	"Ed3"
+	MaxStr:	"Ed3"
+	Precision:	-3
+)
+
+(LClass.85
+	IsText:	1
+	Label:	"Ei"
+	MinStr:	"Ei"
+	MaxStr:	"Ei"
+	Precision:	-3
+)
+
+(LClass.86
+	IsText:	1
+	Label:	"Ff"
+	MinStr:	"Ff"
+	MaxStr:	"Ff"
+	Precision:	-3
+)
+
+(LClass.87
+	IsText:	1
+	Label:	"Fp1"
+	MinStr:	"Fp1"
+	MaxStr:	"Fp1"
+	Precision:	-3
+)
+
+(LClass.88
+	IsText:	1
+	Label:	"Fp2"
+	MinStr:	"Fp2"
+	MaxStr:	"Fp2"
+	Precision:	-3
+)
+
+(LClass.89
+	IsText:	1
+	Label:	"Ll"
+	MinStr:	"Ll"
+	MaxStr:	"Ll"
+	Precision:	-3
+)
+
+(LClass.90
+	IsText:	1
+	Label:	"Lm1"
+	MinStr:	"Lm1"
+	MaxStr:	"Lm1"
+	Precision:	-3
+)
+
+(LClass.91
+	IsText:	1
+	Label:	"Lm2"
+	MinStr:	"Lm2"
+	MaxStr:	"Lm2"
+	Precision:	-3
+)
+
+(LClass.92
+	IsText:	1
+	Label:	"Lm3"
+	MinStr:	"Lm3"
+	MaxStr:	"Lm3"
+	Precision:	-3
+)
+
+(LClass.93
+	IsText:	1
+	Label:	"Lm4"
+	MinStr:	"Lm4"
+	MaxStr:	"Lm4"
+	Precision:	-3
+)
+
+(LClass.94
+	IsNoData:	1
+	IsText:	1
+	Label:	"No Data"
+	Precision:	-3
+)
+
+(NameDict.95
+)
+
+(NameDict.96
+)
+
