@@ -121,20 +121,39 @@ def faults(spatial):
     faults_gdf.loc[int(4), "id"] = 'Yarra1'
     faults_gdf.loc[int(10), "id"] = 'Biggestmeanest'
     faults_gdf = faults_gdf.drop(index=[0, 3, 5, 6, 7, 8, 9, 11, 12, 13, 14])
-
+    faults_gdf = faults_gdf.reset_index(drop = True)
+    
     #### FAULTS AS LINESTRINGS
         
-    r = 2000 # distance between points
+    r = 1000 # distance between points
+    threshold_distance = 500 # Don't want fault nodes too close to boundaries.
     faults_ls, faults_coords = [], []
     faults1_coords, faults2_coords = [], []
 
-    for ls in faults_gdf.geometry: # For each fault...    
-        #ls = faults_gdf.geometry[n] 
+    for i, ls in enumerate(faults_gdf.geometry): # For each fault...    
+        
+        # STEP 1: Resample fault to have evenly spaced nodes at distance r
         ls_resample = resample_linestring(ls, r) # Resample linestring
-        faults_ls.append(ls_resample) # list of shapely points
-    
+
+        # STEP 2: Removing nodes too close to inner and outer boundary so mesh doesn't go crazy refined (threshold_distance)
+        nodes_to_remove = []
+        for p1 in ls_resample:
+            for p2 in spatial.inner_boundary_poly.exterior.coords:
+                p2 = Point(p2)
+                if p1.distance(p2) <= threshold_distance:
+                    nodes_to_remove.append(p1)
+            for p3 in spatial.model_boundary_poly.exterior.coords:
+                p3 = Point(p3)
+                if p1.distance(p3) <= threshold_distance:
+                    nodes_to_remove.append(p1)
+        if nodes_to_remove:
+            print('Removing faults nodes on ', faults_gdf.loc[i, 'id'], ' because too close to boundary: ', nodes_to_remove)
+        ls_new = [node for node in ls_resample if node not in nodes_to_remove]
+        faults_ls.append(ls_new) # list of shapely points
+
+        # STEP 3: Don't include short faults with only 1 node
         p = []
-        for point in ls_resample:
+        for point in ls_new:
             x,y = point.x, point.y
             p.append((x,y))
         if len(p) > 1: # just making sure very short dykes with 1 point are not included
