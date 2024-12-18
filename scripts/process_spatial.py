@@ -1,10 +1,11 @@
-from meshing_routines import resample_linestring
-from meshing_routines import resample_poly
+
 from shapely.geometry import LineString,Point,Polygon,MultiPolygon,MultiPoint,shape
 import geopandas as gpd
 import pandas as pd
 import itertools
 import matplotlib.pyplot as plt
+import loopflopy
+from loopflopy.mesh_routines import resample_linestring, resample_poly 
 
 def remove_duplicate_points(polygon):
     # Extract unique points using LinearRing
