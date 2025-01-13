@@ -12,7 +12,7 @@ def prepare_strat_column(structuralmodel):
     vals = strat.val.tolist()
     nlg = len(strat_names) - 1 # number of geological layers
     sequences = strat.sequence.tolist()
-    sequence = set(sequences)
+    sequence = list(set(sequences))
     # Make bespoke colormap
     stratcolors = []
     for i in range(len(strat)):
@@ -40,7 +40,7 @@ def prepare_strat_column(structuralmodel):
         else:
             mn = vals[i]
         if i == 0: mn = vals[i] #work around for the ground
-        stratagraphic_column[sequences[i]][strat_names[i]] = {'min': mn, 'max': mx, 'id': lithids[i], 'color': stratcolors[i]}
+        stratigraphic_column[sequences[i]][strat_names[i]] = {'min': mn, 'max': mx, 'id': lithids[i], 'color': stratcolors[i]}
         
            
     structuralmodel.strat = strat
@@ -92,7 +92,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         gx, gy, gz = 0.0, 0.0, 1.0  # np.nan, np.nan,np.nan
 
         # Add data for groundlevel
-        val = strat.vals[0]
+        val = strat.val[0]
         formatted_data.append(
             [
                 boreid,
@@ -101,7 +101,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
                 groundlevel,
                 val,
                 "Ground",
-                "Quaternary",
+                "Ground",
                 gx,
                 gy,
                 gz,
@@ -113,9 +113,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         #Quaternary Unconformity
         if isinstance(data_list[i][5], numbers.Number) == True:
             bottom = groundlevel - float(data_list[i][5])  # Ground surface - TQ (mbgl)
-            val = strat.vals[1]  # designated isovalue
-            lithid = lithcodes[1]  # lithology id
-            feat_name = strat.sequences[1]  # sequence name
+            val = strat.val[1]  # designated isovalue
+            lithid = strat.lithid[1]  # lithology id
+            feat_name = strat.sequence[1]  # sequence name
             formatted_data.append(
                 [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )
@@ -123,9 +123,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         #Kings park
         if isinstance(data_list[i][8], numbers.Number) == True:
             bottom = groundlevel - float(data_list[i][8])  # Ground surface - kinhs park base (mbgl)
-            val = strat.vals[2]  # designated isovalue
-            lithid = lithcodes[2]  # lithology id
-            feat_name = strat.sequences[2]  # sequence name
+            val = strat.val[2]  # designated isovalue
+            lithid = strat.lithid[2]  # lithology id
+            feat_name = strat.sequence[2]  # sequence name
             formatted_data.append(
                 [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )
@@ -144,9 +144,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         for j in range(3):
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
-                val = strat.vals[ldum[j]]  # designated isovalue
-                lithid = lithcodes[ldum[j]]  # lithology id
-                feat_name = strat.sequences[ldum[j]]  # sequence name
+                val = strat.val[ldum[j]]  # designated isovalue
+                lithid = strat.lithid[ldum[j]]  # lithology id
+                feat_name = strat.sequence[ldum[j]]  # sequence name
                 formatted_data.append(
                     [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
                 )
@@ -167,9 +167,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         for j in range(3):
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
-                val = strat.vals[ldum[j]]  # designated isovalue
-                lithid = lithcodes[ldum[j]]  # lithology id
-                feat_name = strat.sequences[ldum[j]]  # sequence name
+                val = strat.val[ldum[j]]  # designated isovalue
+                lithid = strat.lithid[ldum[j]]  # lithology id
+                feat_name = strat.sequence[ldum[j]]  # sequence name
                 formatted_data.append(
                     [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
                 )
@@ -191,9 +191,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 if float(data_list[i][cdum[j]]) < EOH:
                     bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
-                    val = strat.vals[ldum[j]]  # designated isovalue
-                    lithid = lithcodes[ldum[j]]  # lithology id
-                    feat_name = strat.sequences[ldum[j]]  # sequence name
+                    val = strat.val[ldum[j]]  # designated isovalue
+                    lithid = strat.lithid[ldum[j]]  # lithology id
+                    feat_name = strat.sequence[ldum[j]]  # sequence name
                     formatted_data.append(
                         [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
                     )
@@ -214,9 +214,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 if float(data_list[i][cdum[j]]) < EOH:
                     bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
-                    val = strat.vals[ldum[j]]  # designated isovalue
-                    lithid = lithcodes[ldum[j]]  # lithology id
-                    feat_name = strat.sequences[ldum[j]]  # sequence name
+                    val = strat.val[ldum[j]]  # designated isovalue
+                    lithid = strat.lithid[ldum[j]]  # lithology id
+                    feat_name = strat.sequence[ldum[j]]  # sequence name
                     formatted_data.append(
                         [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
                     )
@@ -237,13 +237,28 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 if float(data_list[i][cdum[j]]) < EOH:
                     bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
-                    val = strat.vals[ldum[j]]  # designated isovalue
-                    lithid = lithcodes[ldum[j]]  # lithology id
-                    feat_name = strat.sequences[ldum[j]]  # sequence name
+                    val = strat.val[ldum[j]]  # designated isovalue
+                    lithid = strat.lithid[ldum[j]]  # lithology id
+                    feat_name = strat.sequence[ldum[j]]  # sequence name
                     formatted_data.append(
                         [boreid, easting, northing, bottom, val, lithid, feat_name, np.nan, np.nan, np.nan,"raw_data"]
                     )
                     current_bottom = np.copy(bottom)
+
+    data = pd.DataFrame(formatted_data)
+    data.columns = [
+        "ID",
+        "X",
+        "Y",
+        "Z",
+        "val",
+        "lithcode",
+        "feature_name",
+        "gx",
+        "gy",
+        "gz",
+        "for_Kerry"
+    ]
     
     if Lleyland:
         valdum = [38.,-10.,0.,0.,-732,-888,-947,-1029,0][::-1]
@@ -305,14 +320,14 @@ def create_structuralmodel(structuralmodel):
     Ground = model.create_and_add_foliation(
         "Ground", nelements=1e4, buffer=0.1
     )
-    UC = model.add_onlap_unconformity(
+    UC = model.add_unconformity(
     model["Ground"], 0.
     )
     #First add the quaternary formation
     Quat = model.create_and_add_foliation(
         "Quaternary", nelements=1e4, buffer=0.1
     )
-    UC0 = model.add_onlap_unconformity(
+    UC0 = model.add_unconformity(
     model["Quaternary"], -44.
     )
     Tert = model.create_and_add_foliation(
@@ -330,7 +345,7 @@ def create_structuralmodel(structuralmodel):
     Lancelin_UC = model.create_and_add_foliation(
         "Lanc_U", nelements=1e4, buffer=0.1
     )
-    UC2 = smodel.add_onlap_unconformity(
+    UC2 = model.add_onlap_unconformity(
         model["Lanc_U"], 0
     )
     Osb = model.create_and_add_foliation(
