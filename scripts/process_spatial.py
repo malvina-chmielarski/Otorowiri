@@ -20,19 +20,12 @@ def remove_duplicate_points(polygon):
 
 def model_boundary(spatial):
 
-    x0, x1, y0, y1 = 348000, 415000, 6504000, 6544000
-    xcoords = [x0, x1, x1, x0, x0]
-    ycoords = [y0, y0, y1, y1, y0]
-    bbox = Polygon(list(zip(xcoords, ycoords)))
-    bbox_gdf = gpd.GeoDataFrame(geometry=[bbox], crs = spatial.epsg)
-    bbox_gdf.to_file('../data/data_shp/bbox/bbox.shp')
-
-    model_boundary_shp_fname = '../data/data_shp/coast/Coastline_LGATE_070.shp'
+    model_boundary_shp_fname = '../data/data_shp/Otorowiri_Model_Extent.shp'
     model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
     model_boundary_gdf.to_crs(epsg=spatial.epsg, inplace=True)
-    model_boundary_gdf = gpd.clip(model_boundary_gdf, bbox_gdf).reset_index(drop=True)    
-    model_boundary_gdf.to_file('../data/data_shp/model_boundary/model_boundary.shp')
-    model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=1000, preserve_topology=True) # simplify 
+    #model_boundary_gdf = gpd.clip(model_boundary_gdf, bbox_gdf).reset_index(drop=True)    
+    #model_boundary_gdf.to_file('../data/data_shp/model_boundary/model_boundary.shp')
+    model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=1, preserve_topology=True) # simplify 
     model_boundary_poly = resample_poly(model_boundary_gs, 2000) # resample    
     inner_boundary_poly = model_boundary_poly.buffer(-1000)
     inner_boundary_gs = gpd.GeoSeries([inner_boundary_poly])
@@ -41,7 +34,7 @@ def model_boundary(spatial):
     #refinement_boundary_gs = model_boundary_gdf.buffer(5000)   
     #refinement_boundary_poly = resample_poly(refinement_boundary_gs, 3000) 
     spatial.model_boundary_gdf = model_boundary_gdf
-    spatial.bbox_gdf = bbox_gdf
+    #spatial.bbox_gdf = bbox_gdf
     spatial.model_boundary_poly = model_boundary_poly
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
@@ -87,8 +80,8 @@ def head_boundary(spatial):
     #chd_west_gdf['geometry'] = new_gdf['geometry'].apply(lambda geom: translate(geom, xoff=10, yoff=0))
 
 def obs_bores(spatial):   
-    obsbore_df = pd.read_excel('../data/data_dwer/Formation picks.xls', sheet_name = 'bore_info')
-    obsbore_gdf = gpd.GeoDataFrame(obsbore_df, geometry=gpd.points_from_xy(obsbore_df.Easting, obsbore_df.Northing), crs="epsg:28350")
+    obsbore_df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mbgl')
+    obsbore_gdf = gpd.GeoDataFrame(obsbore_df, geometry=gpd.points_from_xy(obsbore_df.Easting, obsbore_df.Northing), crs=spatial.epsg)
     obsbore_gdf = gpd.clip(obsbore_gdf, spatial.inner_boundary_poly).reset_index(drop=True)
     spatial.idobsbores = list(obsbore_gdf.ID)
     spatial.xyobsbores = list(zip(obsbore_gdf.Easting, obsbore_gdf.Northing))
@@ -96,9 +89,9 @@ def obs_bores(spatial):
     spatial.obsbore_gdf = obsbore_gdf
     
 def pump_bores(spatial):    
-    spatial.xypumpbores = [(370000, 6515000), (365700, 6525000)] # # Fake pumping bores
+    spatial.xypumpbores = [(359000, 6700000)]#, (365700, 6525000)] # # Fake pumping bores
     spatial.npump = len(spatial.xypumpbores)
-    spatial.idpumpbores = ['P1', 'P2']
+    spatial.idpumpbores = ['P1']
     spatial.xpumpbores, spatial.ypumpbores = list(zip(*spatial.xypumpbores))
     pumpbore_gdf = gpd.GeoDataFrame(pd.DataFrame({'id': spatial.idpumpbores, 'x': spatial.xpumpbores, 'y': spatial.ypumpbores}), 
                                     geometry=gpd.points_from_xy(x=spatial.xpumpbores, y=spatial.ypumpbores))
@@ -188,18 +181,18 @@ def streams(spatial):
 def plot_spatial(spatial):    
     
     fig, ax = plt.subplots(figsize = (7,7))
-    ax.set_title('Perth Loop to Flopy')
+    ax.set_title('Otorowiri')
        
     x, y = spatial.model_boundary_poly.exterior.xy
     ax.plot(x, y, '-o', ms = 2, lw = 1, color='black')
     x, y = spatial.inner_boundary_poly.exterior.xy
     ax.plot(x, y, '-o', ms = 2, lw = 0.5, color='black')
 
-    for node in spatial.faults_nodes: 
-        ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
+    #for node in spatial.faults_nodes: 
+        #ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
         
-    spatial.faults_gdf.plot(ax=ax, markersize = 12, color = 'lightblue', zorder=2)
-    spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+    #spatial.faults_gdf.plot(ax=ax, markersize = 12, color = 'lightblue', zorder=2)
+    #spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     spatial.obsbore_gdf.plot(ax=ax, markersize = 7, color = 'darkblue', zorder=2)
     spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     
