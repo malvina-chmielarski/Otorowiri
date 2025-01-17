@@ -300,7 +300,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
 
     if Petroleum:
         Pet = pd.read_excel(
-        "../data/data_dwer\geology.xls", sheet_name="Petroleum_readable")
+        "../data/data_dwer/geology.xls", sheet_name="Petroleum_readable")
         ddum = []
         for i in range(len(Pet)):
             ddum.append(['PET',Pet["X"][i], Pet["Y"][i], Pet["Z"][i], Pet["val"][i],Pet['lithcode'][i], Pet["feature_name"][i], np.nan, np.nan, np.nan,"WAPIMS"]) 

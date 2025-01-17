@@ -1,5 +1,5 @@
 
-from shapely.geometry import LineString,Point,Polygon,MultiPolygon,MultiPoint,shape
+from shapely.geometry import LineString, LinearRing, Point,Polygon,MultiPolygon,MultiPoint,shape
 import geopandas as gpd
 import pandas as pd
 import itertools
