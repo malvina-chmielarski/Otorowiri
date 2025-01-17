@@ -159,23 +159,24 @@ def faults(spatial):
     spatial.faults_nodes = faults_nodes
     spatial.faults_multipoint = faults_multipoint
 
-def streams(spatial):  
-    streams_gdf = gpd.read_file('../data/data_shp/Streams.shp')
-    streams_gdf.to_crs(epsg=28350, inplace=True)
-    streams_gdf = gpd.clip(streams_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    #streams_gdf.plot()
-    from meshing_routines import resample_polys
-    streams_multipoly = resample_polys(streams_gdf, 3000) # streams_multipoly = streams_gdf
-    streams_poly = streams_multipoly.geoms[0] 
+def river(spatial):  
+    river_gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
+    river_gdf.to_crs(epsg=28350, inplace=True)
+    river_gdf = gpd.clip(river_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    spatial.river_gdf = river_gdf
     
-    from meshing_routines import remove_close_points
-    threshold = 1000
-    cleaned_coords = remove_close_points(list(streams_poly.exterior.coords), threshold) # Clean the polygon exterior
-    streams_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+    #from meshing_routines import resample_polys
+    #streams_multipoly = resample_polys(streams_gdf, 3000) # streams_multipoly = streams_gdf
+    #streams_poly = streams_multipoly.geoms[0] 
     
-    streams_gdf = gpd.GeoDataFrame(geometry=list(streams_multipoly.geoms))
+    #from meshing_routines import remove_close_points
+    #threshold = 1000
+    #cleaned_coords = remove_close_points(list(streams_poly.exterior.coords), threshold) # Clean the polygon exterior
+    #streams_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+    
+    #streams_gdf = gpd.GeoDataFrame(geometry=list(streams_multipoly.geoms))
 
-    spatial.streams_poly = streams_poly 
+    #spatial.streams_poly = streams_poly 
 
     
 def plot_spatial(spatial):    
@@ -195,7 +196,7 @@ def plot_spatial(spatial):
     #spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     spatial.obsbore_gdf.plot(ax=ax, markersize = 7, color = 'darkblue', zorder=2)
     spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    
+    spatial.river_gdf.plot(ax=ax)
     for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
     for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.id):
