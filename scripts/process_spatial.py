@@ -18,30 +18,30 @@ def remove_duplicate_points(polygon):
     #gdf = gpd.GeoDataFrame({'geometry': [polygon]})
 
 
-def model_boundary(spatial):
-
-    x0, x1, y0, y1 = 348000, 415000, 6504000, 6544000
+def make_bbox_shp(spatial, x0, x1, y0, y1):
     xcoords = [x0, x1, x1, x0, x0]
     ycoords = [y0, y0, y1, y1, y0]
     bbox = Polygon(list(zip(xcoords, ycoords)))
     bbox_gdf = gpd.GeoDataFrame(geometry=[bbox], crs = spatial.epsg)
     bbox_gdf.to_file('../data/data_shp/bbox/bbox.shp')
+    spatial.bbox_gdf = bbox_gdf
 
+def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     model_boundary_shp_fname = '../data/data_shp/coast/Coastline_LGATE_070.shp'
     model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
     model_boundary_gdf.to_crs(epsg=spatial.epsg, inplace=True)
-    model_boundary_gdf = gpd.clip(model_boundary_gdf, bbox_gdf).reset_index(drop=True)    
+    model_boundary_gdf = gpd.clip(model_boundary_gdf, spatial.bbox_gdf).reset_index(drop=True)    
     model_boundary_gdf.to_file('../data/data_shp/model_boundary/model_boundary.shp')
-    model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=1000, preserve_topology=True) # simplify 
-    model_boundary_poly = resample_poly(model_boundary_gs, 2000) # resample    
-    inner_boundary_poly = model_boundary_poly.buffer(-1000)
+    model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=simplify_tolerance, preserve_topology=True) # simplify 
+    model_boundary_poly = resample_poly(model_boundary_gs, node_spacing) # resample    
+    inner_boundary_poly = model_boundary_poly.buffer(-boundary_buff)
     inner_boundary_gs = gpd.GeoSeries([inner_boundary_poly])
-    inner_boundary_poly = resample_poly(inner_boundary_gs, 1900) 
+    inner_boundary_poly = resample_poly(inner_boundary_gs, 0.95*node_spacing) #  A few less nodes in inside boundary
     
     #refinement_boundary_gs = model_boundary_gdf.buffer(5000)   
     #refinement_boundary_poly = resample_poly(refinement_boundary_gs, 3000) 
+    spatial.boundary_buff = boundary_buff
     spatial.model_boundary_gdf = model_boundary_gdf
-    spatial.bbox_gdf = bbox_gdf
     spatial.model_boundary_poly = model_boundary_poly
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
@@ -166,23 +166,44 @@ def faults(spatial):
     spatial.faults_nodes = faults_nodes
     spatial.faults_multipoint = faults_multipoint
 
-def streams(spatial):  
-    streams_gdf = gpd.read_file('../data/data_shp/Streams.shp')
-    streams_gdf.to_crs(epsg=28350, inplace=True)
-    streams_gdf = gpd.clip(streams_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    #streams_gdf.plot()
-    from meshing_routines import resample_polys
-    streams_multipoly = resample_polys(streams_gdf, 3000) # streams_multipoly = streams_gdf
-    streams_poly = streams_multipoly.geoms[0] 
-    
-    from meshing_routines import remove_close_points
-    threshold = 1000
-    cleaned_coords = remove_close_points(list(streams_poly.exterior.coords), threshold) # Clean the polygon exterior
-    streams_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
-    
-    streams_gdf = gpd.GeoDataFrame(geometry=list(streams_multipoly.geoms))
+def lakes(spatial):  
 
-    spatial.streams_poly = streams_poly 
+    gdf = gpd.read_file('../data/data_shp/lakes/EPP_Lakes.shp')
+    gdf.to_crs(epsg=28350, inplace=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    spatial.lakes_gdf = gdf
+
+def rivers(spatial, buffer_distance, node_spacing):#, threshold):  
+
+    gdf = gpd.read_file('../data/data_shp/rivers/Hydrography -  Inland Waters - Waterlines (named rivers only).shp')
+    gdf.to_crs(epsg=28350, inplace=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    #gdf.plot()
+
+    gs = gdf.buffer(buffer_distance)
+    print(type(gs))
+    #buffered_gdf = gpd.GeoDataFrame(geometry=buffered_lines)
+    from shapely.ops import unary_union
+    p1 = unary_union(gs)
+    p2 = unary_union(p1)
+    polygon = unary_union(p2)
+    print(type(polygon))
+    gdf = gpd.GeoDataFrame(geometry=[polygon])
+    #polygon = unary_union(merged_polygon)
+    print(type(gdf))
+    gdf.plot()
+    print(gdf)
+    poly = gdf.geoms[0]
+    poly = resample_poly(poly, node_spacing) # streams_multipoly = streams_gdf
+     
+    
+    #from meshing_routines import remove_close_points
+    #cleaned_coords = remove_close_points(list(poly.exterior.coords), threshold) # Clean the polygon exterior
+    #poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+    
+    gdf = gpd.GeoDataFrame(geometry=list(poly.geoms))
+    spatial.rivers_gdf = gdf
+    spatial.rivers_poly = poly 
 
     
 def plot_spatial(spatial):    
@@ -199,8 +220,10 @@ def plot_spatial(spatial):
         ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
         
     spatial.faults_gdf.plot(ax=ax, markersize = 12, color = 'lightblue', zorder=2)
+    spatial.rivers_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
+    spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
     spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    spatial.obsbore_gdf.plot(ax=ax, markersize = 7, color = 'darkblue', zorder=2)
+    spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
     spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     
     for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
@@ -208,6 +231,8 @@ def plot_spatial(spatial):
     for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.id):
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
     
+    x, y = spatial.rivers_poly.exterior.xy
+    ax.plot(x, y, '-o', ms = 1, lw = 0.5, color='darkblue')
     #### PLOTTING
     #ax.set_xlim([700000,spatial.x1]) 
     #ax.set_ylim([spatial.y0, 7470000]) 
