@@ -13,6 +13,7 @@ def prepare_strat_column(structuralmodel):
     nlg = len(strat_names) - 1 # number of geological layers
     sequences = strat.sequence.tolist()
     sequence = list(set(sequences))
+    
     # Make bespoke colormap
     stratcolors = []
     for i in range(len(strat)):
@@ -41,7 +42,7 @@ def prepare_strat_column(structuralmodel):
             mn = vals[i]
         if i == 0: mn = vals[i] #work around for the ground
         stratigraphic_column[sequences[i]][strat_names[i]] = {'min': mn, 'max': mx, 'id': lithids[i], 'color': stratcolors[i]}
-        
+    ###########################    
            
     structuralmodel.strat = strat
     structuralmodel.strat_col = stratigraphic_column
