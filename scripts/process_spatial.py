@@ -205,7 +205,6 @@ def lakes(spatial):
 
 def river(spatial, buffer_distance, node_spacing, threshold):  
 
-    
     gdf = gpd.read_file('../data/data_shp/rivers/Hydrography -  Inland Waters - Waterlines (named rivers only).shp')
     gdf.to_crs(epsg=28350, inplace=True)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
@@ -215,18 +214,13 @@ def river(spatial, buffer_distance, node_spacing, threshold):
     poly = unary_union(gs)   
     poly = resample_shapely_poly(poly, node_spacing) # streams_multipoly = streams_gdf
      
-    
     from loopflopy.mesh_routines import remove_close_points
     cleaned_coords = remove_close_points(list(poly.exterior.coords), threshold) # Clean the polygon exterior
     poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
-    #gdf = gpd.GeoDataFrame(geometry=list(poly.geoms))
     
     spatial.river_poly = poly 
     spatial.river_gdf = gpd.GeoDataFrame(geometry = [poly])
-
-    #clip_boundary = spatial.model_boundary_poly.buffer(-1.5 * spatial.boundary_buff)
-    #clipped_gdf = gpd.clip(spatial.river_gdf, clip_boundary).reset_index(drop=True)
-    spatial.river_nodes = list(spatial.river_gdf.geometry[0].exterior.coords) # so that nodes arent too close to boundary
+    spatial.river_nodes = list(spatial.river_gdf.geometry[0].exterior.coords) 
 
     
 def plot_spatial(spatial):    
@@ -256,13 +250,6 @@ def plot_spatial(spatial):
     for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.id):
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
     
-    #x, y = spatial.river_poly.exterior.xy
-    #ax.plot(x, y, 'o', ms = 1., color='darkblue')
-    #### PLOTTING
-    #ax.set_xlim([700000,spatial.x1]) 
-    #ax.set_ylim([spatial.y0, 7470000]) 
-
-
 ### THIS TRIES TO REMOVES NODES THAT ARE TOO CLOSE!
 
 '''streams_multipoint = MultiPoint(streams_poly.exterior.coords)
