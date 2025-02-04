@@ -6,6 +6,16 @@ class Observations:
 
             self.observations_label = "ObservationsBaseClass"
         
+    def obs_bores(spatial):   
+    obsbore_df = pd.read_excel('../data/data_dwer/Formation picks.xls', sheet_name = 'bore_info')
+    obsbore_gdf = gpd.GeoDataFrame(obsbore_df, geometry=gpd.points_from_xy(obsbore_df.Easting, obsbore_df.Northing), crs="epsg:28350")
+    obsbore_gdf = gpd.clip(obsbore_gdf, spatial.inner_boundary_poly).reset_index(drop=True)
+    spatial.idobsbores = list(obsbore_gdf.ID)
+    spatial.xyobsbores = list(zip(obsbore_gdf.Easting, obsbore_gdf.Northing))
+    spatial.nobs = len(spatial.xyobsbores)
+    spatial.obsbore_gdf = obsbore_gdf
+    
+    
     def process_obs(self, spatial, geomodel, mesh):
 
         # Get observation elevation (z) from dataframe
