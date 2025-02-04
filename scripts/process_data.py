@@ -7,17 +7,17 @@ class Data:
             self.data_label = "DataBaseClass"
 
     def process_rch(self, mesh):
-        fname = '../data/data_climate/IDCJAC0001_007176_Data12.csv'
-        df = pd.read_csv(fname)
-        df = df[df.Year > 2018]
-        df = df[df.Year < 2024]
-        df = df.fillna(0)
-        df = df.reset_index()
+        #fname = '../data/data_climate/IDCJAC0001_007176_Data12.csv'
+        #df = pd.read_csv(fname)
+        #df = df[df.Year > 2018]
+        #df = df[df.Year < 2024]
+        #df = df.fillna(0)
+        #df = df.reset_index()
+        #mean_rch = df.Annual.mean()/1000/365 # DAILY RCH AVERAGE
         
-        mean_rch = df.Annual.mean()/1000/365 # DAILY RCH AVERAGE
-        
+        mean_rch = 35/365 # DAILY RCH AVERAGE
         self.rch_rec = {}      
-        self.rch_rec[0] = [((0, icpl), 0.4 * mean_rch) for icpl in mesh.stream_cells] # Assume for now 40% rain turns to recharge
+        self.rch_rec[0] = [((0, icpl), mean_rch) for icpl in range(mesh.ncpl)] # Assume for now 35mm over entire year
 
     def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
                   # geo layer pumping from
@@ -75,10 +75,46 @@ class Data:
     def process_chd(self, geomodel, mesh):
         self.chd_rec = []
         for icpl in mesh.chd_cells:
-            z = 465
+            z = 0
             x,y,z = mesh.xcyc[icpl][0], mesh.xcyc[icpl][1], z
             point = Point(x,y,z)
             lay, icpl = geomodel.vgrid.intersect(x,y,z)
             cell_disv = icpl + lay*mesh.ncpl
             cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-            self.chd_rec.append([cell_disu, 463])    
+            self.chd_rec.append([cell_disu, 0])    
+
+    def process_ghb(self, geomodel, mesh):
+        # General-Head Boundaries
+        ghb_period = {}
+        ghb_period_array = []
+        for layer, cond in zip(range(1, 3), [15.0, 1500.0]):
+            for row in range(0, 15):
+                ghb_period_array.append(((layer, row, 9), "tides", cond, "Estuary-L2"))
+        ghb_period[0] = ghb_period_array
+        ghb = flopy.mf6.ModflowGwfghb(gwf, stress_period_data=ghb_period,)
+        ts_recarray = []
+        fd = open(os.path.join(data_pth, "tides.txt"))
+        for line in fd:
+            line_list = line.strip().split(",")
+            ts_recarray.append((float(line_list[0]), float(line_list[1])))
+        ghb.ts.initialize(
+            filename="tides.ts",
+            timeseries=ts_recarray,
+            time_series_namerecord="tides",
+            interpolation_methodrecord="linear",
+        )
+        obs_recarray = {
+            "ghb_obs.csv": [
+                ("ghb-2-6-10", "GHB", (1, 5, 9)),
+                ("ghb-3-6-10", "GHB", (2, 5, 9)),
+            ],
+            "ghb_flows.csv": [
+                ("Estuary2", "GHB", "Estuary-L2"),
+                ("Estuary3", "GHB", "Estuary-L3"),
+            ],
+        }
+        ghb.obs.initialize(
+            filename=f"{model_name}.ghb.obs",
+            print_input=True,
+            continuous=obs_recarray,
+        )
