@@ -37,6 +37,7 @@ class DEM:
         delr = np.ones((ncol)) * ((structuralmodel.x1 - structuralmodel.x0)/ncol)
         delc = np.ones((nrow)) * ((structuralmodel.y1 - structuralmodel.y0)/nrow)
         resample_grid = flopy.discretization.structuredgrid.StructuredGrid(delc = delc, delr = delr, xoff = structuralmodel.x0, yoff = structuralmodel.y0)
+        self.resample_grid = resample_grid
         resampled_topo = fine_topo.resample_to_grid(resample_grid, band=fine_topo.bands[0], method="linear", extrapolate_edges=True,)
 
         # Create a list x,y,z to put in structural model

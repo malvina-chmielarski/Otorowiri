@@ -116,14 +116,15 @@ def head_boundary(spatial):
     #from shapely.affinity import translate
     #chd_west_gdf['geometry'] = new_gdf['geometry'].apply(lambda geom: translate(geom, xoff=10, yoff=0))
 
-def obs_bores(spatial):   
-    obsbore_df = pd.read_excel('../data/data_dwer/Formation picks.xls', sheet_name = 'bore_info')
-    obsbore_gdf = gpd.GeoDataFrame(obsbore_df, geometry=gpd.points_from_xy(obsbore_df.Easting, obsbore_df.Northing), crs="epsg:28350")
-    obsbore_gdf = gpd.clip(obsbore_gdf, spatial.inner_boundary_poly).reset_index(drop=True)
-    spatial.idobsbores = list(obsbore_gdf.ID)
-    spatial.xyobsbores = list(zip(obsbore_gdf.Easting, obsbore_gdf.Northing))
+def obs_bores(spatial, observations):   
+    #df = pd.read_excel('../data/data_dwer/Formation picks.xls', sheet_name = 'bore_info')
+    df = observations.df_boredetails
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
+    gdf = gpd.clip(gdf, spatial.inner_boundary_poly).reset_index(drop=True)
+    spatial.obsbore_gdf = gdf
+    spatial.idobsbores = list(gdf.ID)
+    spatial.xyobsbores = list(zip(gdf.Easting, gdf.Northing))
     spatial.nobs = len(spatial.xyobsbores)
-    spatial.obsbore_gdf = obsbore_gdf
     
 def pump_bores(spatial):    
     spatial.xypumpbores = [(370000, 6515000), (365700, 6525000)] # # Fake pumping bores
