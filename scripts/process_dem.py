@@ -19,6 +19,7 @@ class DEM:
             shapes = [feature["geometry"] for feature in shapefile]
         
         with rasterio.open(self.geotiff_fname) as src:
+            print(src.crs)
             out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
             out_meta = src.meta
         
@@ -28,6 +29,7 @@ class DEM:
                         "transform": out_transform})
         
         with rasterio.open("../data/data_dem/cropped_raster.tif", "w", **out_meta) as dest:
+            print(dest.crs)
             dest.write(out_image)
 
     def resample_topo(self, project, structuralmodel, nrow, ncol, fname):
@@ -35,10 +37,19 @@ class DEM:
         delr = np.ones((ncol)) * ((structuralmodel.x1 - structuralmodel.x0)/ncol)
         delc = np.ones((nrow)) * ((structuralmodel.y1 - structuralmodel.y0)/nrow)
         resample_grid = flopy.discretization.structuredgrid.StructuredGrid(delc = delc, delr = delr, xoff = structuralmodel.x0, yoff = structuralmodel.y0)
-        self.resample_grid = resample_grid
         resampled_topo = fine_topo.resample_to_grid(resample_grid, band=fine_topo.bands[0], method="linear", extrapolate_edges=True,)
-        pickle.dump(resampled_topo, open(os.path.join(fname),'wb'))
-        return None
+
+        # Create a list x,y,z to put in structural model
+        xyzcenters = resample_grid.xyzcellcenters
+        xcenters = xyzcenters[0][0]
+        ycenters = [xyzcenters[1][i][0] for i in range(nrow)]
+        topo_xyz = []
+        for col in range(ncol):
+            for row in range(nrow):
+                topo_xyz.append((xcenters[col], ycenters[row], resampled_topo[col, row]))
+        
+        pickle.dump(topo_xyz, open(os.path.join(fname),'wb'))
+        return resampled_topo
 
     def load_topo(self, project):
         pickleoff = open(project.workspace + 'topo.pkl','rb')
