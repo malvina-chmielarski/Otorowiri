@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import numbers
+from LoopStructural.utils import strikedip2vector as strike_dip_vector
 
 def prepare_strat_column(structuralmodel):
     
@@ -36,7 +37,7 @@ def prepare_strat_column(structuralmodel):
             mx = np.inf
         else:
             mx = vals[i-1]
-        if i != (len(sequences) - 1) and sequences[i] != sequences[i+1]:
+        if i != (len(sequences) - 1) and sequences[i] != sequences[i+1] and i != 1:
             mn = -np.inf
         else:
             mn = vals[i]
@@ -50,7 +51,14 @@ def prepare_strat_column(structuralmodel):
     structuralmodel.cmap = cmap
     structuralmodel.norm = norm
     
-def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum = True, Model = 1,extent = None ):
+def prepare_geodata(structuralmodel, 
+                    Lleyland = True, 
+                    Brett = True, 
+                    Petroleum = True, 
+                    Model = 1,
+                    extent = None,
+                    Fault = True,
+                    Fault_vert = False):
 
     if type(extent) == type(None):
         x0, y0, z0 = structuralmodel.x0, structuralmodel.y0, structuralmodel.z0
@@ -61,6 +69,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
 
     
     strat = structuralmodel.strat
+    
+    elev = np.loadtxt('../data/LSE.dat')
+
     
     bore_info = pd.read_excel(structuralmodel.geodata_fname, sheet_name=structuralmodel.data_sheetname)
     df = bore_info.copy()
@@ -80,6 +91,25 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
 
     data_list = df.values.tolist()  # Turn data into a list of lists
     formatted_data = []
+    gx, gy, gz = 0.0, 0.0, 1.0
+    for i in range(len(elev)):
+        val = strat.val[0]
+        formatted_data.append(
+            [
+                "ground_cloud",
+                elev[i,0],
+                elev[i,1],
+                elev[i,2],
+                val,
+                "Ground",
+                "Ground",
+                gx,
+                gy,
+                gz,
+                "ELVIS_data"
+            ]
+        )
+        
    
     for i in range(len(data_list)):  # iterate for each row
         end = False
@@ -128,6 +158,14 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
                 [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )
             current_bottom = np.copy(bottom)
+        bottom = np.copy(current_bottom) # current depth
+        val = 0  # designated isovalue
+        lithid = 'base_Quat'  # lithology id
+        feat_name = "Quat_U"  # sequence name
+        formatted_data.append(
+            [boreid, easting, northing, bottom, val, lithid, feat_name, 0, 0, 1,"raw_data"]
+        )    
+        
         #Kings park
         TKP = np.copy(bottom)
         if isinstance(data_list[i][8], numbers.Number) == True:
@@ -151,12 +189,12 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             lithid = strat.lithid[2]  # lithology id
             feat_name = strat.sequence[2]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, bottom+2., val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )     
         #Tertiaty_unconformity
         gx, gy, gz = np.nan, np.nan,np.nan
         if not EOH_flag:
-            bottom = np.copy(current_bottom)  # current depth
+            bottom = np.copy(current_bottom) # current depth
             val = 0  # designated isovalue
             lithid = 'base_tert'  # lithology id
             feat_name = "Tert_U"  # sequence name
@@ -167,6 +205,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         ldum = [3,4,5]
         cdum = [11,12,13]
         TLF = np.copy(bottom)
+        first = None
         for j in range(3):
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
@@ -177,20 +216,25 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
                     [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
                 )
                 current_bottom = np.copy(bottom)     
+                if type(first) == type(None):
+                    first = strat.val[ldum[j]-1]
         
         if bottom == TLF: #hide it
             val = strat.val[5]
             lithid = strat.lithid[5]  # lithology id
             feat_name = strat.sequence[5]  # sequence name
+            if isinstance(data_list[i][10], numbers.Number) == True: #is it logged as undifferentiated?
+                bottom = groundlevel - float(data_list[i][10])
+                current_bottom = np.copy(bottom)               
             formatted_data.append(
                 [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )                      
-        elif isinstance(data_list[i][11], numbers.Number) == True:    
+        else:    
             val = strat.val[2]
             lithid = strat.lithid[3]  # lithology id
             feat_name = strat.sequence[3]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, TLF, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, TLF, first, lithid, feat_name, gx, gy, gz,"raw_data"]
             )    
 
         #Lancelin _ unconformity
@@ -207,6 +251,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         #Osbourne_formation
         ldum = [6,7,8]
         cdum = [14,15,17]
+        first = None
         for j in range(3):
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 bottom = groundlevel - float(data_list[i][cdum[j]])  # Ground surface - kinhs park base (mbgl)
@@ -216,26 +261,28 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
                 formatted_data.append(
                     [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
                 )
-                current_bottom = np.copy(bottom)     
+                current_bottom = np.copy(bottom)   
+                if type(first) == type(None):
+                    first = strat.val[ldum[j]-1]  
+                    lithdum = lithid
         if TOF == bottom:
             val = strat.val[8]
             lithid = strat.lithid[8]  # lithology id
             feat_name = strat.sequence[8]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, bottom+2., val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )                      
-        elif isinstance(data_list[i][14], numbers.Number) == True:    
+        else:    
             val = strat.val[5]
             lithid = strat.lithid[6]  # lithology id
             feat_name = strat.sequence[6]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, TOF, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, TOF, first, lithid, feat_name, gx, gy, gz,"raw_data"]
             ) 
             
         #Osbourne _ unconformity
         bottom = np.copy(current_bottom)  # current depth
-        TOL = np.copy(bottom)
-        
+
         if not EOH_flag:
             val = 0  # designated isovalue
             lithid = 'base_Osb'  # lithology id
@@ -243,7 +290,8 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             formatted_data.append(
                 [boreid, easting, northing, bottom, val, lithid, feat_name, 0, 0, 1,"raw_data"]
             )
-
+        TOL = np.copy(bottom)
+        first = None
         #Leedervilles
         ldum = [9,10,11]
         cdum = [18,19,20]
@@ -260,20 +308,22 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
                     current_bottom = np.copy(bottom)   
                 else:
                     EOH_flag = True      
+                if type(first) == type(None):
+                    first = strat.val[ldum[j]-1]
         #Leederville _ unconformity
         if TOL == bottom and not EOH_flag:
             val = strat.val[11]
             lithid = strat.lithid[11]  # lithology id
             feat_name = strat.sequence[11]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, bottom+2., val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )                      
-        elif isinstance(data_list[i][18], numbers.Number) == True:    
+        else:    
             val = strat.val[8]
             lithid = strat.lithid[9]  # lithology id
             feat_name = strat.sequence[9]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, TOL, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, TOL, first, lithid, feat_name, gx, gy, gz,"raw_data"]
             ) 
         bottom = np.copy(current_bottom)  # current depth
         if not EOH_flag:
@@ -288,6 +338,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         #SPS and Gage
         ldum = [12,13]
         cdum = [21,22]
+        first = None
         for j in range(2):
             if isinstance(data_list[i][cdum[j]], numbers.Number) == True:
                 if float(data_list[i][cdum[j]]) < EOH:
@@ -300,7 +351,9 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
                     )
                 else:
                     EOH_flag = True   
-                current_bottom = np.copy(bottom) 
+                current_bottom = np.copy(bottom)
+                if type(first) == type(None):
+                    first = strat.val[ldum[j]-1]
                      
         #Warnbro _ unconformity
         if TOW == bottom and not EOH_flag:
@@ -308,14 +361,14 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             lithid = strat.lithid[13]  # lithology id
             feat_name = strat.sequence[13]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, bottom, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, bottom+2., val, lithid, feat_name, gx, gy, gz,"raw_data"]
             )                      
-        elif isinstance(data_list[i][21], numbers.Number) == True:    
+        else:    
             val = strat.val[11]
             lithid = strat.lithid[12]  # lithology id
             feat_name = strat.sequence[12]  # sequence name
             formatted_data.append(
-                [boreid, easting, northing, TOW, val, lithid, feat_name, gx, gy, gz,"raw_data"]
+                [boreid, easting, northing, TOW, first, lithid, feat_name, gx, gy, gz,"raw_data"]
             ) 
         bottom = np.copy(current_bottom)  # current depth
         if not EOH_flag:
@@ -364,10 +417,10 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
     ]
     
     if Lleyland:
-        valdum = [38.,-10.,0.,0.,-732,-888,-947,-1029,0][::-1]
+        valdum = [0.,-44.,0.,0.,-440,-607,-660,-783,0][::-1]
         feature = ['Ground','Quaternary','NC1_FEAT','NC5_FEAT', #['Quaternary','Quaternary','NC1_FEAT','NC5_FEAT',
                    'Leederville','Leederville','Leederville'
-                   ,'Warnbro','NC7_FEAT'][::-1]
+                   ,'Warnbro','Warn_U'][::-1]
         
         ddum = []
         Lley = pd.read_excel("../data/data_dwer/geology.xls", sheet_name="Lleyland")
@@ -380,12 +433,12 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             ddum.append([BoreID, X, Y, LSE, valdum[-1], 'Lley', feature[-1], 0.0, 0.0, 1.0,"Lucy"])
             ddum.append([BoreID, X, Y, LSE-Lley["Break up"][i], valdum[0], 'Lley', feature[0], 0.0, 0.0, 1.0,"Lucy"]) 
             if type(Lley["SPS"][i]) == type(1):
-                ddum.append([BoreID, X, Y, LSE-Lley["SPS"][i], valdum[1], 'Lley', feature[1], 0.0, 0.0, 1.0,"Lucy"])
+                ddum.append([BoreID, X, Y, LSE-Lley["SPS"][i], valdum[1], 'Lley', feature[1], np.nan, np.nan, np.nan,"Lucy"])
             if type(Lley["Maringiniup"][i]) == type(1):
-                ddum.append([BoreID, X, Y, LSE-Lley["Maringiniup"][i], valdum[2], 'Lley', feature[2], 0.0, 0.0, 1.0,"Lucy"])            
-            ddum.append([BoreID, X, Y, LSE-Lley["Waneroo"][i], valdum[3], 'Lley', feature[3], 0.0, 0.0, 1.0,"Lucy"])
+                ddum.append([BoreID, X, Y, LSE-Lley["Maringiniup"][i], valdum[2], 'Lley', feature[2],  np.nan, np.nan, np.nan,"Lucy"])            
+            ddum.append([BoreID, X, Y, LSE-Lley["Waneroo"][i], valdum[3], 'Lley', feature[3],  np.nan, np.nan, np.nan,"Lucy"])
             if type(Lley["Pinjar"][i]) == type(1):
-                ddum.append([BoreID, X, Y, LSE-Lley["Pinjar"][i], valdum[4], 'Lley', feature[4], 0.0, 0.0, 1.0,"Lucy"])                    
+                ddum.append([BoreID, X, Y, LSE-Lley["Pinjar"][i], valdum[4], 'Lley', feature[4],  np.nan, np.nan, np.nan,"Lucy"])                    
             ddum.append([BoreID, X, Y, LSE-Lley["Aptian"][i], valdum[5], 'Lley', feature[5], 0.0, 0.0, 1.0,"Lucy"])   
             if type(Lley["Paleocene"][i]) == type(1):
                 ddum.append([BoreID, X, Y, LSE-Lley["Paleocene"][i], valdum[5], 'Lley', feature[5], 0.0, 0.0, 1.0,"Lucy"]) 
@@ -397,7 +450,7 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
         gphys = pd.read_excel("../data/data_dwer/geology.xls", sheet_name="Other_constraints")
         ddum = []
         for i in range(len(gphys)):
-            ddum.append(['GEO', gphys["Easting"][i], gphys["Northing"][i], gphys["z"][i], gphys["val"][i], 'GEO', gphys["Feature"][i], 0.0, 0.0, 1.0,"Brett"]) 
+            ddum.append(['GEO', gphys["Easting"][i], gphys["Northing"][i], gphys["z"][i], gphys["val"][i], 'GEO', gphys["Feature"][i], np.nan, np.nan, np.nan,"Brett"]) 
 
         data = pd.concat([data,pd.DataFrame(ddum,columns = data.columns)]) 
 
@@ -409,6 +462,117 @@ def prepare_geodata(structuralmodel, Lleyland = False, Brett = True, Petroleum =
             ddum.append(['PET',Pet["X"][i], Pet["Y"][i], Pet["Z"][i], Pet["val"][i],Pet['lithcode'][i], Pet["feature_name"][i], np.nan, np.nan, np.nan,"WAPIMS"]) 
 
         data = pd.concat([data,pd.DataFrame(ddum,columns = data.columns)])  
+        
+    if Fault: 
+        if Fault_vert:
+            faultfile = "../data/data_seismic/Fault_data_vertical.xlsx"
+        else: 
+            faultfile = "../data/data_seismic/Fault_data.xlsx"
+        #Fault1
+        Fault_1 = pd.read_excel(
+        faultfile, 
+        sheet_name="Fault_1")   
+        rows = []
+        for i in range(len(Fault_1)):
+            nx1, ny1, nz1 = strike_dip_vector([Fault_1['strike'][i]],[Fault_1['dip'][i]])[0]
+            df_new_row = pd.DataFrame.from_records(
+                {
+                    "X": [Fault_1['X'][i]],
+                    "Y": [Fault_1['Y'][i]],
+                    "Z": [Fault_1['Z'][i]],
+                    "val": [0.0],
+                    "feature_name": ["Fault_1"],
+                    "nx": [nx1],
+                    "ny": [ny1],
+                    "nz": [nz1],
+                    "for_Kerry" : ["Fault_Seis"]
+                }
+            )
+            data = pd.concat([data,df_new_row], ignore_index=True) 
+            
+        Fault_2 = pd.read_excel(
+       faultfile, 
+        sheet_name="Fault_2")   
+        rows = []
+        for i in range(len(Fault_2)):
+            nx1, ny1, nz1 = strike_dip_vector([Fault_2['strike'][i]],[Fault_2['dip'][i]])[0]
+            df_new_row = pd.DataFrame.from_records(
+                {
+                    "X": [Fault_2['X'][i]],
+                    "Y": [Fault_2['Y'][i]],
+                    "Z": [Fault_2['Z'][i]],
+                    "val": [0.0],
+                    "feature_name": ["Fault_2"],
+                    "nx": [nx1],
+                    "ny": [ny1],
+                    "nz": [nz1],
+                    "for_Kerry" : ["Fault_Seis"]
+                }
+            )
+            data = pd.concat([data,df_new_row], ignore_index=True) 
+
+        Fault_3 = pd.read_excel(
+        faultfile, 
+        sheet_name="Fault_3")   
+        rows = []
+        for i in range(len(Fault_3)):
+            nx1, ny1, nz1 = strike_dip_vector([Fault_3['strike'][i]],[Fault_3['dip'][i]])[0]
+            df_new_row = pd.DataFrame.from_records(
+                {
+                    "X": [Fault_3['X'][i]],
+                    "Y": [Fault_3['Y'][i]],
+                    "Z": [Fault_3['Z'][i]],
+                    "val": [0.0],
+                    "feature_name": ["Fault_3"],
+                    "nx": [nx1],
+                    "ny": [ny1],
+                    "nz": [nz1],
+                    "for_Kerry" : ["Fault_Seis"]
+                }
+            )
+            data = pd.concat([data,df_new_row], ignore_index=True)            
+
+        Fault_4 = pd.read_excel(
+        faultfile, 
+        sheet_name="Fault_4")   
+        rows = []
+        for i in range(len(Fault_4)):
+            nx1, ny1, nz1 = strike_dip_vector([Fault_4['strike'][i]],[Fault_4['dip'][i]])[0]
+            df_new_row = pd.DataFrame.from_records(
+                {
+                    "X": [Fault_4['X'][i]],
+                    "Y": [Fault_4['Y'][i]],
+                    "Z": [Fault_4['Z'][i]],
+                    "val": [0.0],
+                    "feature_name": ["Fault_4"],
+                    "nx": [nx1],
+                    "ny": [ny1],
+                    "nz": [nz1],
+                    "for_Kerry" : ["Fault_Seis"]
+                }
+            )
+            data = pd.concat([data,df_new_row], ignore_index=True)    
+            
+        Fault_5 = pd.read_excel(
+        faultfile, 
+        sheet_name="Fault_5")   
+        rows = []
+        for i in range(len(Fault_5)):
+            nx1, ny1, nz1 = strike_dip_vector([Fault_5['strike'][i]],[Fault_5['dip'][i]])[0]
+            df_new_row = pd.DataFrame.from_records(
+                {
+                    "X": [Fault_5['X'][i]],
+                    "Y": [Fault_5['Y'][i]],
+                    "Z": [Fault_5['Z'][i]],
+                    "val": [0.0],
+                    "feature_name": ["Fault_5"],
+                    "nx": [nx1],
+                    "ny": [ny1],
+                    "nz": [nz1],
+                    "for_Kerry" : ["Fault_Seis"]
+                }
+            )
+            data = pd.concat([data,df_new_row], ignore_index=True)   
     
     structuralmodel.data = data
 
@@ -423,19 +587,28 @@ def create_structuralmodel(structuralmodel):
     Ground = model.create_and_add_foliation(
         "Ground", nelements=1e4, buffer=0.1
     )
+
     UC = model.add_unconformity(
     model["Ground"], 0.
     )
+
     #First add the quaternary formation
     Quat = model.create_and_add_foliation(
         "Quaternary", nelements=1e4, buffer=0.1
     )
+    
+    Quat_UC = model.create_and_add_foliation(
+        "Quat_U", nelements=1e4, buffer=0.1
+    )
+    
     UC0 = model.add_unconformity(
     model["Quaternary"], -44.
     )
+    
     Tert = model.create_and_add_foliation(
         "Tertiary", nelements=1e4, buffer=0.1
     )
+        
     TertUC =model.create_and_add_foliation(
         "Tert_U", nelements=1e4, buffer=0.1
     )
@@ -461,6 +634,23 @@ def create_structuralmodel(structuralmodel):
     UC3 = model.add_onlap_unconformity(
         model["Osb_U"], 0
     )
+
+    fault_slip_vector = [0., 0, 1.]
+    Fault_1 = model.create_and_add_fault(
+        "Fault_1",
+        displacement=500,
+        fault_slip_vector=fault_slip_vector,
+        nelements=1e4,
+        faultfunction = 'BaseFault'
+    )
+    
+    Fault_4 = model.create_and_add_fault(
+        "Fault_4",
+        displacement=200,
+        fault_slip_vector=fault_slip_vector,
+        nelements=1e4,
+        faultfunction = 'BaseFault'
+    )
    
     LEED = model.create_and_add_foliation(
         "Leederville", nelements=1e4, buffer=0.1
@@ -483,6 +673,34 @@ def create_structuralmodel(structuralmodel):
         model["Warn_U"], 0
     )
 
+    fault_slip_vector = [0, 0, -1.]
+    Fault_2 = model.create_and_add_fault(
+        "Fault_2",
+        displacement=100,
+        fault_slip_vector=fault_slip_vector,
+        nelements=1e4,
+        faultfunction = 'BaseFault'
+    )
+    
+    fault_slip_vector = [0, 0, 1.]
+    Fault_3 = model.create_and_add_fault(
+        "Fault_3",
+        displacement=100,
+        fault_slip_vector=fault_slip_vector,
+        nelements=1e4,
+        faultfunction = 'BaseFault'
+    )
+    
+    
+    fault_slip_vector = [0, 0, 1.]
+    Fault_5 = model.create_and_add_fault(
+        "Fault_5",
+        displacement=500,
+        fault_slip_vector=fault_slip_vector,
+        nelements=1e4,
+        faultfunction = 'BaseFault'
+    )
+
     YARR = model.create_and_add_foliation(
         "Yarragadee", nelements=1e4, buffer=0.1
     )   
@@ -491,3 +709,72 @@ def create_structuralmodel(structuralmodel):
     
     structuralmodel.model = model
 
+    f_list = ['Fault_1','Fault_2','Fault_3','Fault_4','Fault_5']
+    fault_surfaces = model.get_fault_surfaces(f_list)
+    import pickle
+    for i in range(len(f_list)):
+        valid_mask = ~np.isnan(fault_surfaces[i].vertices).any(axis=1)
+        vnew = fault_surfaces[i].vertices[valid_mask]
+        with open(f_list[i] + '.pkl','wb') as file:
+            pickle.dump(vnew,file)
+    
+def fault_vtk(structuralmodel):
+    f_list = ['Fault_1','Fault_2','Fault_3','Fault_4','Fault_5']
+    fault_surfaces = structuralmodel.model.get_fault_surfaces(f_list)
+    vertices, triangles, fault = [], [], []
+    for j in range(len(f_list)):
+        v_old, e_old = fault_surfaces[j].vertices, fault_surfaces[j].triangles
+        v_new, e_new = clean_mesh(v_old,e_old)
+        fdum = np.ones(np.shape(v_new)[0]) * (j+1)
+        vertices.append(v_new)
+        triangles.append(e_new)
+        fault.append(fdum)
+        f = open(f_list[j] + '.vtk','w')
+        f.write("""# vtk DataFile Version 3.0
+        vtk output
+        ASCII
+        DATASET UNSTRUCTURED_GRID\n""")
+        f.write('POINTS %i float\n' % len(v_new))
+        for i in range(len(v_new)):
+            f.write('%g %g %g\n' % (v_new[i,0],v_new[i,1],v_new[i,2]))
+
+        f.write('\n')
+
+        f.write('CELLS %i %i\n' % (len(e_new),len(e_new)*4))
+        for i in range(len(e_new)):
+            f.write('%i %i %i %i\n' % (3,e_new[i,0],e_new[i,1],e_new[i,2]))
+
+        f.write('\n')
+
+        f.write('CELL_TYPES %i\n' % len(e_new))
+        for i in range(len(e_new)):
+            f.write('%i\n' % (5))
+
+        f.write('\n')
+        f.write('POINT_DATA %i\n' % len(fdum))
+        f.write("""SCALARS Fault float 1
+        LOOKUP_TABLE default\n""")
+        for i in range(len(fdum)):
+            f.write('%i\n' % (fdum[i]))
+        f.close()       
+        
+    
+
+def clean_mesh(vertices, elements):
+    # Step 1: Identify valid (non-NaN) vertices
+    valid_mask = ~np.isnan(vertices).any(axis=1)
+    new_vertex_indices = np.full(vertices.shape[0], -1, dtype=int)  # Default -1 for removed vertices
+    new_vertices = vertices[valid_mask]
+    
+    # Step 2: Create a mapping from old indices to new indices
+    new_vertex_indices[valid_mask] = np.arange(new_vertices.shape[0])
+    
+    # Step 3: Filter elements (remove those referencing NaN vertices)
+    valid_elements_mask = np.all(valid_mask[elements], axis=1)
+    new_elements = elements[valid_elements_mask]
+    
+    # Step 4: Update element indices to reflect new vertex numbering
+    new_elements = new_vertex_indices[new_elements]
+    
+    return new_vertices, new_elements
+    
