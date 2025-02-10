@@ -57,7 +57,8 @@ def prepare_geodata(structuralmodel,
                     Petroleum = True, 
                     Model = 1,
                     extent = None,
-                    Fault = True):
+                    Fault = True,
+                    Fault_vert = False):
 
     if type(extent) == type(None):
         x0, y0, z0 = structuralmodel.x0, structuralmodel.y0, structuralmodel.z0
@@ -463,9 +464,13 @@ def prepare_geodata(structuralmodel,
         data = pd.concat([data,pd.DataFrame(ddum,columns = data.columns)])  
         
     if Fault: 
+        if Fault_vert:
+            faultfile = "../data/data_seismic/Fault_data_vertical.xlsx"
+        else: 
+            faultfile = "../data/data_seismic/Fault_data.xlsx"
         #Fault1
         Fault_1 = pd.read_excel(
-        "../data/data_seismic/Fault_data.xlsx", 
+        faultfile, 
         sheet_name="Fault_1")   
         rows = []
         for i in range(len(Fault_1)):
@@ -486,7 +491,7 @@ def prepare_geodata(structuralmodel,
             data = pd.concat([data,df_new_row], ignore_index=True) 
             
         Fault_2 = pd.read_excel(
-        "../data/data_seismic/Fault_data.xlsx", 
+       faultfile, 
         sheet_name="Fault_2")   
         rows = []
         for i in range(len(Fault_2)):
@@ -507,7 +512,7 @@ def prepare_geodata(structuralmodel,
             data = pd.concat([data,df_new_row], ignore_index=True) 
 
         Fault_3 = pd.read_excel(
-        "../data/data_seismic/Fault_data.xlsx", 
+        faultfile, 
         sheet_name="Fault_3")   
         rows = []
         for i in range(len(Fault_3)):
@@ -528,7 +533,7 @@ def prepare_geodata(structuralmodel,
             data = pd.concat([data,df_new_row], ignore_index=True)            
 
         Fault_4 = pd.read_excel(
-        "../data/data_seismic/Fault_data.xlsx", 
+        faultfile, 
         sheet_name="Fault_4")   
         rows = []
         for i in range(len(Fault_4)):
@@ -549,7 +554,7 @@ def prepare_geodata(structuralmodel,
             data = pd.concat([data,df_new_row], ignore_index=True)    
             
         Fault_5 = pd.read_excel(
-        "../data/data_seismic/Fault_data.xlsx", 
+        faultfile, 
         sheet_name="Fault_5")   
         rows = []
         for i in range(len(Fault_5)):
@@ -600,9 +605,6 @@ def create_structuralmodel(structuralmodel):
     model["Quaternary"], -44.
     )
     
-    """UC0 = model.add_unconformity(
-    model["Quaternary"], -44.
-    )"""
     Tert = model.create_and_add_foliation(
         "Tertiary", nelements=1e4, buffer=0.1
     )
@@ -707,3 +709,72 @@ def create_structuralmodel(structuralmodel):
     
     structuralmodel.model = model
 
+    f_list = ['Fault_1','Fault_2','Fault_3','Fault_4','Fault_5']
+    fault_surfaces = model.get_fault_surfaces(f_list)
+    import pickle
+    for i in range(len(f_list)):
+        valid_mask = ~np.isnan(fault_surfaces[i].vertices).any(axis=1)
+        vnew = fault_surfaces[i].vertices[valid_mask]
+        with open(f_list[i] + '.pkl','wb') as file:
+            pickle.dump(vnew,file)
+    
+def fault_vtk(structuralmodel):
+    f_list = ['Fault_1','Fault_2','Fault_3','Fault_4','Fault_5']
+    fault_surfaces = structuralmodel.model.get_fault_surfaces(f_list)
+    vertices, triangles, fault = [], [], []
+    for j in range(len(f_list)):
+        v_old, e_old = fault_surfaces[j].vertices, fault_surfaces[j].triangles
+        v_new, e_new = clean_mesh(v_old,e_old)
+        fdum = np.ones(np.shape(v_new)[0]) * (j+1)
+        vertices.append(v_new)
+        triangles.append(e_new)
+        fault.append(fdum)
+        f = open(f_list[j] + '.vtk','w')
+        f.write("""# vtk DataFile Version 3.0
+        vtk output
+        ASCII
+        DATASET UNSTRUCTURED_GRID\n""")
+        f.write('POINTS %i float\n' % len(v_new))
+        for i in range(len(v_new)):
+            f.write('%g %g %g\n' % (v_new[i,0],v_new[i,1],v_new[i,2]))
+
+        f.write('\n')
+
+        f.write('CELLS %i %i\n' % (len(e_new),len(e_new)*4))
+        for i in range(len(e_new)):
+            f.write('%i %i %i %i\n' % (3,e_new[i,0],e_new[i,1],e_new[i,2]))
+
+        f.write('\n')
+
+        f.write('CELL_TYPES %i\n' % len(e_new))
+        for i in range(len(e_new)):
+            f.write('%i\n' % (5))
+
+        f.write('\n')
+        f.write('POINT_DATA %i\n' % len(fdum))
+        f.write("""SCALARS Fault float 1
+        LOOKUP_TABLE default\n""")
+        for i in range(len(fdum)):
+            f.write('%i\n' % (fdum[i]))
+        f.close()       
+        
+    
+
+def clean_mesh(vertices, elements):
+    # Step 1: Identify valid (non-NaN) vertices
+    valid_mask = ~np.isnan(vertices).any(axis=1)
+    new_vertex_indices = np.full(vertices.shape[0], -1, dtype=int)  # Default -1 for removed vertices
+    new_vertices = vertices[valid_mask]
+    
+    # Step 2: Create a mapping from old indices to new indices
+    new_vertex_indices[valid_mask] = np.arange(new_vertices.shape[0])
+    
+    # Step 3: Filter elements (remove those referencing NaN vertices)
+    valid_elements_mask = np.all(valid_mask[elements], axis=1)
+    new_elements = elements[valid_elements_mask]
+    
+    # Step 4: Update element indices to reflect new vertex numbering
+    new_elements = new_vertex_indices[new_elements]
+    
+    return new_vertices, new_elements
+    
