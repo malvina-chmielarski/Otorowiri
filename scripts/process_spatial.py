@@ -157,7 +157,7 @@ def faults(spatial):
     #### FAULTS AS LINESTRINGS
         
     r = 1000 # distance between points
-    threshold_distance = 500 # Don't want fault nodes too close to boundaries.
+    threshold_distance = 1000 # Don't want fault nodes too close to boundaries.
     faults_ls, faults_coords = [], []
     faults1_coords, faults2_coords = [], []
 
@@ -224,7 +224,7 @@ def river(spatial, buffer_distance, node_spacing, threshold):
     spatial.river_nodes = list(spatial.river_gdf.geometry[0].exterior.coords) 
 
     
-def plot_spatial(spatial):    
+def plot_spatial(spatial, extent = None):    # extent[[x0,x1], [y0,y1]]
     
     fig, ax = plt.subplots(figsize = (7,7))
     ax.set_title('Perth Loop to Flopy')
@@ -233,11 +233,12 @@ def plot_spatial(spatial):
     ax.plot(x, y, '-o', ms = 2, lw = 1, color='black')
     x, y = spatial.inner_boundary_poly.exterior.xy
     ax.plot(x, y, '-o', ms = 2, lw = 0.5, color='black')
-
-    for node in spatial.faults_nodes: 
-        ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
+    if extent: ax.set_xlim(extent[0][0], extent[0][1])
+    if extent: ax.set_ylim(extent[1][0], extent[1][1])
+    #for node in spatial.faults_nodes: 
+    #    ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
         
-    spatial.faults_gdf.plot(ax=ax, markersize = 12, color = 'lightblue', zorder=2)
+    #spatial.faults_gdf.plot(ax=ax, markersize = 5, color = 'lightblue', zorder=2)
     spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
     spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
     spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)

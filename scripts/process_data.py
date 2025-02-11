@@ -84,6 +84,30 @@ class Data:
             self.chd_rec.append([cell_disu, 0])    
 
     def process_ghb(self, geomodel, mesh):
+        
+        self.ghb_rec = []
+        for icpl in mesh.ghb_west_cells:
+            z = 0
+            x,y,z = mesh.xcyc[icpl][0], mesh.xcyc[icpl][1], z
+            point = Point(x,y,z)
+            lay, icpl = geomodel.vgrid.intersect(x,y,z)
+            cell_disv = icpl + lay*mesh.ncpl
+            cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+            self.ghb_rec.append([cell_disu, 0, 100]) # node, stage, conductance
+
+
+        stageleft = 10.0
+        stageright = 10.0
+        bound_sp1 = []
+        for il in range(nlay):
+            condleft = hk * (stageleft - zbot) * delc
+            condright = hk * (stageright - zbot) * delc
+            for ir in range(nrow):
+                bound_sp1.append([il, ir, 0, stageleft, condleft])
+                bound_sp1.append([il, ir, ncol - 1, stageright, condright])
+        print("Adding ", len(bound_sp1), "GHBs for stress period 1.")
+        
+        
         # General-Head Boundaries
         ghb_period = {}
         ghb_period_array = []

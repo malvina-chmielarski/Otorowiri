@@ -77,16 +77,27 @@ def add_WL_obs(df_boredetails):
     # Filter based on date and variable name
     WL = WL[WL['Collect Date'] > '2005-01-01']
     start_date = '2005-01-01'
-    filtered_df = WL[
+    df_filtered = WL[
                     (WL['Collect Date'] >= start_date) & 
                     (WL['Variable Name'] == 'Water level (AHD) (m)')
                     ]
 
     # Add ID, screened aquifer to main df
-    filtered_df = pd.merge(filtered_df, df_boredetails, on='Site Ref', how='left')
-    filtered_df = filtered_df[['ID', 'Site Ref', 'Collect Date', 'Aquifer Name', 'Reading Value', 'GL mAHD', 'Screen top', 'Screen bot']]
+    df_obs = pd.merge(df_filtered, df_boredetails, on='Site Ref', how='left')
+    df_obs = df_obs[['ID', 'Site Ref', 'Collect Date', 'Aquifer Name', 'Reading Value', 'GL mAHD', 'Screen top', 'Screen bot']]
 
-    return filtered_df
+    df_boredetails['min_WL'] = None
+    df_boredetails['max_WL'] = None
+    df_boredetails['mean_WL'] = None
+
+    bores = df_obs['Site Ref'].unique()
+    for bore in bores:
+        df = df_obs[df_obs['Site Ref'] == bore]
+        df_boredetails.loc[df_boredetails['Site Ref'] == bore, 'min_WL'] = df['Reading Value'].min()
+        df_boredetails.loc[df_boredetails['Site Ref'] == bore, 'max_WL'] = df['Reading Value'].max()
+        df_boredetails.loc[df_boredetails['Site Ref'] == bore, 'mean_WL'] = df['Reading Value'].mean()
+
+    return (df_boredetails, df_obs)
 
 def plot_leederville_hydrographs(df_obs):
     # Plot water levels - Leederville
@@ -107,42 +118,3 @@ def plot_yarragadee_hydrographs(df_obs):
         df = yarr_df[yarr_df['Site Ref'] == bore]
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
     plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
-
-class Observations:
-    def __init__(self, fname, sheetname):
-
-        self.observations_label = "ObservationsBaseClass"
-        
-    def obs_bores(spatial):   
-        obsbore_df = pd.read_excel('../data/data_dwer/Formation picks.xls', sheet_name = 'bore_info')
-        obsbore_gdf = gpd.GeoDataFrame(obsbore_df, geometry=gpd.points_from_xy(obsbore_df.Easting, obsbore_df.Northing), crs="epsg:28350")
-        obsbore_gdf = gpd.clip(obsbore_gdf, spatial.inner_boundary_poly).reset_index(drop=True)
-        spatial.idobsbores = list(obsbore_gdf.ID)
-        spatial.xyobsbores = list(zip(obsbore_gdf.Easting, obsbore_gdf.Northing))
-        spatial.nobs = len(spatial.xyobsbores)
-        spatial.obsbore_gdf = obsbore_gdf
-    
-    
-    def process_obs(self, spatial, geomodel, mesh):
-
-        # Get observation elevation (z) from dataframe
-        depth = spatial.obsbore_gdf.zobs_mbgl.tolist()
-        zobs = []
-        for n in range(spatial.nobs):
-            icpl = mesh.obs_cells[n]
-            zobs.append(geomodel.top_geo[icpl] - depth[n])
-        
-        xobs, yobs = spatial.obsbore_gdf.Easting.tolist(), spatial.obsbore_gdf.Northing.tolist(), 
-        obslist = list(zip(xobs, yobs, zobs))
-    
-        # Cretae input arrays
-        obs_rec = []
-        for i, cell in enumerate(mesh.obs_cells):
-            x,y,z = obslist[i][0], obslist[i][1], obslist[i][2]
-            point = Point(x,y,z)
-            lay, icpl = geomodel.vgrid.intersect(x,y,z)
-            cell_disv = icpl + lay*mesh.ncpl
-            cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-            obs_rec.append([spatial.idobsbores[i], 'head', (cell_disu+1)])   
-    
-        self.obs_rec = obs_rec
