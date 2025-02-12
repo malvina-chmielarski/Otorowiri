@@ -30,13 +30,34 @@ def make_bbox_shp(spatial, x0, x1, y0, y1):
     spatial.bbox_gdf = bbox_gdf
 
 def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
+    
+    # Crop bbox with coastline on West coast
     model_boundary_shp_fname = '../data/data_shp/coast/Coastline_LGATE_070.shp'
     model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
     model_boundary_gdf.to_crs(epsg=spatial.epsg, inplace=True)
-    model_boundary_gdf = gpd.clip(model_boundary_gdf, spatial.bbox_gdf).reset_index(drop=True)    
-    model_boundary_gdf.to_file('../data/data_shp/model_boundary/model_boundary.shp')
+    model_boundary_gdf = gpd.clip(model_boundary_gdf, spatial.bbox_gdf).reset_index(drop=True)       
+    model_boundary_poly = Polygon(model_boundary_gdf.geometry.iloc[0])
+
+    # Import Darling Fault along east
+    shp_fname = '../data/data_shp/geology/Faults/faultlines.shp'
+    gdf = gpd.read_file(shp_fname)
+    gdf = gdf[gdf.Name == 'DARLING SCARP']
+    gdf.to_crs(epsg=spatial.epsg, inplace=True)
+    gdf = gdf.reset_index()
+    darling_fault_ls = gdf.geometry[0]
+
+    # Crop model area with Darlng Fault by splitting polygon and keeping one
+    from shapely.ops import split
+    split_polygons = split(model_boundary_poly, darling_fault_ls)
+    model_boundary_poly = split_polygons.geoms[0]
+    
+    # Turn back into a gdf and simplify
+    model_boundary_gdf = gpd.GeoDataFrame(geometry=[model_boundary_poly])
+    model_boundary_gdf.set_crs(epsg=spatial.epsg, inplace=True)  
     model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=simplify_tolerance, preserve_topology=True) # simplify 
-    model_boundary_poly = resample_gdf_poly(model_boundary_gs, node_spacing) # resample    
+    model_boundary_poly = resample_gdf_poly(model_boundary_gs, node_spacing) # resample 
+    
+    # Create an inner boundary for meshing
     inner_boundary_poly = model_boundary_poly.buffer(-boundary_buff)
     inner_boundary_gs = gpd.GeoSeries([inner_boundary_poly])
     inner_boundary_poly = resample_gdf_poly(inner_boundary_gs, 0.95*node_spacing) #  A few less nodes in inside boundary
@@ -45,82 +66,72 @@ def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     #refinement_boundary_poly = resample_poly(refinement_boundary_gs, 3000) 
     spatial.boundary_buff = boundary_buff
     spatial.model_boundary_gdf = model_boundary_gdf
+    model_boundary_gdf.to_file('../modelfiles/model_boundary.shp')
     spatial.model_boundary_poly = model_boundary_poly
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
 
 def head_boundary(spatial):    
-    model_boundary_shp_fname = '../data/data_shp/coast/Coastline_LGATE_070.shp'
-    model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
-    model_boundary_gdf.to_crs(epsg=spatial.epsg, inplace=True)
-    model_boundary_gdf = gpd.clip(model_boundary_gdf, spatial.bbox_gdf).reset_index(drop=True)    
-    model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=1000, preserve_topology=True) # simplify 
-    line = model_boundary_gs[0].exterior
-    coords = list(line.coords)
 
     # WEST
-    coords_to_remove = []
+    inner_boundary_poly = spatial.model_boundary_poly.buffer(-1)
+    coords = list(inner_boundary_poly.exterior.coords)
+    new_coords = []
     for coord in coords:
         x,y = coord[0], coord[1]
-        if x > 380000:
-            coords_to_remove.append((x,y))
-
-    filtered_coords = [point for point in line.coords if point not in coords_to_remove]
-    filtered_coords = filtered_coords[:-1] # removing last coordinate as its on the opposite end!
-    chd_west_ls = LineString(filtered_coords)
-    chd_west_ls = translate(chd_west_ls, xoff=200, yoff=0)
+        if x < 380000:
+            if y < (spatial.y1 - 5):
+                if y > (spatial.y0 + 5):
+                    new_coords.append(coord)
+ 
+    chd_west_ls = LineString(new_coords)
     chd_west_gdf = gpd.GeoDataFrame({'geometry': [chd_west_ls]})
     spatial.chd_west_gdf = chd_west_gdf
     spatial.chd_west_ls = chd_west_ls
 
     # SOUTH
-    coords_to_remove = []
+    new_coords = []
     for coord in coords:
         x,y = coord[0], coord[1]
-        if y > 6530000:
-            coords_to_remove.append((x,y))
+        if y < (spatial.y0 + 5):
+            new_coords.append((x,y))
 
-    filtered_coords = [point for point in line.coords if point not in coords_to_remove]
-    filtered_coords = filtered_coords[:-1] # removing last coordinate as its on the opposite end!
-    ghb_south_ls = LineString(filtered_coords)
+    ghb_south_ls = LineString(new_coords)
     ghb_south_ls = translate(ghb_south_ls, xoff=0, yoff=200)
     ghb_south_gdf = gpd.GeoDataFrame({'geometry': [ghb_south_ls]})
     spatial.ghb_south_gdf = ghb_south_gdf
     spatial.ghb_south_ls = ghb_south_ls
 
     # NORTH
-    coords_to_remove = []
-    len(coords)
+    new_coords = []
     for coord in coords:
         x,y = coord[0], coord[1]
-        if y < 6530000:
-            print(x,y)
-            coords_to_remove.append((x,y))
+        if y > (spatial.y1 - 5):
+            new_coords.append((x,y))
 
-    filtered_coords = [point for point in line.coords if point not in coords_to_remove]
-    filtered_coords = filtered_coords[1:] # removing last coordinate as its on the opposite end!
-    ghb_north_ls = LineString(filtered_coords)
+    ghb_north_ls = LineString(new_coords)
     ghb_north_ls = translate(ghb_north_ls, xoff=0, yoff=-200)
     ghb_north_gdf = gpd.GeoDataFrame({'geometry': [ghb_north_ls]})
     spatial.ghb_north_gdf = ghb_north_gdf
     spatial.ghb_north_ls = ghb_north_ls
     
-    #gdf['geometry'] = gdf['geometry'].apply(lambda geom: LineString([point for point in geom.coords if point != (1, 1)])) # Update the geometry in the GeoDataFrame
-    
-    #x, y = line.xy
-    #fig, ax = plt.subplots(figsize = (5,5))
-    #ax.plot(x, y, '-o', ms = 7, lw = 1, color='black')
-    #x, y = chd_west_ls.xy
-    #ax.plot(x, y, '-o', ms = 3, lw = 1, color='red')
-    
-    #from shapely.affinity import translate
-    #chd_west_gdf['geometry'] = new_gdf['geometry'].apply(lambda geom: translate(geom, xoff=10, yoff=0))
+
+def head_boundary2(spatial):    
+    coast_gdf = gpd.read_file('../data/data_shp/coast/Coastline_LGATE_070.shp')
+    coast_gdf.to_crs(epsg=spatial.epsg, inplace=True)
+    coast_gdf = gpd.clip(spatial.model_boundary_gdf, spatial.bbox_gdf).reset_index(drop=True)    
+    coast_ls = coast_gdf.geometry[0]
+    coast_ls = translate(coast_ls, xoff=10, yoff=0)
+    chd_west_gdf = gpd.GeoDataFrame({'geometry': [coast_ls]})
+    spatial.chd_west_gdf = chd_west_gdf
+    spatial.chd_west_ls = coast_ls
+
 
 def obs_bores(spatial, observations):   
     #df = pd.read_excel('../data/data_dwer/Formation picks.xls', sheet_name = 'bore_info')
     df = observations.df_boredetails
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
-    gdf = gpd.clip(gdf, spatial.inner_boundary_poly).reset_index(drop=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.obsbore_gdf = gdf
     spatial.idobsbores = list(gdf.ID)
     spatial.xyobsbores = list(zip(gdf.Easting, gdf.Northing))
@@ -134,6 +145,9 @@ def pump_bores(spatial):
     pumpbore_gdf = gpd.GeoDataFrame(pd.DataFrame({'id': spatial.idpumpbores, 'x': spatial.xpumpbores, 'y': spatial.ypumpbores}), 
                                     geometry=gpd.points_from_xy(x=spatial.xpumpbores, y=spatial.ypumpbores))
     spatial.pumpbore_gdf = pumpbore_gdf
+
+
+
 
 def faults(spatial):  
     faults_gdf = gpd.read_file('../data/data_shp/baragoon_seismic/baragoon_seismic_faults.shp')
@@ -246,7 +260,7 @@ def plot_spatial(spatial, extent = None):    # extent[[x0,x1], [y0,y1]]
     spatial.ghb_south_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
     spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    
+
     for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
     for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.id):

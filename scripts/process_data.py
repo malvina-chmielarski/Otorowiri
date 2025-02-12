@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
+import loopflopy.utils as utils
 
 class Data:
     def __init__(self):
@@ -72,16 +74,16 @@ class Data:
     def process_ic(self, geomodel, mesh):
         self.strt = 500. #geomodel.top_geo - 1. # start with a watertable of 1m everywhere #wt.reshape(1,len(wt))
         
-    def process_chd(self, geomodel, mesh):
+    def process_chd(self, geomodel, mesh, props):
         self.chd_rec = []
-        for icpl in mesh.chd_cells:
-            z = 0
-            x,y,z = mesh.xcyc[icpl][0], mesh.xcyc[icpl][1], z
-            point = Point(x,y,z)
-            lay, icpl = geomodel.vgrid.intersect(x,y,z)
-            cell_disv = icpl + lay*mesh.ncpl
-            cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-            self.chd_rec.append([cell_disu, 0])    
+        for icpl in mesh.chd_cells: # for each chd_cell in plan...
+            for geo_lay in range(geomodel.nlg): # for each geological layer....
+                if not np.isnan(props.ch_west[geo_lay]):               # if a constant head value exists....
+                    for model_lay in geomodel.model_layers[geo_lay]: # then for each flow model layer...
+                        cell_disv = icpl + model_lay*mesh.ncpl # find the disv cell...
+                        cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv) # convert to the disu cell..
+                        if cell_disu != -1:
+                            self.chd_rec.append([cell_disu, props.ch_west[geo_lay]]) # append record
 
     def process_ghb(self, geomodel, mesh):
         
