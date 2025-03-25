@@ -108,24 +108,35 @@ def head_boundary2(spatial):
     spatial.chd_west_gdf = chd_west_gdf
     spatial.chd_west_ls = coast_ls
 
+'''def geo_bores(spatial):   
+    unfiltered_df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'geo_bores')
+    df = unfiltered_df[unfiltered_df['Data_type'] == 'Editted']
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    spatial.geobore_gdf = gdf
+    spatial.idgeobores = list(gdf.ID)
+    spatial.xygeobores = list(zip(gdf.Easting, gdf.Northing))
+    spatial.nobs = len(spatial.xygeobores)'''
 
 def obs_bores(spatial):   
-    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
+    unfiltered_df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'geo_bores')
+    df = unfiltered_df[unfiltered_df['Data_type'] != 'Raw']
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.obsbore_gdf = gdf
     spatial.idobsbores = list(gdf.ID)
     spatial.xyobsbores = list(zip(gdf.Easting, gdf.Northing))
     spatial.nobs = len(spatial.xyobsbores)
-    
+
+
 def pump_bores(spatial):    
-    spatial.xypumpbores = [(350000, 6710000)]#, (365700, 6525000)] # # Fake pumping bores
+    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'pumping_bores')
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    spatial.pumpbore_gdf = gdf
+    spatial.idpumpbores = list(gdf.ID)
+    spatial.xypumpbores = list(zip(gdf.Easting, gdf.Northing))
     spatial.npump = len(spatial.xypumpbores)
-    spatial.idpumpbores = ['P1']#, 'P2']
-    spatial.xpumpbores, spatial.ypumpbores = list(zip(*spatial.xypumpbores))
-    pumpbore_gdf = gpd.GeoDataFrame(pd.DataFrame({'id': spatial.idpumpbores, 'x': spatial.xpumpbores, 'y': spatial.ypumpbores}), 
-                                    geometry=gpd.points_from_xy(x=spatial.xpumpbores, y=spatial.ypumpbores))
-    spatial.pumpbore_gdf = pumpbore_gdf
 
 
 
@@ -221,99 +232,30 @@ def river(spatial, buffer_distance, node_spacing, threshold):
 def plot_spatial(spatial, extent = None):    # extent[[x0,x1], [y0,y1]]
     
     fig, ax = plt.subplots(figsize = (7,7))
-    ax.set_title('Perth Loop to Flopy')
+    ax.set_title('Example spatial files')
        
     x, y = spatial.model_boundary_poly.exterior.xy
     ax.plot(x, y, '-o', ms = 2, lw = 1, color='black')
     x, y = spatial.inner_boundary_poly.exterior.xy
     ax.plot(x, y, '-o', ms = 2, lw = 0.5, color='black')
-    if extent: ax.set_xlim(extent[0][0], extent[0][1])
-    if extent: ax.set_ylim(extent[1][0], extent[1][1])
-    #for node in spatial.faults_nodes: 
-    #    ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
+    if extent: 
+        ax.set_xlim(extent[0][0], extent[0][1])
+        ax.set_ylim(extent[1][0], extent[1][1])
         
-    #spatial.faults_gdf.plot(ax=ax, markersize = 5, color = 'lightblue', zorder=2)
-    #spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
-    spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
+    '''spatial.faults_gdf.plot(ax=ax, markersize = 5, color = 'lightblue', zorder=2)
+    for node in spatial.fault_nodes: 
+        ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)'''
+    
+    #spatial.chd_east_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     #spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.ghb_north_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.ghb_south_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
+    spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
     spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+    #spatial.geobore_gdf.plot(ax=ax, markersize = 12, color = 'green', zorder=2)
 
     for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
-    for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.id):
+    for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.ID):
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
+
+    plt.savefig('../figures/spatial.png')
     
-### THIS TRIES TO REMOVES NODES THAT ARE TOO CLOSE!
-
-'''streams_multipoint = MultiPoint(streams_poly.exterior.coords)
-
-points_to_remove = []
-for i, p1 in enumerate(dykes_multipoint.geoms):
-    for j, p2 in enumerate(streams_multipoint.geoms):
-        if p1.distance(streams_multipoint.geoms) < 1500:
-            print('hello')
-        else:
-            points_to_remove.append(p1) 
-print(len(dykes_multipoint.geoms))
-new_points = [point for point in dykes_multipoint.geoms if point not in points_to_remove]
-# Create a new MultiPoint without the removed point
-new_dyke_multipoint = MultiPoint(new_points)
-
-print(len(new_dyke_multipoint.geoms))'''
-
-'''from shapely.ops import nearest_points
-
-# Set minimum distance
-min_distance = 2000
-new_dyke_polys = []
-
-# Function to ensure minimum distance between nodes
-def enforce_min_distance(geom1, geom2, min_dist):
-    if geom1.intersects(geom2):
-        nodes1 = MultiPoint(geom1.exterior.coords)
-        nodes2 = MultiPoint(geom2.exterior.coords)
-
-        adjusted_nodes = []
-        for i, point1 in  enumerate(nodes1.geoms):
-            nearest_point = nearest_points(point1, nodes2)[1]
-            distance = point1.distance(nearest_point)
-
-            if distance < min_dist:
-                # Move the point away
-                move_vector = np.array(point1.coords[0]) - np.array(nearest_point.coords[0])
-                move_vector = move_vector / np.linalg.norm(move_vector) * (min_dist - distance)
-                new_point = Point(np.array(point1.coords[0]) + move_vector)
-                adjusted_nodes.append(new_point)
-            else:
-                adjusted_nodes.append(point1)
-        # Rebuild adjusted polygon
-        adjusted_geom = Polygon([p.coords[0] for p in adjusted_nodes])
-        return adjusted_geom
-    return geom1
-
-print('number of dykes = ', len(dykes_multipoly.geoms))
-
-poly2 = streams_poly
-for i in range(len(dykes_multipoly.geoms)):
-    
-    poly1 = dykes_multipoly.geoms[i] # for each dyke
-    num_nodes = len(poly1.exterior.coords)
-    
-    # Convert to GeoDataFrame
-    gdf = gpd.GeoDataFrame({'geometry': [poly1, poly2]})
-    # Apply function to polygons
-    adjusted_polygons = []
-    for i, geom in enumerate(gdf.geometry):
-        other_geom = gdf.loc[gdf.index != i, 'geometry'].union_all()
-        adjusted_geom = enforce_min_distance(geom, other_geom, min_distance)
-        adjusted_polygons.append(adjusted_geom)
-    
-    # Update GeoDataFrame
-    #gdf['geometry'] = adjusted_polygons
-    
-    new_dyke_polys.append(gdf.geometry.iloc[0])
-
-dykes_multipoly = MultiPolygon(new_dyke_polys)'''
