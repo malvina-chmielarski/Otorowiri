@@ -93,11 +93,12 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
         if data_type == 'Control': ### Z VALUES: mAHD
             boreid = data_list[i][0]
             easting, northing = data_list[i][1], data_list[i][2]
+            groundlevel = data_list[i][5]
 
             count = 1  # Add data row for each lithology
             for j in range(6,df.shape[1]-1): #iterate through each formation 
                 if isinstance(data_list[i][j], numbers.Number) == True:  # Add lithology  
-                    Z         = float(data_list[i][j])             # elevation (mAHD)
+                    Z         = groundlevel - float(data_list[i][j])             # elevation (mAHD)
                     val       = strat.val[count]                   # designated isovalue
                     unit      = strat.unit[count]                  # unit 
                     feature   = strat.sequence[count]              # sequence
