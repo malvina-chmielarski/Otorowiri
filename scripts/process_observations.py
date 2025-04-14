@@ -5,7 +5,9 @@ import matplotlib.pyplot as plt
 def prefilter_data():
     # Import observation bores screened in Leederville or Yarragadee, and filter ti unclude only Leederville and Yarragadee
     aquifers = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Aquifers')
-    df = aquifers[(aquifers['Aquifer Name'] == 'Perth-Yarragadee North') | (aquifers['Aquifer Name'] == 'Perth-Leederville')]
+    df = aquifers[
+        (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
+        (aquifers['Aquifer Name'] == 'Perth-Leederville-Parmelia')]
 
     # Add Site Short Name, Easting, Northing to df
     details = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Site Details')
@@ -74,6 +76,10 @@ def add_WL_obs(df_boredetails):
     # Import water level data from WIR
     WL = pd.read_excel('../data/data_dwer/obs/170999/WaterLevelsDiscreteForSiteFlatFile.xlsx')
 
+    #Find the years which have the most data
+    WL['Collect Date'] = pd.to_datetime(WL['Collect Date'])
+    WL['Year'] = WL['Collect Date'].dt.year
+
     # Filter based on date and variable name
     WL = WL[WL['Collect Date'] > '2005-01-01']
     start_date = '2005-01-01'
@@ -109,7 +115,7 @@ def plot_leederville_hydrographs(df_obs):
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
     plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
 
-def plot_yarragadee_hydrographs(df_obs):
+'''def plot_yarragadee_hydrographs(df_obs):
     # Plot water levels - Yarragadee
     yarr_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Yarragadee North']
     yarr_bores = yarr_df['Site Ref'].unique()
@@ -117,4 +123,4 @@ def plot_yarragadee_hydrographs(df_obs):
     for bore in yarr_bores:
         df = yarr_df[yarr_df['Site Ref'] == bore]
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
-    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
+    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)'''
