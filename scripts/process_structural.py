@@ -73,11 +73,11 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
             groundlevel = data_list[i][5]  
 
             # Add ground level to dataframe
-            formatted_data.append([boreid, easting, northing, groundlevel, 0, 'Ground', 'Ground', 0, 0, 1, data_type]) 
+            formatted_data.append([boreid, easting, northing, groundlevel, 232, 'Ground', 'Ground', 0, 0, 1, data_type]) 
 
             #print(df.shape[1])
             count = 1  # Add data row for each lithology
-            for j in range(6,df.shape[1]-1): #iterate through each formation 
+            for j in range(6,8): #iterate through each formation 
                 if isinstance(data_list[i][j], numbers.Number) == True:  # Add lithology
                     #print(count)  
                     bottom    = groundlevel - float(data_list[i][j])  # Ground surface - formation bottom (mbgl)
@@ -90,13 +90,14 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
                 count+=1
         
         #-----------CONTROL POINT-----------------------
-        if data_type == 'Control': ### Z VALUES: mAHD
+        if data_type == 'Control2': ### Z VALUES: mAHD
+
             boreid = data_list[i][0]
             easting, northing = data_list[i][1], data_list[i][2]
             groundlevel = data_list[i][5]
 
             count = 1  # Add data row for each lithology
-            for j in range(6,df.shape[1]-1): #iterate through each formation 
+            for j in range(6,8): #iterate through each formation 
                 if isinstance(data_list[i][j], numbers.Number) == True:  # Add lithology  
                     Z         = groundlevel - float(data_list[i][j])             # elevation (mAHD)
                     val       = strat.val[count]                   # designated isovalue
