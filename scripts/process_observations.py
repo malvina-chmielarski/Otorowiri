@@ -1,6 +1,7 @@
 import pandas as pd
 from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
 import matplotlib.pyplot as plt
+import geopandas as gpd
 
 def prefilter_data():
     # Import observation bores screened in Leederville or Yarragadee, and filter ti unclude only Leederville and Yarragadee
@@ -34,6 +35,7 @@ def prefilter_data():
 
 # Now we have git extra bore details from WIR, we can groundlevel and well screens to our dataframe
 def assemble_clean_data(df_filtered):
+
     # Add GL to main df
     measurements = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Depth Measurement Points')
     ground_level = measurements[measurements['Measurement Point Type'] == 'Ground level'].drop_duplicates(subset=['Site Ref'])
@@ -90,7 +92,14 @@ def add_WL_obs(df_boredetails):
 
     # Add ID, screened aquifer to main df
     df_obs = pd.merge(df_filtered, df_boredetails, on='Site Ref', how='left')
-    df_obs = df_obs[['ID', 'Site Ref', 'Collect Date', 'Aquifer Name', 'Reading Value', 'GL mAHD', 'Screen top', 'Screen bot']]
+    df_obs = df_obs[['ID', 'Site Ref', 'Easting', 'Northing', 'Collect Date', 'Aquifer Name', 'Reading Value', 'GL mAHD', 'Screen top', 'Screen bot']]
+
+    # Filter out points outside model boundary for df_obs only
+    '''df_obs['geometry'] = df_obs.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    gdf = gpd.GeoDataFrame(df_obs, geometry='geometry', crs=spatial.epsg)    
+    df_obs= gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
+    count = len(df_obs) # Count the number of points within the polygon
+    print(f"Number of bores within model boundary: {count}")'''
 
     df_boredetails['min_WL'] = None
     df_boredetails['max_WL'] = None
@@ -102,25 +111,48 @@ def add_WL_obs(df_boredetails):
         df_boredetails.loc[df_boredetails['Site Ref'] == bore, 'min_WL'] = df['Reading Value'].min()
         df_boredetails.loc[df_boredetails['Site Ref'] == bore, 'max_WL'] = df['Reading Value'].max()
         df_boredetails.loc[df_boredetails['Site Ref'] == bore, 'mean_WL'] = df['Reading Value'].mean()
+    
+    # Filter out known duplicates
 
+    df_obs = df_obs[df_obs['ID'] != 'GG11 (I)'] # This is at the same location as AM4A so remove
+    df_obs = df_obs[df_obs['ID'] != 'GG11 (O)'] # This is at the same location as AM4A so remove
+    
     return (df_boredetails, df_obs)
 
-def plot_leederville_hydrographs(df_obs):
+def plot_leederville_hydrographs(df_obs, spatial):
+ 
     # Plot water levels - Leederville
     leed_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Leederville']
+    leed_df['geometry'] = leed_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    gdf = gpd.GeoDataFrame(leed_df, geometry='geometry', crs=spatial.epsg)
+
+    # Filter out points outside model boundary
+    leed_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
+    count = len(set(leed_df.ID.tolist())) # Count the number of points within the polygon
+    print(f"Number of Leerville bores within model boundary: {count}")
+
     leed_bores = leed_df['Site Ref'].unique()
 
     for bore in leed_bores:
         df = leed_df[leed_df['Site Ref'] == bore]
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
     plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
+    plt.show()
 
-'''def plot_yarragadee_hydrographs(df_obs):
+def plot_yarragadee_hydrographs(df_obs, spatial):
     # Plot water levels - Yarragadee
     yarr_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Yarragadee North']
+    yarr_df['geometry'] = yarr_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    gdf = gpd.GeoDataFrame(yarr_df, geometry='geometry', crs=spatial.epsg)
+
+    # Filter out points outside model boundary
+    yarr_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
+    count = len(set(yarr_df.ID.tolist())) # Count the number of points within the polygon
+    print(f"Number of Yarragadee bores within model boundary: {count}")
+
     yarr_bores = yarr_df['Site Ref'].unique()
 
     for bore in yarr_bores:
         df = yarr_df[yarr_df['Site Ref'] == bore]
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
-    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)'''
+    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)

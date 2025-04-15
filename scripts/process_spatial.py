@@ -108,19 +108,18 @@ def head_boundary2(spatial):
     spatial.chd_west_gdf = chd_west_gdf
     spatial.chd_west_ls = coast_ls
 
-'''def geo_bores(spatial):   
+def geo_bores(spatial):   
     unfiltered_df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'geo_bores')
-    df = unfiltered_df[unfiltered_df['Data_type'] == 'Editted']
+    df = unfiltered_df #[unfiltered_df['Data_type'] == 'Editted']
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.geobore_gdf = gdf
     spatial.idgeobores = list(gdf.ID)
     spatial.xygeobores = list(zip(gdf.Easting, gdf.Northing))
-    spatial.nobs = len(spatial.xygeobores)'''
+    spatial.nobs = len(spatial.xygeobores)
 
 def obs_bores(spatial):   
-    unfiltered_df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'geo_bores')
-    df = unfiltered_df[unfiltered_df['Data_type'] != 'Raw']
+    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.obsbore_gdf = gdf
@@ -258,4 +257,46 @@ def plot_spatial(spatial, extent = None):    # extent[[x0,x1], [y0,y1]]
         ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
 
     plt.savefig('../figures/spatial.png')
+
+def plot_spatial2(spatial, faults = False, obsbores = False, pumpbores = True, geobores = True, extent = None):    # extent[[x0,x1], [y0,y1]]
+    
+    fig, ax = plt.subplots(figsize = (7,7))
+    ax.set_title('Otorowiri spatial files') 
+
+    x, y = spatial.model_boundary_poly.exterior.xy
+    ax.plot(x, y, '-o', ms = 2, lw = 1, color='black')
+    x, y = spatial.inner_boundary_poly.exterior.xy
+    ax.plot(x, y, '-o', ms = 2, lw = 0.5, color='black')
+    if extent: 
+        ax.set_xlim(extent[0][0], extent[0][1])
+        ax.set_ylim(extent[1][0], extent[1][1])
+
+    #spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
+    #spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
+    #spatial.ghb_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+    #spatial.chd_north_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+    #spatial.chd_south_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+
+    if faults: 
+        spatial.faults_gdf.plot(ax=ax, markersize = 5, color = 'lightblue', zorder=2)
+        for node in spatial.faults_nodes: 
+            ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
+    
+    if obsbores == True:
+        spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
+        for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
+            ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
+    
+    if pumpbores == True:
+        spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+        for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.ID):
+            ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
+
+    if geobores == True:
+        spatial.geobore_gdf.plot(ax=ax, markersize = 12, marker = '^', color = 'green', zorder=2)
+
+        for x, y, label in zip(spatial.geobore_gdf.geometry.x, spatial.geobore_gdf.geometry.y, spatial.geobore_gdf.ID):
+            ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
+
+
     

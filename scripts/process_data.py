@@ -1,0 +1,202 @@
+import pandas as pd
+import numpy as np
+from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
+import loopflopy.utils as utils
+import pickle
+from scipy.interpolate import griddata
+
+class Data:
+    def __init__(self):
+
+            self.data_label = "DataBaseClass"
+
+    def process_rch(self, geomodel, mesh):
+   
+        rec = []
+
+        for icpl in range(mesh.ncpl):
+            lay = 0
+            cell_disv = icpl + lay*mesh.ncpl
+            cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+            rch = 0.035
+            if cell_disu != -1: # if cell is not pinched out...
+                rec.append(((0, icpl), rch)) # Assume for now 35mm over entire year
+
+        self.rch_rec = {}      
+        self.rch_rec[0] = rec 
+
+    def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
+                  # geo layer pumping from
+        
+        ## Assume screening pumping well across entire geological layer, ## Find top and bottom of screen 
+        self.wel_screens = []
+        self.spd_wel = []
+        for n in range(spatial.npump):
+            icpl = mesh.wel_cells[n]
+            print(icpl)
+            if wel_qlay == 0:
+                wel_top = geomodel.top[wel_cell]  
+            else:   
+                wel_top = geomodel.botm[(wel_qlay[n])* geomodel.nls-1, icpl]
+            wel_bot = geomodel.botm[(wel_qlay[n] + 1) * geomodel.nls-1, icpl]   
+            self.wel_screens.append((wel_top, wel_bot))
+                   
+            if geomodel.vertgrid == 'vox':
+                nwell_cells = int((wel_top - wel_bot)/geomodel.dz)
+                for lay in range(int((geomodel.top_geo[icpl]-wel_top)/geomodel.dz), int((geomodel.top_geo[icpl]-wel_top)/geomodel.dz) + nwell_cells):   
+                    cell_disv = icpl + lay*mesh.ncpl
+                    cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                    self.spd_wel.append([cell_disu, wel_q[n]/nwell_cells])
+    
+            if geomodel.vertgrid == 'con':        
+                nwell_cells = geomodel.nls # For this research, assume pumping across entire geological layer
+                for wel_lay in range(wel_qlay[n] * geomodel.nls, (wel_qlay[n] + 1) * geomodel.nls): # P.geo_pl = geological pumped layer                    
+                    cell_disv = icpl + wel_lay*mesh.ncpl
+                    cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                    self.spd_wel.append([cell_disu, wel_q[n]/nwell_cells])
+                    
+            if geomodel.vertgrid == 'con2':       
+                lay = 0
+                well_layers = []
+                nwell_cells = 0
+                
+                while geomodel.botm[lay, icpl] >= wel_top-0.1: # above top of screen
+                    lay += 1
+                while geomodel.botm[lay, icpl] > wel_bot: # above bottom of screen
+                    if geomodel.idomain[lay, icpl] != -1: # skips pinched out cells
+                        nwell_cells += 1
+                        well_layers.append(lay)
+                    lay += 1
+                
+                for lay in well_layers:
+                    cell_disv = icpl + lay*mesh.ncpl
+                    cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                    self.spd_wel.append([cell_disu, wel_q[n]/nwell_cells])      
+    
+        print(self.wel_screens)
+
+    def process_ic(self):
+        self.strt = -50. 
+
+    def process_chd(self, geomodel, spatial, mesh):
+
+        # Open PRAMS heads - north boundary
+        pickleoff = open('../data/data_prams/chd_north.pkl','rb')
+        xczc_north_bd, head_north_bd = pickle.load(pickleoff)
+        pickleoff.close()
+        print('northern boundary min and max head: ', head_north_bd.min(), head_north_bd.max())
+
+        # Open PRAMS heads - south boundary
+        pickleoff = open('../data/data_prams/chd_south.pkl','rb')
+        xczc_south_bd, head_south_bd = pickle.load(pickleoff)
+        pickleoff.close()
+        print('southern boundary min and max head: ', head_south_bd.min(), head_south_bd.max())
+       
+        self.chd_rec = []
+
+        #------- NORTH - Interpolate PRAMS heads onto regular grid
+        points = xczc_north_bd # 2D array of xz points
+        values = head_north_bd
+                
+        xi = [] # generate a 2D of x,z coords along north boundary in PERTH_MODEL
+        for lay in range(geomodel.nlay):
+            for icpl in mesh.chd_north_cells:
+                x = mesh.xcyc[icpl][0]
+                z = geomodel.zc[lay, icpl]
+                xi.append([x,z])
+        xi = np.array(xi)
+        chd_north = griddata(points, values, xi, method='linear')
+        chd_north = chd_north.reshape((geomodel.nlay, len(mesh.chd_north_cells)))
+
+        for lay in range(geomodel.nlay):
+            for i, icpl in enumerate(mesh.chd_north_cells):
+                head = chd_north[lay,i]
+                if not np.isnan(head): #if head is not nan...
+                    if head > geomodel.botm[lay, icpl]: # if head is not below cell bottom...
+                        cell_disv = icpl + lay*mesh.ncpl
+                        cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                        if cell_disu != -1: # if cell is not pinched out...
+                            self.chd_rec.append([cell_disu, head]) 
+
+        #------- SOUTH - Interpolate PRAMS heads onto regular grid
+        points = xczc_south_bd # 2D array of xz points
+        values = head_south_bd
+                
+        xi = [] # generate a 2D of x,z coords along north boundary in PERTH_MODEL
+        for lay in range(geomodel.nlay):
+            for icpl in mesh.chd_south_cells:
+                x = mesh.xcyc[icpl][0]
+                z = geomodel.zc[lay, icpl]
+                xi.append([x,z])
+        xi = np.array(xi)
+        chd_south = griddata(points, values, xi, method='linear')
+        chd_south = chd_south.reshape((geomodel.nlay, len(mesh.chd_south_cells)))
+
+        for lay in range(geomodel.nlay):
+            for i, icpl in enumerate(mesh.chd_south_cells):
+                head = chd_south[lay, i]
+                if not np.isnan(head): #if head is not nan...
+                    if head > geomodel.botm[lay, icpl]: # if head is not below cell bottom...
+                        cell_disv = icpl + lay*mesh.ncpl
+                        cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                        if cell_disu != -1: # if cell is not pinched out...
+                            self.chd_rec.append([cell_disu, head]) 
+              
+    def process_ghb(self, geomodel, mesh, props): # Coast line
+        self.ghb_rec = []
+        for icpl in mesh.ghb_west_cells: # for each chd_cell in plan...
+            for geo_lay in range(geomodel.nlg): # for each geological layer....
+                if not np.isnan(props.ghb_west_stage[geo_lay]):               # if a constant head value exists....
+                    for model_lay in geomodel.model_layers[geo_lay]: # then for each flow model layer...
+                        cell_disv = icpl + model_lay*mesh.ncpl # find the disv cell...
+                        cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv) # convert to the disu cell..
+                        if cell_disu != -1:
+                            self.ghb_rec.append([cell_disu, props.ghb_west_stage[geo_lay], 
+                                                 props.ghb_west_cond[geo_lay]]) # node, stage, conductance
+'''
+        stageleft = 10.0
+        stageright = 10.0
+        bound_sp1 = []
+        for il in range(nlay):
+            condleft = hk * (stageleft - zbot) * delc
+            condright = hk * (stageright - zbot) * delc
+            for ir in range(nrow):
+                bound_sp1.append([il, ir, 0, stageleft, condleft])
+                bound_sp1.append([il, ir, ncol - 1, stageright, condright])
+        print("Adding ", len(bound_sp1), "GHBs for stress period 1.")
+        
+        
+        # General-Head Boundaries
+        ghb_period = {}
+        ghb_period_array = []
+        for layer, cond in zip(range(1, 3), [15.0, 1500.0]):
+            for row in range(0, 15):
+                ghb_period_array.append(((layer, row, 9), "tides", cond, "Estuary-L2"))
+        ghb_period[0] = ghb_period_array
+        ghb = flopy.mf6.ModflowGwfghb(gwf, stress_period_data=ghb_period,)
+        ts_recarray = []
+        fd = open(os.path.join(data_pth, "tides.txt"))
+        for line in fd:
+            line_list = line.strip().split(",")
+            ts_recarray.append((float(line_list[0]), float(line_list[1])))
+        ghb.ts.initialize(
+            filename="tides.ts",
+            timeseries=ts_recarray,
+            time_series_namerecord="tides",
+            interpolation_methodrecord="linear",
+        )
+        obs_recarray = {
+            "ghb_obs.csv": [
+                ("ghb-2-6-10", "GHB", (1, 5, 9)),
+                ("ghb-3-6-10", "GHB", (2, 5, 9)),
+            ],
+            "ghb_flows.csv": [
+                ("Estuary2", "GHB", "Estuary-L2"),
+                ("Estuary3", "GHB", "Estuary-L3"),
+            ],
+        }
+        ghb.obs.initialize(
+            filename=f"{model_name}.ghb.obs",
+            print_input=True,
+            continuous=obs_recarray,
+        )'''
