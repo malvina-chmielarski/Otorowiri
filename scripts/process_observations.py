@@ -4,18 +4,18 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 
 def prefilter_data():
-    # Import observation bores screened in Leederville or Yarragadee, and filter ti unclude only Leederville and Yarragadee
-    aquifers = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Aquifers')
+    # Import observation bores screened in Parmelia, and filter to unclude only Parmelia
+    aquifers = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Aquifers')
     df = aquifers[
         (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
         (aquifers['Aquifer Name'] == 'Perth-Leederville-Parmelia')]
 
     # Add Site Short Name, Easting, Northing to df
-    details = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Site Details')
+    details = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Site Details')
     df = pd.merge(df, details[['Site Ref', 'Site Short Name', 'Easting', 'Northing']], on='Site Ref', how='left')
     
     # Import screen details
-    casing = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Casing')
+    casing = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Casing')
     casing = casing[casing['Element'] == 'Inlet (screen)']
 
     # Identify wells with multiple screen intervals and remove from df
@@ -76,13 +76,30 @@ def assemble_clean_data(df_filtered):
 # Now we have bore details, we can add Water Level observations to our dataframe
 def add_WL_obs(df_boredetails):
     # Import water level data from WIR
-    WL = pd.read_excel('../data/data_dwer/obs/170999/WaterLevelsDiscreteForSiteFlatFile.xlsx')
+    WL = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
 
-    #Find the years which have the most data
-    WL['Collect Date'] = pd.to_datetime(WL['Collect Date'])
-    WL['Year'] = WL['Collect Date'].dt.year
+    #Create bins for the seasons (dry versus wet season)
+    WL['Season'] = WL['Collect Month'].apply(lambda x: 'Wet' if x in [5, 6, 7, 8, 9, 10] else 'Dry')
+    WL['Sample timeframe'] = df['Collect year'].astype(str) + '_' + df['Season'] #this is now Year_Season
+    
+    #Select the Sample timeframe which have the most data
+    sample_timeframe_counts = WL['Sample timeframe'].value_counts() #counting the sample timeframe
+    print(sample_timeframe_counts)
+    WL['Sample timeframe years'] = WL['Sample timeframe'].str.extract(r'(\d{4})') #extracting the year from the Sample timeframe
+    selected_years = []
+    last_year = None
+    for _, row in df.iterrows():
+        year = row['Year']
+    if last_year is None or (year - last_year) >= 5:
+        selected.append(row['Filter date'])
+        last_year = year
+    if len(selected) == 5:
+        break
 
-    # Filter based on date and variable name
+    print("Selected filter dates (at least 5 years apart):")
+    print(selected)
+
+    # Filter based on Sample timeframe counts
     WL = WL[WL['Collect Date'] > '2005-01-01']
     start_date = '2005-01-01'
     df_filtered = WL[
@@ -139,7 +156,11 @@ def plot_leederville_hydrographs(df_obs, spatial):
     plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
     plt.show()
 
+<<<<<<< HEAD
+'''def plot_yarragadee_hydrographs(df_obs):
+=======
 def plot_yarragadee_hydrographs(df_obs, spatial):
+>>>>>>> a9d40f4d88bd26eab5ff8f0397a2f9f091bbf48d
     # Plot water levels - Yarragadee
     yarr_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Yarragadee North']
     yarr_df['geometry'] = yarr_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
@@ -155,4 +176,4 @@ def plot_yarragadee_hydrographs(df_obs, spatial):
     for bore in yarr_bores:
         df = yarr_df[yarr_df['Site Ref'] == bore]
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
-    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
+    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)'''
