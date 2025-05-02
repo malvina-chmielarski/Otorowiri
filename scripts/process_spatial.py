@@ -1,4 +1,4 @@
-
+import shapely.geometry as sg
 from shapely.geometry import LineString, LinearRing, Point,Polygon, MultiPolygon, MultiPoint
 from shapely.ops import unary_union
 import geopandas as gpd
@@ -20,6 +20,13 @@ def remove_duplicate_points(polygon):
     # Apply to a GeoDataFrame
     #gdf = gpd.GeoDataFrame({'geometry': [polygon]})
 
+def create_polygon_from_xy(x_coords, y_coords):
+    coords= list(zip(x_coords, y_coords))
+    # Check if the first and last coords are the same (ie if the polygon is closed)
+    if coords[0] != coords[-1]:
+        coords.append(coords[0])
+    # Create a Polygon from the coordinates
+    return Polygon(coords)
 
 def make_bbox_shp(spatial, x0, x1, y0, y1):
     xcoords = [x0, x1, x1, x0, x0]
@@ -30,9 +37,7 @@ def make_bbox_shp(spatial, x0, x1, y0, y1):
     spatial.bbox_gdf = bbox_gdf
 
 def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
-    
-    # Crop bbox with coastline on West coast
-    model_boundary_shp_fname = '../data/data_shp/Otorowiri_Model_Extent.shp'
+    model_boundary_shp_fname = '../data/data_shp/Otorowiri_Model_Extent_update_new.shp'
     model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
     model_boundary_gdf.to_crs(epsg=spatial.epsg, inplace=True) 
     model_boundary_poly = Polygon(model_boundary_gdf.geometry.iloc[0])
@@ -109,8 +114,7 @@ def head_boundary2(spatial):
     spatial.chd_west_ls = coast_ls
 
 def geo_bores(spatial):   
-    unfiltered_df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'geo_bores')
-    df = unfiltered_df #[unfiltered_df['Data_type'] == 'Editted']
+    df = pd.read_excel('../data/data_geology/bore_data.xlsx', sheet_name = 'geo')
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.geobore_gdf = gdf
@@ -118,15 +122,24 @@ def geo_bores(spatial):
     spatial.xygeobores = list(zip(gdf.Easting, gdf.Northing))
     spatial.nobs = len(spatial.xygeobores)
 
-def obs_bores(spatial):   
+'''def obs_bores(spatial):   
     df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.obsbore_gdf = gdf
     spatial.idobsbores = list(gdf.ID)
     spatial.xyobsbores = list(zip(gdf.Easting, gdf.Northing))
-    spatial.nobs = len(spatial.xyobsbores)
+    spatial.nobs = len(spatial.xyobsbores)'''
 
+def obs_bores(spatial): #, observations):   
+    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
+    #df = observations.df_boredetails
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    spatial.obsbore_gdf = gdf
+    spatial.idobsbores = list(gdf.ID)
+    spatial.xyobsbores = list(zip(gdf.Easting, gdf.Northing))
+    spatial.nobs = len(spatial.xyobsbores)
 
 def pump_bores(spatial):    
     df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'pumping_bores')
@@ -137,7 +150,52 @@ def pump_bores(spatial):
     spatial.xypumpbores = list(zip(gdf.Easting, gdf.Northing))
     spatial.npump = len(spatial.xypumpbores)
 
+def outcrop(spatial, buffer_distance, node_spacing, threshold):
+    Otorowiri_1_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri_1')
+    Otorowiri_1_df = Otorowiri_1_df.dropna(subset=['Easting', 'Northing'])
+    Otorowiri_1_raw_poly = create_polygon_from_xy(Otorowiri_1_df['Easting'], Otorowiri_1_df['Northing'])
+    print(Otorowiri_1_raw_poly)
+    Otorowiri_1_gdf = gpd.GeoDataFrame({'geometry': [Otorowiri_1_raw_poly]}, crs=spatial.epsg)
+    Otorowiri_1_gdf = gpd.clip(Otorowiri_1_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    Otorowiri_1_gs = Otorowiri_1_gdf.geometry.simplify(tolerance=100, preserve_topology=True) # simplify
+    Otorowiri_1_gs = Otorowiri_1_gdf.geometry.buffer(buffer_distance) # buffer
+    Otorowiri_1_poly = unary_union(Otorowiri_1_gs) # union
+    Otorowiri_1_poly = resample_shapely_poly(Otorowiri_1_poly, node_spacing) # resample
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(Otorowiri_1_poly.exterior.coords), threshold) # Clean the polygon exterior
+    Otorowiri_1_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
 
+    Otorowiri_2_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri_2')
+    Otorowiri_2_df = Otorowiri_2_df.dropna(subset=['Easting', 'Northing'])
+    Otorowiri_2_raw_poly = create_polygon_from_xy(Otorowiri_2_df['Easting'], Otorowiri_2_df['Northing'])
+    print(Otorowiri_2_raw_poly)
+    Otorowiri_2_gdf = gpd.GeoDataFrame({'geometry': [Otorowiri_2_raw_poly]}, crs=spatial.epsg)
+    Otorowiri_2_gdf = gpd.clip(Otorowiri_2_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    Otorowiri_2_gs = Otorowiri_2_gdf.geometry.simplify(tolerance=100, preserve_topology=True) # simplify
+    Otorowiri_2_gs = Otorowiri_2_gdf.geometry.buffer(buffer_distance) # buffer
+    Otorowiri_2_poly = unary_union(Otorowiri_2_gs) # union
+    Otorowiri_2_poly = resample_shapely_poly(Otorowiri_2_poly, node_spacing) # resample
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(Otorowiri_2_poly.exterior.coords), threshold) # Clean the polygon exterior
+    Otorowiri_2_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    Otorowiri_3_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri_3')   
+    Otorowiri_3_df = Otorowiri_3_df.dropna(subset=['Easting', 'Northing'])
+    Otorowiri_3_raw_poly = create_polygon_from_xy(Otorowiri_3_df['Easting'], Otorowiri_3_df['Northing'])
+    print(Otorowiri_3_raw_poly)
+    Otorowiri_3_gdf = gpd.GeoDataFrame({'geometry': [Otorowiri_3_raw_poly]}, crs=spatial.epsg)
+    Otorowiri_3_gdf = gpd.clip(Otorowiri_3_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    Otorowiri_3_gs = Otorowiri_3_gdf.geometry.simplify(tolerance=100, preserve_topology=True) # simplify
+    Otorowiri_3_gs = Otorowiri_3_gdf.geometry.buffer(buffer_distance) # buffer
+    Otorowiri_3_poly = unary_union(Otorowiri_3_gs) # union
+    Otorowiri_3_poly = resample_shapely_poly(Otorowiri_3_poly, node_spacing) # resample
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(Otorowiri_3_poly.exterior.coords), threshold) # Clean the polygon exterior
+    Otorowiri_3_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    spatial.outcrop_poly = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly]
+    spatial.outcrop_gdf = gpd.GeoDataFrame(geometry = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly])
+    spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
 
 def faults(spatial):  
     faults_gdf = gpd.read_file('../data/data_shp/baragoon_seismic/baragoon_seismic_faults.shp')
@@ -218,6 +276,7 @@ def river(spatial, buffer_distance, node_spacing, threshold):
     Arrowsmith_gdf = gdf[((gdf['something'] == 'Arrowsmith_1') | (gdf['something'] == 'Arrowsmith_2') | (gdf['something'] == 'Arrowsmith_3'))]
     Arrowsmith_gs = Arrowsmith_gdf.buffer(buffer_distance)
     Arrowsmith_poly = unary_union(Arrowsmith_gs)
+    print(Arrowsmith_poly)
     Arrowsmith_poly = resample_shapely_poly(Arrowsmith_poly, node_spacing) # streams_multipoly = streams_gdf
 
     from loopflopy.mesh_routines import remove_close_points
@@ -235,7 +294,7 @@ def river(spatial, buffer_distance, node_spacing, threshold):
     Small_creek_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
 
     ##Sand_Plain_Creek River polygons
-    Sand_Plain_Creek_gdf = gdf[(gdf['something'] == 'Sand_Plain_Creek_1')| (gdf['something'] == 'Sand_Plain_Creek_2')]
+    Sand_Plain_Creek_gdf = gdf[(gdf['something'] == 'Sand_Plain_Creek_1')]#| (gdf['something'] == 'Sand_Plain_Creek_2')]
     Sand_Plain_Creek_gs = Sand_Plain_Creek_gdf.buffer(buffer_distance)
     Sand_Plain_Creek_poly = unary_union(Sand_Plain_Creek_gs)
     Sand_Plain_Creek_poly = resample_shapely_poly(Sand_Plain_Creek_poly, node_spacing) # streams_multipoly = streams_gdf
@@ -292,6 +351,7 @@ def plot_spatial2(spatial, faults = False, obsbores = False, pumpbores = True, g
         ax.set_ylim(extent[1][0], extent[1][1])
 
     spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
+    spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
     #spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
     #spatial.ghb_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     #spatial.chd_north_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
