@@ -41,16 +41,18 @@ def plot_hydrograph(df_boreids, spatial): #df_boreids is used here as the data f
 
     # Import all water level observations from WIR
     df_WL = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
-    
+    #append the df to have the 'Site Short Name' column, which matches the Site Ref in df_boreids   
+    df_WL = pd.merge(df_WL, df_boreids[['Site Ref', 'Site Short Name']], on='Site Ref', how='left')
+
     # Plot water levels from the filtered bores
     parmelia_boreids = df_boreids['Site Short Name'].unique()
-    parmelia_WL_df = df_WL[df_WL['borehole_id'].isin(parmelia_boreids)]
+    parmelia_WL_df = df_WL[df_WL['Site Short Name'].isin(parmelia_boreids)]
     parmelia_WL_df['geometry'] =  parmelia_WL_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
     gdf = gpd.GeoDataFrame(parmelia_WL_df, geometry='geometry', crs=spatial.epsg)
 
     # Filter out points outside model boundary
     parmelia_WL_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon if any snuck in
-    parmelia_bores = parmelia_WL_df['borehole_id'].unique()
+    parmelia_bores = parmelia_WL_df['Site Short Name'].unique()
 
     for bore in parmelia_bores:
         df = parmelia_WL_df[parmelia_WL_df['Site Ref'] == bore]
