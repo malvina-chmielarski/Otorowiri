@@ -3,8 +3,9 @@ from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
 import matplotlib.pyplot as plt
 import geopandas as gpd
 
+#filter all the raw WIR data to narrow down the bores screened in the lithology of interest
 def prefilter_data():
-    # Import observation bores screened in Parmelia, and filter to unclude only Parmelia
+    # Import observation bores screened in Parmelia, and filter to include only Parmelia
     aquifers = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Aquifers')
     df = aquifers[
         (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
@@ -28,12 +29,40 @@ def prefilter_data():
     df_boreids = pd.merge(df_boreids, casing[['Site Ref', 'From (mbGL)', 'To (mbGL)', 'Inside Dia. (mm)']], on='Site Ref', how='left')
 
     # Export desired obs bores as csv
-    df_boreids.to_csv('../data/data_dwer/obs/cleaned_obs_bores.csv', index=False)
+    df_boreids.to_csv('../data/data_waterlevels/obs/cleaned_obs_bores.csv', index=False)
+    unique_boreids = df_boreids['Site Short Name'].unique()
+    print(f"Unique bore IDs: {unique_boreids}")
 
     # Use df_cleaned for data request on Water Information Reporting
     return df_boreids
+    
+# Plot hydrographs of all the bores from the pre-filtering selection
+def plot_hydrographs(df_obs, spatial):
+    # Import observation bores screened in Parmelia, and filter to include only Parmelia
+    aquifers = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
+    df = aquifers[
+        (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
+        (aquifers['Aquifer Name'] == 'Perth-Leederville-Parmelia')]
+    
+    # Plot water levels - Leederville
+    parmelia_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Leederville']
+    leed_df['geometry'] = leed_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    gdf = gpd.GeoDataFrame(leed_df, geometry='geometry', crs=spatial.epsg)
 
-# Now we have git extra bore details from WIR, we can groundlevel and well screens to our dataframe
+    # Filter out points outside model boundary
+    leed_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
+    count = len(set(leed_df.ID.tolist())) # Count the number of points within the polygon
+    print(f"Number of Leerville bores within model boundary: {count}")
+
+    leed_bores = leed_df['Site Ref'].unique()
+
+    for bore in leed_bores:
+        df = leed_df[leed_df['Site Ref'] == bore]
+        plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
+    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
+    plt.show()
+
+# Now we have get extra bore details from WIR, we can add groundlevel and well screens to our dataframe
 def assemble_clean_data(df_filtered):
 
     # Add GL to main df
@@ -74,15 +103,15 @@ def assemble_clean_data(df_filtered):
     return df_boredetails
 
 # Now we have bore details, we can add Water Level observations to our dataframe
-def add_WL_obs(df_boredetails):
+'''def add_WL_obs(df_boredetails):
     # Import water level data from WIR
     WL = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
 
-    #Create bins for the seasons (dry versus wet season)
+    # Create bins for the seasons (dry versus wet season)
     WL['Season'] = WL['Collect Month'].apply(lambda x: 'Wet' if x in [5, 6, 7, 8, 9, 10] else 'Dry')
     WL['Sample timeframe'] = df['Collect year'].astype(str) + '_' + df['Season'] #this is now Year_Season
     
-    #Select the Sample timeframe which have the most data
+    # Select the Sample timeframes which have the most data
     sample_timeframe_counts = WL['Sample timeframe'].value_counts() #counting the sample timeframe
     print(sample_timeframe_counts)
     WL['Sample timeframe years'] = WL['Sample timeframe'].str.extract(r'(\d{4})') #extracting the year from the Sample timeframe
@@ -99,7 +128,9 @@ def add_WL_obs(df_boredetails):
     print("Selected filter dates (at least 5 years apart):")
     print(selected)
 
-    # Filter based on Sample timeframe counts
+    print (dskhfkjsdhf)'''
+
+'''    # Filter based on Sample timeframe counts
     WL = WL[WL['Collect Date'] > '2005-01-01']
     start_date = '2005-01-01'
     df_filtered = WL[
@@ -111,13 +142,17 @@ def add_WL_obs(df_boredetails):
     df_obs = pd.merge(df_filtered, df_boredetails, on='Site Ref', how='left')
     df_obs = df_obs[['ID', 'Site Ref', 'Easting', 'Northing', 'Collect Date', 'Aquifer Name', 'Reading Value', 'GL mAHD', 'Screen top', 'Screen bot']]
 
-    # Filter out points outside model boundary for df_obs only
-    '''df_obs['geometry'] = df_obs.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    # Filter out points outside model boundary for df_obs only'''
+
+
+
+'''df_obs['geometry'] = df_obs.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
     gdf = gpd.GeoDataFrame(df_obs, geometry='geometry', crs=spatial.epsg)    
     df_obs= gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
     count = len(df_obs) # Count the number of points within the polygon
     print(f"Number of bores within model boundary: {count}")'''
 
+'''
     df_boredetails['min_WL'] = None
     df_boredetails['max_WL'] = None
     df_boredetails['mean_WL'] = None
@@ -134,46 +169,4 @@ def add_WL_obs(df_boredetails):
     df_obs = df_obs[df_obs['ID'] != 'GG11 (I)'] # This is at the same location as AM4A so remove
     df_obs = df_obs[df_obs['ID'] != 'GG11 (O)'] # This is at the same location as AM4A so remove
     
-    return (df_boredetails, df_obs)
-
-def plot_leederville_hydrographs(df_obs, spatial):
- 
-    # Plot water levels - Leederville
-    leed_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Leederville']
-    leed_df['geometry'] = leed_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
-    gdf = gpd.GeoDataFrame(leed_df, geometry='geometry', crs=spatial.epsg)
-
-    # Filter out points outside model boundary
-    leed_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
-    count = len(set(leed_df.ID.tolist())) # Count the number of points within the polygon
-    print(f"Number of Leerville bores within model boundary: {count}")
-
-    leed_bores = leed_df['Site Ref'].unique()
-
-    for bore in leed_bores:
-        df = leed_df[leed_df['Site Ref'] == bore]
-        plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
-    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
-    plt.show()
-
-<<<<<<< HEAD
-'''def plot_yarragadee_hydrographs(df_obs):
-=======
-def plot_yarragadee_hydrographs(df_obs, spatial):
->>>>>>> a9d40f4d88bd26eab5ff8f0397a2f9f091bbf48d
-    # Plot water levels - Yarragadee
-    yarr_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Yarragadee North']
-    yarr_df['geometry'] = yarr_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
-    gdf = gpd.GeoDataFrame(yarr_df, geometry='geometry', crs=spatial.epsg)
-
-    # Filter out points outside model boundary
-    yarr_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
-    count = len(set(yarr_df.ID.tolist())) # Count the number of points within the polygon
-    print(f"Number of Yarragadee bores within model boundary: {count}")
-
-    yarr_bores = yarr_df['Site Ref'].unique()
-
-    for bore in yarr_bores:
-        df = yarr_df[yarr_df['Site Ref'] == bore]
-        plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
-    plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)'''
+    return (df_boredetails, df_obs)'''
