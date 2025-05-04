@@ -30,43 +30,39 @@ def prefilter_data():
 
     # Export desired obs bores as csv
     df_boreids.to_csv('../data/data_waterlevels/obs/cleaned_obs_bores.csv', index=False)
-    unique_boreids = df_boreids['Site Short Name'].unique()
-    print(f"Unique bore IDs: {unique_boreids}")
+    parmelia_boreids = df_boreids['Site Short Name'].unique()
+    print(f"Unique Parmelia bore IDs: {parmelia_boreids}")
 
     # Use df_cleaned for data request on Water Information Reporting
     return df_boreids
-    
+
 # Plot hydrographs of all the bores from the pre-filtering selection
-def plot_hydrographs(df_obs, spatial):
-    # Import observation bores screened in Parmelia, and filter to include only Parmelia
-    aquifers = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
-    df = aquifers[
-        (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
-        (aquifers['Aquifer Name'] == 'Perth-Leederville-Parmelia')]
+def plot_hydrograph(df_boreids, spatial): #df_boreids is used here as the data filtered to the Parmelia aquifer
+
+    # Import all water level observations from WIR
+    df_WL = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
     
-    # Plot water levels - Leederville
-    parmelia_df = df_obs[df_obs['Aquifer Name'] == 'Perth-Leederville']
-    leed_df['geometry'] = leed_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
-    gdf = gpd.GeoDataFrame(leed_df, geometry='geometry', crs=spatial.epsg)
+    # Plot water levels from the filtered bores
+    parmelia_boreids = df_boreids['Site Short Name'].unique()
+    parmelia_WL_df = df_WL[df_WL['borehole_id'].isin(parmelia_boreids)]
+    parmelia_WL_df['geometry'] =  parmelia_WL_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    gdf = gpd.GeoDataFrame(parmelia_WL_df, geometry='geometry', crs=spatial.epsg)
 
     # Filter out points outside model boundary
-    leed_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon
-    count = len(set(leed_df.ID.tolist())) # Count the number of points within the polygon
-    print(f"Number of Leerville bores within model boundary: {count}")
+    parmelia_WL_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon if any snuck in
+    parmelia_bores = parmelia_WL_df['borehole_id'].unique()
 
-    leed_bores = leed_df['Site Ref'].unique()
-
-    for bore in leed_bores:
-        df = leed_df[leed_df['Site Ref'] == bore]
+    for bore in parmelia_bores:
+        df = parmelia_WL_df[parmelia_WL_df['Site Ref'] == bore]
         plt.plot(df['Collect Date'], df['Reading Value'], label = df['ID'].iloc[0])
     plt.legend(loc = 'upper left',fontsize = 'small', markerscale=0.5)
     plt.show()
 
 # Now we have get extra bore details from WIR, we can add groundlevel and well screens to our dataframe
-def assemble_clean_data(df_filtered):
+def assemble_clean_data(df_filtered): #df_boreids is used here as df_filtered
 
     # Add GL to main df
-    measurements = pd.read_excel('../data/data_dwer/obs/obs_bores.xlsx', sheet_name='Depth Measurement Points')
+    measurements = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Depth Measurement Points')
     ground_level = measurements[measurements['Measurement Point Type'] == 'Ground level'].drop_duplicates(subset=['Site Ref'])
     toc = measurements[measurements['Measurement Point Type'] == 'Top of casing'].drop_duplicates(subset=['Site Ref'])
     mp = measurements[measurements['Measurement Point Type'] == 'Measurement Point'].drop_duplicates(subset=['Site Ref'])
@@ -99,6 +95,8 @@ def assemble_clean_data(df_filtered):
     
     df = df.rename(columns={'Site Short Name': 'ID'})
     df_boredetails = df
+    print_bore_details = df_boredetails.columns
+    print(f"Bore detail columns are: {print_bore_details}")
 
     return df_boredetails
 
