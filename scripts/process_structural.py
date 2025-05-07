@@ -6,6 +6,8 @@ import numbers
 from LoopStructural.utils import strikedip2vector as strike_dip_vector
 import geopandas as gpd
 from loopflopy.mesh_routines import resample_linestring
+import rasterio
+from rasterio.transform import rowcol
 
 def prepare_strat_column(structuralmodel):
     
@@ -52,13 +54,33 @@ def prepare_strat_column(structuralmodel):
     structuralmodel.strat_names = strat_names
     structuralmodel.cmap = cmap
     structuralmodel.norm = norm
-    
-def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):  
 
-    strat = structuralmodel.strat
-    df = pd.read_excel(structuralmodel.geodata_fname, sheet_name=structuralmodel.data_sheetname)
+def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
+    clipped_DEM = spatial.model_DEM #path to the clipped DEM file
+    strat = structuralmodel.strat 
+    df = pd.read_excel(structuralmodel.geodata_fname, sheet_name=structuralmodel.data_sheetname) #Refer to the geology spreadsheet
+    #fill in any blank z values with an extract from the asc file
+    df['Ground_mAHD'] = df['Ground_mAHD'].replace("", np.nan)
+    ground_points = df['Ground_mAHD'].tolist()
+    for point in ground_points:
 
+        with rasterio.open(clipped_DEM) as src:
+            missing_idx = df['Ground_mAHD'].isna()
+            missing_coords = list(zip(df.loc[missing_idx, 'Easting'], df.loc[missing_idx, 'Northing']))
+            missing_coords = [(x, y) for x, y in missing_coords
+                if src.bounds[0] <= x <= src.bounds[2] and src.bounds[1] <= y <= src.bounds[3]]
+            if not missing_coords:
+                print("No valid coordinates inside the DEM bounds.")
+                return df  # No coordinates to sample
+            sampled_values = list(src.sample(missing_coords)) # Extract values from the DEM
+            print("Sampled values:", sampled_values)
+            #df.loc[missing_idx, 'Ground_mAHD'] = [val[0] if val is not None else np.nan for val in src.sample(missing_coords)]
+            df.loc[missing_idx, 'Ground_mAHD'] = [
+                val[0] if val is not None and val[0] != src.nodata else np.nan  # Check for NoData
+                for val in sampled_values]
+            
 # ---------- Prepare borehole data ----------------
+
     data_list = df.values.tolist()  # Turn data into a list of lists
     formatted_data = []
     for i in range(len(data_list)): #iterate for each row
@@ -90,16 +112,16 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
                 count+=1
         
         #-----------CONTROL POINT-----------------------
-        if data_type == 'Control2': ### Z VALUES: mAHD
+        if data_type == 'Control': ### Z VALUES: mAHD
 
             boreid = data_list[i][0]
             easting, northing = data_list[i][1], data_list[i][2]
-            groundlevel = data_list[i][5]
+            groundlevel = data_list[i][5] ### this directly refers to the 'Ground_mAHD' column in the data sheet
 
             count = 1  # Add data row for each lithology
-            for j in range(6,8): #iterate through each formation 
+            for j in range(6,8): #iterate through each formation of interest
                 if isinstance(data_list[i][j], numbers.Number) == True:  # Add lithology  
-                    Z         = groundlevel - float(data_list[i][j])             # elevation (mAHD)
+                    Z         = groundlevel - float(data_list[i][j])             # This finds the UNIT elevation in mAHD, 
                     val       = strat.val[count]                   # designated isovalue
                     unit      = strat.unit[count]                  # unit 
                     feature   = strat.sequence[count]              # sequence
@@ -165,7 +187,6 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
                     }
                 )
             data = pd.concat([data, df_new_row], ignore_index=True)      
-
     
     structuralmodel.data = data
 

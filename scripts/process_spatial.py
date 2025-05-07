@@ -1,5 +1,5 @@
 import shapely.geometry as sg
-from shapely.geometry import LineString, LinearRing, Point,Polygon, MultiPolygon, MultiPoint
+from shapely.geometry import LineString, LinearRing, Point,Polygon, MultiPolygon, MultiPoint, mapping
 from shapely.ops import unary_union
 import geopandas as gpd
 import pandas as pd
@@ -9,6 +9,11 @@ import matplotlib.pyplot as plt
 import loopflopy
 from loopflopy.mesh_routines import resample_linestring, resample_shapely_poly, resample_gdf_poly
 from shapely.affinity import translate
+import rasterio
+from rasterio.warp import calculate_default_transform, reproject, Resampling
+from rasterio.io import MemoryFile
+from rasterio.mask import mask
+import os
 
 def remove_duplicate_points(polygon):
     # Extract unique points using LinearRing
@@ -57,6 +62,70 @@ def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     spatial.model_boundary_poly = model_boundary_poly
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
+
+def model_DEM(spatial):
+    # Read the DEM file and set the CRS
+    asc_path = "C:\\Users\\00105010\\Projects\\Otorowiri\\data\\data_elevation\\rasters_COP30\\output_hh.asc"
+    crs=spatial.epsg
+    model_geom = [mapping(spatial.model_boundary_poly)] # Convert the polygon to a format suitable for rasterio
+
+    with rasterio.open(asc_path) as src:
+        # reproject the ASC crs to the model crs
+        transform, width, height = calculate_default_transform(
+        src.crs, crs, src.width, src.height, *src.bounds)
+        kwargs = src.meta.copy()
+        kwargs.update({
+            'crs': crs,
+            'transform': transform,
+            'width': width,
+            'height': height})
+        # Reproject to memory
+        with MemoryFile() as memfile:
+            with memfile.open(**kwargs) as dst:
+                for i in range(1, src.count + 1):
+                    reproject(source=rasterio.band(src, i),
+                        destination=rasterio.band(dst, i),
+                        src_transform=src.transform,
+                        src_crs=src.crs,
+                        dst_transform=transform,
+                        dst_crs=crs,
+                        resampling=Resampling.bilinear)
+                # Mask (clip) the raster to the polygon
+                out_image, out_transform = mask(dst, model_geom, crop=True)
+                out_meta = dst.meta.copy()
+                out_meta.update({"height": out_image.shape[1],
+                    "width": out_image.shape[2],
+                    "transform": out_transform})
+    output_filename = "Otorowiri_Model_DEM.asc"
+    output_path = os.path.join("..", "modelfiles", output_filename)
+    ## Create the gdf for the DEM data    
+    spatial.dem_gdf = gpd.GeoDataFrame({'geometry': [spatial.model_boundary_poly]}, crs=crs)
+    spatial.dem_gdf['elevation'] = [float(np.nanmean(out_image))]
+    # Save the clipped DEM to the new ASC file
+    with open(output_path, 'w') as asc_file:
+        # Write the ASC header
+        asc_file.write(f"ncols         {out_image.shape[2]}\n")
+        asc_file.write(f"nrows         {out_image.shape[1]}\n")
+        asc_file.write(f"xllcorner     {out_transform[2]}\n")  # bottom-left x
+        asc_file.write(f"yllcorner     {out_transform[5]}\n")  # bottom-left y
+        asc_file.write(f"cellsize      {out_transform[0]}\n")  # pixel size
+        asc_file.write(f"NODATA_value  -9999\n")  # NoData value
+        # Write the elevation data
+        for row in out_image[0]:  # Assuming you're working with a single-band raster
+            asc_file.write(' '.join(map(str, row)) + '\n')
+    spatial.model_DEM = output_path
+
+    # plotting the figure
+    plt.figure(figsize=(8, 6))
+    plt.imshow(out_image[0], cmap='terrain', origin='upper')
+    plt.colorbar(label='Elevation (m)')
+    plt.title("Clipped Elevation Map")
+    plt.xlabel("Pixel X")
+    plt.ylabel("Pixel Y")
+    plt.tight_layout()
+    plt.show()
+
+    return output_filename
 
 def head_boundary(spatial):    
 
@@ -196,6 +265,27 @@ def outcrop(spatial, buffer_distance, node_spacing, threshold):
     spatial.outcrop_poly = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly]
     spatial.outcrop_gdf = gpd.GeoDataFrame(geometry = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly])
     spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
+
+def lithology_boundary(spatial, buffer_distance, node_spacing, threshold):
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
+    df = df.dropna(subset=['Easting', 'Northing'])
+    lithology_points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
+    # Create a LineString from the list of Points
+    line = LineString(lithology_points)
+    lithology_gdf = gpd.GeoDataFrame(index=[0], geometry=[line], crs=spatial.epsg)
+    lithology_gdf = gpd.clip(lithology_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    lithology_gs = lithology_gdf.buffer(buffer_distance)
+    lithology_poly = unary_union(lithology_gs)
+    print(lithology_poly)
+    lithology_poly = resample_shapely_poly(lithology_poly, node_spacing)
+
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(lithology_poly.exterior.coords), threshold) # Clean the polygon exterior
+    lithology_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    spatial.lithology_poly = [lithology_poly]
+    spatial.lithology_gdf = gpd.GeoDataFrame(geometry = [lithology_poly])
+    spatial.lithology_nodes = list(spatial.lithology_gdf.geometry[0].exterior.coords) 
 
 def faults(spatial):  
     faults_gdf = gpd.read_file('../data/data_shp/baragoon_seismic/baragoon_seismic_faults.shp')
@@ -352,6 +442,7 @@ def plot_spatial2(spatial, faults = False, obsbores = False, pumpbores = True, g
 
     spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
     spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
+    spatial.lithology_gdf.plot(ax=ax, color = 'purple', lw = 0.5, zorder=2)
     #spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
     #spatial.ghb_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
     #spatial.chd_north_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
