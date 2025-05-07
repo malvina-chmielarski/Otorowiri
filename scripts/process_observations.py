@@ -2,6 +2,7 @@ import pandas as pd
 from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
 import matplotlib.pyplot as plt
 import geopandas as gpd
+import numpy as np
 
 def convert_static_to_ahd(row):
     key = (row['Site Short Name'], row['Collect Date'])
@@ -115,7 +116,7 @@ def plot_hydrograph(df_boredetails, spatial):
     print(f"Unique Parmelia bore refs: {parmelia_bore_refs}")
 
     #Cleaning up the data pre-hydrograph
-    column_names = parmelia_WL_df.columns.unique()
+    #column_names = parmelia_WL_df.columns.unique()
     parmelia_WL_df = parmelia_WL_df[parmelia_WL_df['Variable Type'] == 'Water level (discrete)'] # Filter for Water Level variable type (eliminates pump test data)
     parmelia_WL_df = parmelia_WL_df[(parmelia_WL_df['Variable Name'] == 'Water level (AHD) (m)' )]
                                     #| (parmelia_WL_df['Variable Name'] == 'Static water level (m)')] # Filter for Water Level variable name (eliminates water quality data)
@@ -158,3 +159,38 @@ def plot_hydrograph(df_boredetails, spatial):
         plt.suptitle(f"Hydrographs Page {page + 1}", fontsize=16, y=1.02)
         plt.subplots_adjust(top=0.92)
         plt.show()
+
+def transient_timestamps(parmelia_WL_df):
+    # Use the data that has been filtered for the hydrographs, which should now have all AHD values
+    #parmelia_WL_df
+
+    # Create bins for the seasons (dry versus wet season)
+    parmelia_WL_df['Season'] = parmelia_WL_df['Collect Month'].apply(lambda x: 'Wet' if x in [5, 6, 7, 8, 9, 10] else 'Dry')
+    parmelia_WL_df['Sample timeframe'] = parmelia_WL_df['Collect Year'].astype(str) + '_' + parmelia_WL_df['Season'] #this is now Year_Season
+
+    # Finding the number of bores available for each sample timeframe
+    bore_counts = (
+        parmelia_WL_df
+        .dropna(subset=['Water level (m AHD)'])  # ensure data exists
+        .groupby('Sample timeframe')['Site Short Name']
+        .nunique()
+        .reset_index(name='Num Unique Bores'))
+    #print(bore_counts.sort_values('Sample timeframe'))
+
+
+    '''
+    sample_timeframe_counts = parmelia_WL_df['Sample timeframe'].value_counts() #counting the sample timeframe
+    print(sample_timeframe_counts)
+    parmelia_WL_df['Sample timeframe years'] = parmelia_WL_df['Sample timeframe'].str.extract(r'(\d{4})') #extracting the year from the Sample timeframe
+    selected_years = []
+    last_year = None
+    for _, row in df.iterrows():
+        year = row['Collect Year']
+    if last_year is None or (year - last_year) >= 5:
+        selected_years.append(row['Filter date'])
+        last_year = year
+    if len(selected) == 5:
+        break
+
+    print("Selected filter dates (at least 5 years apart):")
+    print(selected)'''
