@@ -8,6 +8,7 @@ import geopandas as gpd
 from loopflopy.mesh_routines import resample_linestring
 import rasterio
 from rasterio.transform import rowcol
+from openpyxl import load_workbook
 
 def prepare_strat_column(structuralmodel):
     
@@ -55,36 +56,99 @@ def prepare_strat_column(structuralmodel):
     structuralmodel.cmap = cmap
     structuralmodel.norm = norm
 
-def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
-    clipped_DEM = spatial.model_DEM #path to the clipped DEM file
-    strat = structuralmodel.strat 
+#fill in any blank z values with an extract from the asc file
+def elevation_fill(structuralmodel):
+    #clipped_DEM = spatial.model_DEM #path to the clipped DEM file
+    clipped_DEM = '../modelfiles/Otorowiri_Model_DEM.tif'
+    with rasterio.open(clipped_DEM) as src:
+        ##check the DEM bounds
+        bounds = src.bounds
+        print("DEM bounds:")
+        print(f"  xmin (left):   {bounds.left}")
+        print(f"  ymin (bottom): {bounds.bottom}")
+        print(f"  xmax (right):  {bounds.right}")
+        print(f"  ymax (top):    {bounds.top}")
+        print(f"  CRS:           {src.crs}")
     df = pd.read_excel(structuralmodel.geodata_fname, sheet_name=structuralmodel.data_sheetname) #Refer to the geology spreadsheet
-    #fill in any blank z values with an extract from the asc file
+    min_easting = df['Easting'].min()
+    max_easting = df['Easting'].max()
+    min_northing = df['Northing'].min()
+    max_northing = df['Northing'].max()
+
+    print("DataFrame coordinate extents:")
+    print(f"  Easting:  min = {min_easting}, max = {max_easting}")
+    print(f"  Northing: min = {min_northing}, max = {max_northing}")
+    
+    # Replace empty string with NaN in elevation
     df['Ground_mAHD'] = df['Ground_mAHD'].replace("", np.nan)
-    ground_points = df['Ground_mAHD'].tolist()
-    for point in ground_points:
+    missing_idx = df['Ground_mAHD'].isna()
 
+    # If any elevations are missing, sample from the DEM
+    if missing_idx.any():
         with rasterio.open(clipped_DEM) as src:
-            missing_idx = df['Ground_mAHD'].isna()
-            missing_coords = list(zip(df.loc[missing_idx, 'Easting'], df.loc[missing_idx, 'Northing']))
-            missing_coords = [(x, y) for x, y in missing_coords
-                if src.bounds[0] <= x <= src.bounds[2] and src.bounds[1] <= y <= src.bounds[3]]
-            if not missing_coords:
-                print("No valid coordinates inside the DEM bounds.")
-                return df  # No coordinates to sample
-            sampled_values = list(src.sample(missing_coords)) # Extract values from the DEM
-            print("Sampled values:", sampled_values)
-            #df.loc[missing_idx, 'Ground_mAHD'] = [val[0] if val is not None else np.nan for val in src.sample(missing_coords)]
-            df.loc[missing_idx, 'Ground_mAHD'] = [
-                val[0] if val is not None and val[0] != src.nodata else np.nan  # Check for NoData
-                for val in sampled_values]
-            
-# ---------- Prepare borehole data ----------------
+            nodata = src.nodata
+            bounds = src.bounds
 
+            # Extract coordinates for missing values
+            coords = list(zip(df.loc[missing_idx, 'Easting'], df.loc[missing_idx, 'Northing']))
+
+            # Filter coords to only those within DEM bounds
+            valid_idx = [
+                idx for idx, (x, y) in zip(df.loc[missing_idx].index, coords)
+                if bounds.left <= x <= bounds.right and bounds.bottom <= y <= bounds.top
+            ]
+            valid_coords = [
+                (df.at[idx, 'Easting'], df.at[idx, 'Northing']) for idx in valid_idx
+            ]
+
+            if not valid_coords:
+                print("No valid coordinates inside the DEM bounds.")
+                return df
+
+            # Sample DEM values at those coordinates
+            updated_elevations = []
+            sampled_values = list(src.sample(valid_coords))
+
+            # Assign values back to DataFrame
+            for idx, val in zip(valid_idx, sampled_values):
+                elevation = val[0]
+                if elevation != nodata:
+                    df.at[idx, 'Ground_mAHD'] = elevation
+                    updated_elevations.append((idx, elevation))
+                else:
+                    # If the sampled value is nodata, set to NaN
+                    df.at[idx, 'Ground_mAHD'] = np.nan
+                    updated_elevations.append((idx, np.nan))
+                #df.at[idx, 'Ground_mAHD'] = elevation if elevation != nodata else np.nan
+                #updated_elevations.append((idx, np.nan))
+
+            print(f"Filled {len(valid_coords)} missing 'Ground_mAHD' values from DEM.")
+            # Print the list of updated values
+            print("\nUpdated 'Ground_mAHD' values from DEM:")
+            for idx, elev in updated_elevations:
+                print(f"  Index {idx}: Elevation = {elev}")
+    else:
+        print("No missing 'Ground_mAHD' values to fill.")
+    
+    output_excel_path = structuralmodel.geodata_fname
+    new_sheet_name = 'geodata_elevation'
+    with pd.ExcelWriter(output_excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+        df.to_excel(writer, sheet_name=new_sheet_name, index=False)
+    print(f"\nUpdated DataFrame written to new sheet: '{new_sheet_name}' in file: {output_excel_path}")
+
+    return df
+
+# ---------- Prepare borehole data ----------------
+def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
+    df= pd.read_excel(structuralmodel.geodata_fname, sheet_name='geodata_elevation') #this should be the corrected data with elevations
+    df['Ground_mAHD'] = pd.to_numeric(df['Ground_mAHD'], errors='coerce')  # Ensure values are numeric, convert invalid to NaN
+    df = df.dropna(subset=['Ground_mAHD'])  # Keep only rows with valid elevation
+    print(f"{len(df)} valid elevation points retained for further processing.")
+    strat = structuralmodel.strat
     data_list = df.values.tolist()  # Turn data into a list of lists
     formatted_data = []
     for i in range(len(data_list)): #iterate for each row
-        
+
         data_type = data_list[i][3]  
         
         #-----------RAW DATA-----------------------
