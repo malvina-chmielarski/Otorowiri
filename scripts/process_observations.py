@@ -3,6 +3,9 @@ from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import numpy as np
+import loopflopy.utils as utils
+import flopy
+import math
 
 def convert_static_to_ahd(row):
     key = (row['Site Short Name'], row['Collect Date'])
@@ -147,7 +150,7 @@ def plot_hydrograph(df_boredetails, spatial):
             ax = axes[i]
             df = parmelia_WL_df[parmelia_WL_df['Site Short Name'] == bore].dropna(subset=['Collect Date', 'Water level (m AHD)'])
             if not df.empty:
-                ax.plot(df['Collect Date'], df['Water level (m AHD)'], label=bore)
+                ax.plot(df['Collect Date'], df['Water level (m AHD)'], '-o', label=bore)
                 ax.set_title(bore, fontsize=10)
                 ax.tick_params(axis='x', rotation=45)
             else:
@@ -194,3 +197,41 @@ def transient_timestamps(parmelia_WL_df):
 
     print("Selected filter dates (at least 5 years apart):")
     print(selected)'''
+
+def make_obs_gdf(df, geomodel, mesh, spatial):
+    
+    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
+
+    mask = gdf.geometry.within(spatial.model_boundary_poly)
+    if not mask.all():
+        print("The following geometries are NOT within the polygon:")
+        print(gdf[~mask])
+    else:
+        print("All geometries are within the polygon.")
+    gdf = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points outside model
+
+    gdf = gdf[gdf['zobs'] != np.nan] # Don't include obs with no zobs
+    gdf = gdf[gdf['zobs'] > geomodel.z0] # Don't include obs deeper than flow model bottom
+    geomodel.zcenters = geomodel.botm + geomodel.thick/2
+
+    # Perform the intersection
+    gdf['cell_disv'] = gdf.apply(lambda row: utils.xyz_to_disvcell(geomodel, row.Easting, row.Northing, row.zobs), axis=1)
+    gdf['cell_disu'] = gdf.apply(lambda row: utils.disvcell_to_disucell(geomodel, row['cell_disv']), axis=1)  
+
+    gdf['(lay,icpl)'] = gdf.apply(lambda row: utils.disvcell_to_layicpl(geomodel, row['cell_disv']), axis = 1)
+    gdf['lay']        = gdf.apply(lambda row: row['(lay,icpl)'][0], axis = 1)
+    gdf['icpl']       = gdf.apply(lambda row: row['(lay,icpl)'][1], axis = 1)
+    gdf['obscell_xy'] = gdf['icpl'].apply(lambda icpl: (mesh.xcyc[icpl][0], mesh.xcyc[icpl][1]))
+    gdf['obscell_z']  = gdf.apply(lambda row: geomodel.zcenters[row['lay'], row['icpl']], axis=1)
+    gdf['obs_zpillar']  = gdf.apply(lambda row: geomodel.zcenters[:, row['icpl']], axis=1)
+    gdf['geolay']       = gdf.apply(lambda row: math.floor(row['lay']/geomodel.nls), axis = 1) # model layer to geolayer
+
+    gdf.rename(columns={'Easting': 'x', 'Northing': 'y', 'zobs': 'z', 'ID' : 'id'}, inplace=True) # to be consistent when creating obs_rec array
+
+    # Make sure no pinched out observations
+    if -1 in gdf['cell_disu'].values:
+        print('Warning: some observations are pinched out. Check the model and data.')
+        print('Number of pinched out observations: ', len(gdf[gdf['cell_disu'] == -1]))
+        gdf = gdf[gdf['cell_disu'] != -1] # delete pilot points where layer is pinched out
+
+    return gdf

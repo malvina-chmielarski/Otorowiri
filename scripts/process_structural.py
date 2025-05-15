@@ -18,7 +18,7 @@ def prepare_strat_column(structuralmodel):
     vals = strat.val.tolist()
     nlg = len(strat_names) - 1 # number of geological layers
     sequences = strat.sequence.tolist()
-    sequence = list(set(sequences))
+    sequence = list(dict.fromkeys(sequences)) # Preserves order and removes duplicates
     
     # Make bespoke colormap
     stratcolors = []
