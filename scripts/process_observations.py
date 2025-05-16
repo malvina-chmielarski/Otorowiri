@@ -78,7 +78,7 @@ def assemble_clean_data(df_boreids): #df_boreids is used here as df_filtered
     df.loc[df['GL mAHD'].isna(), 'GL source'] = 'Measurement Point'
     df.loc[df['GL mAHD'].isna(), 'GL mAHD'] = df['Elevation (m as per Datum Plane)'] - 0.7
     df = df.drop(columns=['Elevation (m as per Datum Plane)'])
-    df = df.drop(columns=['Measurement Point Type'])
+    #df = df.drop(columns=['Measurement Point Type'])
     df = df.drop(columns=['Comments'])
     df = df.drop(columns=['Depth From/To (mbGL)'])
 

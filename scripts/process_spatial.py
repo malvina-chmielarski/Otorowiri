@@ -65,105 +65,6 @@ def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
 
-def model_DEM(spatial):
-    # Read the DEM file and set the CRS
-    asc_path = "C:\\Users\\00105010\\Projects\\Otorowiri\\data\\data_elevation\\rasters_COP30\\output_hh.asc"
-    #crs=spatial.epsg
-    crs = rasterio.crs.CRS.from_epsg(spatial.epsg) # Set the CRS to EPSG:28350
-    model_geom = [mapping(spatial.model_boundary_poly)] # Convert the polygon to a format suitable for rasterio
-
-    with rasterio.open(asc_path) as src:
-        # reproject the ASC crs to the model crs
-        transform, width, height = calculate_default_transform(
-        src.crs, crs, src.width, src.height, *src.bounds)
-        kwargs = src.meta.copy()
-        kwargs.update({
-            'crs': crs,
-            'transform': transform,
-            'width': width,
-            'height': height})
-        # Reproject to memory
-        with MemoryFile() as memfile:
-            with memfile.open(**kwargs) as dst:
-                for i in range(1, src.count + 1):
-                    reproject(source=rasterio.band(src, i),
-                        destination=rasterio.band(dst, i),
-                        src_transform=src.transform,
-                        src_crs=src.crs,
-                        dst_transform=transform,
-                        dst_crs=crs,
-                        resampling=Resampling.bilinear)
-                # Mask (clip) the raster to the polygon
-                out_image, out_transform = mask(dst, model_geom, crop=True)
-                out_meta = dst.meta.copy()
-                out_meta.update({"height": out_image.shape[1],
-                    "width": out_image.shape[2],
-                    "transform": out_transform})
-    output_filename = "Otorowiri_Model_DEM.asc"
-    output_path = os.path.join("..", "modelfiles", output_filename)
-    ## Create the gdf for the DEM data    
-    spatial.dem_gdf = gpd.GeoDataFrame({'geometry': [spatial.model_boundary_poly]}, crs=crs)
-    masked_data = np.ma.masked_equal(out_image, -9999)  # Mask the NoData values
-    spatial.dem_gdf['elevation'] = [float(masked_data.mean())]  # Calculate the mean elevation
-    # Save the clipped DEM to the new ASC file
-    with open(output_path, 'w') as asc_file:
-        # Write the ASC header
-        asc_file.write(f"ncols         {out_image.shape[2]}\n")
-        asc_file.write(f"nrows         {out_image.shape[1]}\n")
-        asc_file.write(f"xllcorner     {out_transform[2]}\n")  # bottom-left x
-        asc_file.write(f"yllcorner     {out_transform[5]}\n")  # bottom-left y
-        asc_file.write(f"cellsize      {out_transform[0]}\n")  # pixel size
-        asc_file.write(f"NODATA_value  -9999\n")  # NoData value
-        # Write the elevation data
-        for row in out_image[0]:  # Assuming you're working with a single-band raster
-            asc_file.write(' '.join(map(str, row)) + '\n')
-    
-    #Write companion .prj file to store CRS metadata
-    prj_path = output_path.replace(".asc", ".prj")
-    with open(prj_path, 'w') as prj_file:
-        prj_file.write(crs.to_wkt())
-
-    # Save the GeoTIFF version of the DEM
-    tiff_output_filename = "Otorowiri_Model_DEM.tif"
-    tiff_output_path = os.path.join("..", "modelfiles", tiff_output_filename)
-    
-    spatial.model_DEM = output_path
-    spatial.model_DEM_2 = tiff_output_path ###use the geotiff option if the asc option doesn't work
-
-    with rasterio.open(tiff_output_path,
-    'w',
-    driver='GTiff',
-    height=out_image.shape[1],
-    width=out_image.shape[2],
-    count=1,
-    dtype=out_image.dtype,
-    crs=crs,
-    transform=out_transform,
-    nodata=-9999) as dst:
-        dst.write(out_image[0], 1)
-
-    #plotting the figure
-    fig, ax = plt.subplots(figsize=(8, 6))
-    image = rasterio.plot.show(out_image[0], transform=out_transform, cmap='terrain', ax=ax)
-    cbar = plt.colorbar(image.get_images()[0], ax=ax, label='Elevation (m)')
-    ax.set_title("Clipped Elevation Map")
-    ax.set_xlabel("Easting (m)")
-    ax.set_ylabel("Northing (m)")
-    plt.tight_layout()
-    plt.show()
-    '''
-    # plotting the figure
-    plt.figure(figsize=(8, 6))
-    plt.imshow(out_image[0], cmap='terrain', origin='upper')
-    plt.colorbar(label='Elevation (m)')
-    plt.title("Clipped Elevation Map")
-    plt.xlabel("Pixel X")
-    plt.ylabel("Pixel Y")
-    plt.tight_layout()
-    plt.show()'''
-
-    return output_filename
-
 def head_boundary(spatial):    
 
     # WEST
@@ -227,15 +128,6 @@ def geo_bores(spatial):
     spatial.idgeobores = list(gdf.ID)
     spatial.xygeobores = list(zip(gdf.Easting, gdf.Northing))
     spatial.nobs = len(spatial.xygeobores)
-
-'''def obs_bores(spatial):   
-    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
-    gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
-    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    spatial.obsbore_gdf = gdf
-    spatial.idobsbores = list(gdf.ID)
-    spatial.xyobsbores = list(zip(gdf.Easting, gdf.Northing))
-    spatial.nobs = len(spatial.xyobsbores)'''
 
 def obs_bores(spatial): #, observations):   
     df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
@@ -388,12 +280,68 @@ def faults(spatial):
 
 def lakes(spatial):  
 
-    gdf = gpd.read_file('../data/data_shp/EPP_Lakes.shp')
+    gdf = gpd.read_file('../data/shp/EPP_Lakes.shp')
     gdf.to_crs(epsg=28350, inplace=True)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    spatial.lakes_gdf = gdf
+    gdf = gdf[gdf.geometry.area > 1000000] # Only plot large lakes
 
-def river(spatial, buffer_distance, node_spacing, threshold):  
+    poly = gdf.geometry.iloc[0]
+    poly = poly.simplify(tolerance=200, preserve_topology=True) # simplify 
+    poly = resample_shapely_poly(poly, distance = 300) # resample 
+
+    spatial.lake_poly = poly 
+    spatial.lake_gdf = gpd.GeoDataFrame(geometry = [poly])
+    spatial.lake_nodes = list(spatial.lake_gdf.geometry[0].exterior.coords) 
+
+    
+def arrow(spatial, buffer_distance, node_spacing, threshold):  
+
+    gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
+    gdf.to_crs(epsg=28350, inplace=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+
+    ##Arrowsmith River polygons
+    Arrowsmith_gdf = gdf[((gdf['something'] == 'Arrowsmith_1') | (gdf['something'] == 'Arrowsmith_2') | (gdf['something'] == 'Arrowsmith_3'))]
+    Arrowsmith_gs = Arrowsmith_gdf.buffer(buffer_distance)
+    Arrowsmith_poly = unary_union(Arrowsmith_gs)
+    print(Arrowsmith_poly)
+    poly = resample_shapely_poly(Arrowsmith_poly, node_spacing) # streams_multipoly = streams_gdf
+
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(Arrowsmith_poly.exterior.coords), threshold) # Clean the polygon exterior
+    Arrowsmith_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    # Removing nodes too close to inner and outer boundary so mesh doesn't go crazy refined (threshold_distance)
+    nodes_to_remove = []
+    for coord in poly.exterior.coords:
+        p1 = Point(coord)
+        for p2 in spatial.inner_boundary_poly.exterior.coords:
+            p2 = Point(p2)
+            if p1.distance(p2) <= threshold:
+                nodes_to_remove.append(p1)
+        for p3 in spatial.model_boundary_poly.exterior.coords:
+            p3 = Point(p3)
+            if p1.distance(p3) <= threshold:
+                nodes_to_remove.append(p1)
+
+    nodes_to_remove = set(nodes_to_remove) # Remove duplicates
+
+    if nodes_to_remove:
+        print('Removing ', len(set(nodes_to_remove)), ' that are too close to the boundary.')
+
+    new_coords = []
+    for node in poly.exterior.coords:
+        if Point(node) not in nodes_to_remove:
+            new_coords.append(node)
+
+    # Saving coordinates as polygon
+    poly = Polygon(new_coords) ## list of shapely points
+    
+    spatial.arrow_poly = poly 
+    spatial.arrow_gdf = gpd.GeoDataFrame(geometry = [poly])
+    spatial.arrow_nodes = list(spatial.arrow_gdf.geometry[0].exterior.coords) 
+
+def rivers(spatial, buffer_distance, node_spacing, threshold):  
 
     gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
     gdf.to_crs(epsg=28350, inplace=True)
@@ -434,37 +382,16 @@ def river(spatial, buffer_distance, node_spacing, threshold):
     spatial.river_gdf = gpd.GeoDataFrame(geometry = [Arrowsmith_poly, Small_creek_poly, Sand_Plain_Creek_poly])
     spatial.river_nodes = list(spatial.river_gdf.geometry[0].exterior.coords) 
     
-def plot_spatial(spatial, extent = None):    # extent[[x0,x1], [y0,y1]]
-    
-    fig, ax = plt.subplots(figsize = (7,7))
-    ax.set_title('Example spatial files')
-       
-    x, y = spatial.model_boundary_poly.exterior.xy
-    ax.plot(x, y, '-o', ms = 2, lw = 1, color='black')
-    x, y = spatial.inner_boundary_poly.exterior.xy
-    ax.plot(x, y, '-o', ms = 2, lw = 0.5, color='black')
-    if extent: 
-        ax.set_xlim(extent[0][0], extent[0][1])
-        ax.set_ylim(extent[1][0], extent[1][1])
-        
-    '''spatial.faults_gdf.plot(ax=ax, markersize = 5, color = 'lightblue', zorder=2)
-    for node in spatial.fault_nodes: 
-        ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)'''
-    
-    #spatial.chd_east_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.chd_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
-    spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.geobore_gdf.plot(ax=ax, markersize = 12, color = 'green', zorder=2)
-
-    for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
-        ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
-    for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.ID):
-        ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
-
-    plt.savefig('../figures/spatial.png')
-
-def plot_spatial2(spatial, faults = False, obsbores = False, pumpbores = True, geobores = True, extent = None):    # extent[[x0,x1], [y0,y1]]
+def plot_spatial(spatial, 
+                 labels = False,
+                 obsbores = False, 
+                 pumpbores = True, 
+                 geobores = True, 
+                 rivers = False,
+                 arrow = True,
+                 outcrop = True,
+                 xsections = True,
+                 extent = None):    # extent[[x0,x1], [y0,y1]]
     
     fig, ax = plt.subplots(figsize = (7,7))
     ax.set_title('Otorowiri spatial files') 
@@ -473,23 +400,29 @@ def plot_spatial2(spatial, faults = False, obsbores = False, pumpbores = True, g
     ax.plot(x, y, '-o', ms = 2, lw = 1, color='black')
     x, y = spatial.inner_boundary_poly.exterior.xy
     ax.plot(x, y, '-o', ms = 2, lw = 0.5, color='black')
+    
     if extent: 
         ax.set_xlim(extent[0][0], extent[0][1])
         ax.set_ylim(extent[1][0], extent[1][1])
 
-    spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
-    spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
-    spatial.lithology_gdf.plot(ax=ax, color = 'purple', lw = 0.5, zorder=2)
-    #spatial.lakes_gdf.plot(ax=ax, color = 'darkblue', zorder=2)
-    #spatial.ghb_west_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.chd_north_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-    #spatial.chd_south_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
+    if xsections: 
+        for i, xs in enumerate(spatial.xsections):
+            x0, y0 = xs[0][0], xs[0][1]
+            x1, y1 = xs[1][0], xs[1][1]
+            ax.plot([x0,x1],[y0,y1], 'o-', ms = 2, lw = 1, color='black')
+            name = spatial.xsection_names[i]
+            ax.annotate(name, xy=(x0-1000, y0), xytext=(2, 2), size = 10, textcoords="offset points")
 
-    if faults: 
-        spatial.faults_gdf.plot(ax=ax, markersize = 5, color = 'lightblue', zorder=2)
-        for node in spatial.faults_nodes: 
-            ax.plot(node[0], node[1], 'o', ms = 3, color = 'lightblue', zorder=2)
-    
+    if rivers:
+        spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
+
+    if arrow:
+        spatial.arrow_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
+
+    if outcrop:
+        spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
+        spatial.lithology_gdf.plot(ax=ax, color = 'purple', lw = 0.5, zorder=2)
+  
     if obsbores == True:
         spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
         for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
@@ -497,11 +430,13 @@ def plot_spatial2(spatial, faults = False, obsbores = False, pumpbores = True, g
     
     if pumpbores == True:
         spatial.pumpbore_gdf.plot(ax=ax, markersize = 12, color = 'red', zorder=2)
-        for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.ID):
-            ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
+        if labels:
+            for x, y, label in zip(spatial.pumpbore_gdf.geometry.x, spatial.pumpbore_gdf.geometry.y, spatial.pumpbore_gdf.ID):
+                ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 10, textcoords="offset points")
 
     if geobores == True:
         spatial.geobore_gdf.plot(ax=ax, markersize = 12, marker = '^', color = 'green', zorder=2)
 
-        for x, y, label in zip(spatial.geobore_gdf.geometry.x, spatial.geobore_gdf.geometry.y, spatial.geobore_gdf.ID):
-            ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
+        if labels:
+            for x, y, label in zip(spatial.geobore_gdf.geometry.x, spatial.geobore_gdf.geometry.y, spatial.geobore_gdf.ID):
+                ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
