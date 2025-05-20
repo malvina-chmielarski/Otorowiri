@@ -196,119 +196,23 @@ def outcrop(spatial, buffer_distance, node_spacing, threshold):
     spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
 
 def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
-    OP_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
-    OP_df = OP_df.dropna(subset=['Easting', 'Northing'])
-    OP_points = [Point(xy) for xy in zip(OP_df['Easting'], OP_df['Northing'])]
-    # Create a LineString from the list of Points
-    line = LineString(OP_points)
-    OP_gdf = gpd.GeoDataFrame(index=[0], geometry=[line], crs=spatial.epsg)
-    OP_gdf = gpd.clip(OP_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    OP_gs = OP_gdf.buffer(buffer_distance)
-    OP_poly = unary_union(OP_gs)
-    print(OP_poly)
-    OP_poly = resample_shapely_poly(OP_poly, node_spacing)
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
+    df = df.dropna(subset=['Easting', 'Northing'])
+    points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
+    line = LineString(points)
+    ls_resample = resample_linestring(line, 1500) # Resample linestring
+    spatial.op_ls = LineString(ls_resample)
+    spatial.op_gdf = gpd.GeoDataFrame(geometry = [spatial.op_ls], crs=spatial.epsg)
+    spatial.OP_nodes = spatial.op_ls.coords
 
-    from loopflopy.mesh_routines import remove_close_points
-    cleaned_coords = remove_close_points(list(OP_poly.exterior.coords), threshold) # Clean the polygon exterior
-    OP_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
-
-    spatial.OP_poly = [OP_poly]
-    spatial.OP_gdf = gpd.GeoDataFrame(geometry = [OP_poly])
-    spatial.OP_nodes = list(spatial.OP_gdf.geometry[0].exterior.coords) 
-    '''print(spatial.OP_gdf) #QAQC codes for checking gdf outcomes
-    print(f"Number of boundary nodes: {len(OP_poly.exterior.coords)}")
-    for x, y in spatial.OP_nodes:
-        print(f"x: {x}, y: {y}")'''
-    
-    YO_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Yarragadee-Otorowiri contact')
-    YO_df = YO_df.dropna(subset=['Easting', 'Northing'])
-    YO_points = [Point(xy) for xy in zip(YO_df['Easting'], YO_df['Northing'])]
-    # Create a LineString from the list of Points
-    line = LineString(YO_points)
-    YO_gdf = gpd.GeoDataFrame(index=[0], geometry=[line], crs=spatial.epsg)
-    YO_gdf = gpd.clip(YO_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    YO_gs = YO_gdf.buffer(buffer_distance)
-    YO_poly = unary_union(YO_gs)
-    if isinstance(YO_poly, MultiPolygon):
-        print(f"YO_poly is a MultiPolygon with {len(YO_poly.geoms)} parts")
-        YO_poly = max(YO_poly.geoms, key=lambda p: p.area)
-    print(YO_poly)
-    YO_poly = resample_shapely_poly(YO_poly, node_spacing)
-
-    from loopflopy.mesh_routines import remove_close_points
-    cleaned_coords = remove_close_points(list(YO_poly.exterior.coords), threshold) # Clean the polygon exterior
-    YO_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
-
-    spatial.YO_poly = [YO_poly]
-    spatial.YO_gdf = gpd.GeoDataFrame(geometry = [YO_poly])
-    spatial.YO_nodes = list(spatial.YO_gdf.geometry[0].exterior.coords)
-
-    '''print(spatial.YO_gdf) #QAQC codes for checking gdf outcomes
-    print(f"Number of boundary nodes: {len(YO_poly.exterior.coords)}")
-    for x, y in spatial.YO_nodes:
-        print(f"x: {x}, y: {y}")'''
-
-def faults(spatial):  
-    faults_gdf = gpd.read_file('../data/data_shp/baragoon_seismic/baragoon_seismic_faults.shp')
-    faults_gdf.to_crs(epsg=spatial.epsg, inplace=True)
-    faults_gdf = gpd.clip(faults_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    
-    #from meshing_routines import remove_close_points
-    #threshold = 1000
-    #cleaned_coords = remove_close_points(list(streams_poly.exterior.coords), threshold) # Clean the polygon exterior
-    #streams_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
-   # 
-   # streams_gdf = gpd.GeoDataFrame(geometry=list(streams_multipoly.geoms))
-
-    faults_gdf.loc[int(1), "id"]  = 'Leed1'
-    faults_gdf.loc[int(2), "id"] = 'Horstye'
-    faults_gdf.loc[int(4), "id"] = 'Yarra1'
-    faults_gdf.loc[int(10), "id"] = 'Biggestmeanest'
-    faults_gdf = faults_gdf.drop(index=[0, 3, 5, 6, 7, 8, 9, 11, 12, 13, 14])
-    faults_gdf = faults_gdf.reset_index(drop = True)
-    
-    #### FAULTS AS LINESTRINGS
-        
-    r = 1000 # distance between points
-    threshold_distance = 1000 # Don't want fault nodes too close to boundaries.
-    faults_ls, faults_coords = [], []
-    faults1_coords, faults2_coords = [], []
-
-    for i, ls in enumerate(faults_gdf.geometry): # For each fault...    
-        
-        # STEP 1: Resample fault to have evenly spaced nodes at distance r
-        ls_resample = resample_linestring(ls, r) # Resample linestring
-
-        # STEP 2: Removing nodes too close to inner and outer boundary so mesh doesn't go crazy refined (threshold_distance)
-        nodes_to_remove = []
-        for p1 in ls_resample:
-            for p2 in spatial.inner_boundary_poly.exterior.coords:
-                p2 = Point(p2)
-                if p1.distance(p2) <= threshold_distance:
-                    nodes_to_remove.append(p1)
-            for p3 in spatial.model_boundary_poly.exterior.coords:
-                p3 = Point(p3)
-                if p1.distance(p3) <= threshold_distance:
-                    nodes_to_remove.append(p1)
-        if nodes_to_remove:
-            print('Removing faults nodes on ', faults_gdf.loc[i, 'id'], ' because too close to boundary: ', nodes_to_remove)
-        ls_new = [node for node in ls_resample if node not in nodes_to_remove]
-        faults_ls.append(ls_new) # list of shapely points
-
-        # STEP 3: Don't include short faults with only 1 node
-        p = []
-        for point in ls_new:
-            x,y = point.x, point.y
-            p.append((x,y))
-        if len(p) > 1: # just making sure very short dykes with 1 point are not included
-            faults_coords.append(p)
-    
-    faults_nodes = list(itertools.chain.from_iterable(faults_coords))
-    faults_multipoint = MultiPoint(faults_nodes)
-    
-    spatial.faults_gdf = faults_gdf   
-    spatial.faults_nodes = faults_nodes
-    spatial.faults_multipoint = faults_multipoint
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Yarragadee-Otorowiri contact')
+    df = df.dropna(subset=['Easting', 'Northing'])
+    points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
+    line = LineString(points)
+    ls_resample = resample_linestring(line, 1500) # Resample linestring
+    spatial.yo_ls = LineString(ls_resample)
+    spatial.yo_gdf = gpd.GeoDataFrame(geometry = [spatial.yo_ls], crs=spatial.epsg)
+    spatial.YO_nodes = spatial.yo_ls.coords
 
 def lakes(spatial):  
 
@@ -452,10 +356,13 @@ def plot_spatial(spatial,
         spatial.arrow_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
 
     if outcrop:
-        spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
-        spatial.OP_gdf.plot(ax=ax, color = 'purple', lw = 0.5, zorder=2)
-        spatial.YO_gdf.plot(ax=ax, color = 'pink', lw = 0.5, zorder=2)
-  
+        #spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
+        for nodes in spatial.YO_nodes:
+            x, y = nodes[0], nodes[1]
+            ax.plot(x, y, 'o', ms = 2, color='purple')
+        for nodes in spatial.OP_nodes:
+            x, y = nodes[0], nodes[1]
+            ax.plot(x, y, 'o', ms = 2, color='orange')
     if obsbores == True:
         spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
         for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
