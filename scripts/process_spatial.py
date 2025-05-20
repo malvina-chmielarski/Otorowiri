@@ -195,26 +195,58 @@ def outcrop(spatial, buffer_distance, node_spacing, threshold):
     spatial.outcrop_gdf = gpd.GeoDataFrame(geometry = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly])
     spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
 
-def lithology_boundary(spatial, buffer_distance, node_spacing, threshold):
-    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
-    df = df.dropna(subset=['Easting', 'Northing'])
-    lithology_points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
+def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
+    OP_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
+    OP_df = OP_df.dropna(subset=['Easting', 'Northing'])
+    OP_points = [Point(xy) for xy in zip(OP_df['Easting'], OP_df['Northing'])]
     # Create a LineString from the list of Points
-    line = LineString(lithology_points)
-    lithology_gdf = gpd.GeoDataFrame(index=[0], geometry=[line], crs=spatial.epsg)
-    lithology_gdf = gpd.clip(lithology_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    lithology_gs = lithology_gdf.buffer(buffer_distance)
-    lithology_poly = unary_union(lithology_gs)
-    print(lithology_poly)
-    lithology_poly = resample_shapely_poly(lithology_poly, node_spacing)
+    line = LineString(OP_points)
+    OP_gdf = gpd.GeoDataFrame(index=[0], geometry=[line], crs=spatial.epsg)
+    OP_gdf = gpd.clip(OP_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    OP_gs = OP_gdf.buffer(buffer_distance)
+    OP_poly = unary_union(OP_gs)
+    print(OP_poly)
+    OP_poly = resample_shapely_poly(OP_poly, node_spacing)
 
     from loopflopy.mesh_routines import remove_close_points
-    cleaned_coords = remove_close_points(list(lithology_poly.exterior.coords), threshold) # Clean the polygon exterior
-    lithology_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+    cleaned_coords = remove_close_points(list(OP_poly.exterior.coords), threshold) # Clean the polygon exterior
+    OP_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
 
-    spatial.lithology_poly = [lithology_poly]
-    spatial.lithology_gdf = gpd.GeoDataFrame(geometry = [lithology_poly])
-    spatial.lithology_nodes = list(spatial.lithology_gdf.geometry[0].exterior.coords) 
+    spatial.OP_poly = [OP_poly]
+    spatial.OP_gdf = gpd.GeoDataFrame(geometry = [OP_poly])
+    spatial.OP_nodes = list(spatial.OP_gdf.geometry[0].exterior.coords) 
+    '''print(spatial.OP_gdf) #QAQC codes for checking gdf outcomes
+    print(f"Number of boundary nodes: {len(OP_poly.exterior.coords)}")
+    for x, y in spatial.OP_nodes:
+        print(f"x: {x}, y: {y}")'''
+    
+    YO_df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Yarragadee-Otorowiri contact')
+    YO_df = YO_df.dropna(subset=['Easting', 'Northing'])
+    YO_points = [Point(xy) for xy in zip(YO_df['Easting'], YO_df['Northing'])]
+    # Create a LineString from the list of Points
+    line = LineString(YO_points)
+    YO_gdf = gpd.GeoDataFrame(index=[0], geometry=[line], crs=spatial.epsg)
+    YO_gdf = gpd.clip(YO_gdf, spatial.model_boundary_poly).reset_index(drop=True)
+    YO_gs = YO_gdf.buffer(buffer_distance)
+    YO_poly = unary_union(YO_gs)
+    if isinstance(YO_poly, MultiPolygon):
+        print(f"YO_poly is a MultiPolygon with {len(YO_poly.geoms)} parts")
+        YO_poly = max(YO_poly.geoms, key=lambda p: p.area)
+    print(YO_poly)
+    YO_poly = resample_shapely_poly(YO_poly, node_spacing)
+
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(YO_poly.exterior.coords), threshold) # Clean the polygon exterior
+    YO_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    spatial.YO_poly = [YO_poly]
+    spatial.YO_gdf = gpd.GeoDataFrame(geometry = [YO_poly])
+    spatial.YO_nodes = list(spatial.YO_gdf.geometry[0].exterior.coords)
+
+    '''print(spatial.YO_gdf) #QAQC codes for checking gdf outcomes
+    print(f"Number of boundary nodes: {len(YO_poly.exterior.coords)}")
+    for x, y in spatial.YO_nodes:
+        print(f"x: {x}, y: {y}")'''
 
 def faults(spatial):  
     faults_gdf = gpd.read_file('../data/data_shp/baragoon_seismic/baragoon_seismic_faults.shp')
@@ -421,7 +453,8 @@ def plot_spatial(spatial,
 
     if outcrop:
         spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
-        spatial.lithology_gdf.plot(ax=ax, color = 'purple', lw = 0.5, zorder=2)
+        spatial.OP_gdf.plot(ax=ax, color = 'purple', lw = 0.5, zorder=2)
+        spatial.YO_gdf.plot(ax=ax, color = 'pink', lw = 0.5, zorder=2)
   
     if obsbores == True:
         spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)

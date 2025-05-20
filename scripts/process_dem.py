@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
 from shapely.geometry import  mapping
+import geopandas as gpd
 import rasterio
 import rasterio.plot
 from rasterio.warp import calculate_default_transform, reproject, Resampling
@@ -45,7 +46,7 @@ def model_DEM(spatial):
                     "width": out_image.shape[2],
                     "transform": out_transform})
     output_filename = "Otorowiri_Model_DEM.asc"
-    output_path = os.path.join("..", "modelfiles", output_filename)
+    output_path = os.path.join("..", "data", "data_dem", output_filename)
     ## Create the gdf for the DEM data    
     spatial.dem_gdf = gpd.GeoDataFrame({'geometry': [spatial.model_boundary_poly]}, crs=crs)
     masked_data = np.ma.masked_equal(out_image, -9999)  # Mask the NoData values
@@ -96,15 +97,5 @@ def model_DEM(spatial):
     ax.set_ylabel("Northing (m)")
     plt.tight_layout()
     plt.show()
-    '''
-    # plotting the figure
-    plt.figure(figsize=(8, 6))
-    plt.imshow(out_image[0], cmap='terrain', origin='upper')
-    plt.colorbar(label='Elevation (m)')
-    plt.title("Clipped Elevation Map")
-    plt.xlabel("Pixel X")
-    plt.ylabel("Pixel Y")
-    plt.tight_layout()
-    plt.show()'''
 
     return output_filename

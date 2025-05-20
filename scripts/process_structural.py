@@ -56,6 +56,33 @@ def prepare_strat_column(structuralmodel):
     structuralmodel.cmap = cmap
     structuralmodel.norm = norm
 
+# bring in the data from the outcrop in process spatial to add 'obs' points from the outcrop
+def add_geo_boundaries(structuralmodel, spatial):
+    df = pd.read_excel(structuralmodel.geodata_fname, sheet_name='geo') #Refer to the geology spreadsheet
+    #import all the relative boundary information points
+    OP_boundary = pd.DataFrame(spatial.OP_nodes, columns=['Easting', 'Northing'])
+    OP_boundary['ID'] = ['OP_boundary' + str(i) for i in range(len(OP_boundary))]
+    OP_boundary['Data_type'] = 'Control'
+    OP_boundary['Source'] = 'DMIRS geology shapefile'
+    OP_boundary['Kp'] = 0
+    OP_boundary = OP_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp']]
+    combined_df = pd.concat([df, OP_boundary], ignore_index=True)
+    #print(combined_df)
+    YO_boundary = pd.DataFrame(spatial.YO_nodes, columns=['Easting', 'Northing'])
+    YO_boundary['ID'] = ['YO_boundary' + str(i) for i in range(len(YO_boundary))]
+    YO_boundary['Data_type'] = 'Control'
+    YO_boundary['Source'] = 'DMIRS geology shapefile'
+    YO_boundary['Kp'] = 0
+    YO_boundary['Kpo'] = 0
+    YO_boundary = YO_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
+    combined_df = pd.concat([combined_df, YO_boundary], ignore_index=True)
+    #write the combined data to a new excel sheet in the same file
+    output_excel_path = structuralmodel.geodata_fname
+    new_sheet_name = 'geo_boundaries'
+    with pd.ExcelWriter(output_excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+        combined_df.to_excel(writer, sheet_name=new_sheet_name, index=False)
+    print(f"\nUpdated DataFrame with geo_boundaries written to new sheet: '{new_sheet_name}' in file: {output_excel_path}")
+
 #fill in any blank z values with an extract from the asc file
 def elevation_fill(structuralmodel):
     #clipped_DEM = spatial.model_DEM #path to the clipped DEM file
@@ -69,7 +96,7 @@ def elevation_fill(structuralmodel):
         print(f"  xmax (right):  {bounds.right}")
         print(f"  ymax (top):    {bounds.top}")
         print(f"  CRS:           {src.crs}")
-    df = pd.read_excel(structuralmodel.geodata_fname, sheet_name=structuralmodel.data_sheetname) #Refer to the geology spreadsheet
+    df = pd.read_excel(structuralmodel.geodata_fname, sheet_name='geo_boundaries') #Refer to the geology spreadsheet
     min_easting = df['Easting'].min()
     max_easting = df['Easting'].max()
     min_northing = df['Northing'].min()
@@ -130,6 +157,9 @@ def elevation_fill(structuralmodel):
     else:
         print("No missing 'Ground_mAHD' values to fill.")
     
+    df = df.dropna(subset=['Ground_mAHD'])  # Keep only rows with valid elevation
+    df = df[df['Ground_mAHD'] != 0]  # Drop rows where elevation is 0 - this is invalid for this area
+
     output_excel_path = structuralmodel.geodata_fname
     new_sheet_name = 'geodata_elevation'
     with pd.ExcelWriter(output_excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
@@ -142,13 +172,11 @@ def elevation_fill(structuralmodel):
 def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
     df= pd.read_excel(structuralmodel.geodata_fname, sheet_name='geodata_elevation') #this should be the corrected data with elevations
     df['Ground_mAHD'] = pd.to_numeric(df['Ground_mAHD'], errors='coerce')  # Ensure values are numeric, convert invalid to NaN
-    df = df.dropna(subset=['Ground_mAHD'])  # Keep only rows with valid elevation
     print(f"{len(df)} valid elevation points retained for further processing.")
     strat = structuralmodel.strat
     data_list = df.values.tolist()  # Turn data into a list of lists
     formatted_data = []
     for i in range(len(data_list)): #iterate for each row
-
         data_type = data_list[i][3]  
         
         #-----------RAW DATA-----------------------
@@ -195,8 +223,8 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
                 
     data = pd.DataFrame(formatted_data)
     data.columns =['ID','X','Y','Z','val','lithcode','feature_name', 'gx', 'gy', 'gz','data_type']
-    
-    # ---------- Prepare fault details ----------------   
+
+# ---------- Prepare fault details ----------------   
     if Fault:
 
         fx, fy = [], []
