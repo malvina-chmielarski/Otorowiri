@@ -203,6 +203,7 @@ def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
     ls_resample = resample_linestring(line, 1500) # Resample linestring
     spatial.op_ls = LineString(ls_resample)
     spatial.op_gdf = gpd.GeoDataFrame(geometry = [spatial.op_ls], crs=spatial.epsg)
+    spatial.op_gdf = gpd.clip(spatial.op_gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.OP_nodes = spatial.op_ls.coords
 
     df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Yarragadee-Otorowiri contact')
@@ -212,6 +213,7 @@ def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
     ls_resample = resample_linestring(line, 1500) # Resample linestring
     spatial.yo_ls = LineString(ls_resample)
     spatial.yo_gdf = gpd.GeoDataFrame(geometry = [spatial.yo_ls], crs=spatial.epsg)
+    spatial.yo_gdf = gpd.clip(spatial.yo_gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.YO_nodes = spatial.yo_ls.coords
 
 def lakes(spatial):  
