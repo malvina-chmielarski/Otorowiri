@@ -200,7 +200,7 @@ def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
     df = df.dropna(subset=['Easting', 'Northing'])
     points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
     line = LineString(points)
-    ls_resample = resample_linestring(line, 1500) # Resample linestring
+    ls_resample = resample_linestring(line, 2500) # Resample linestring
     spatial.op_ls = LineString(ls_resample)
     spatial.op_gdf = gpd.GeoDataFrame(geometry = [spatial.op_ls], crs=spatial.epsg)
     spatial.op_gdf = gpd.clip(spatial.op_gdf, spatial.model_boundary_poly).reset_index(drop=True)
@@ -210,7 +210,7 @@ def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
     df = df.dropna(subset=['Easting', 'Northing'])
     points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
     line = LineString(points)
-    ls_resample = resample_linestring(line, 1500) # Resample linestring
+    ls_resample = resample_linestring(line, 2500) # Resample linestring
     spatial.yo_ls = LineString(ls_resample)
     spatial.yo_gdf = gpd.GeoDataFrame(geometry = [spatial.yo_ls], crs=spatial.epsg)
     spatial.yo_gdf = gpd.clip(spatial.yo_gdf, spatial.model_boundary_poly).reset_index(drop=True)

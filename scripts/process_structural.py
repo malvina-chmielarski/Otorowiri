@@ -74,7 +74,7 @@ def add_geo_boundaries(structuralmodel, spatial):
     YO_boundary['Data_type'] = 'Control'
     YO_boundary['Source'] = 'DMIRS geology shapefile'
     YO_boundary['Kp'] = '-'
-    YO_boundary['Kpo'] = -10
+    YO_boundary['Kpo'] = -6
     YO_boundary = YO_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([combined_df, YO_boundary], ignore_index=True)
     #write the combined data to a new excel sheet in the same file
@@ -199,7 +199,7 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
                     val       = strat.val[count]                   # designated isovalue
                     unit      = strat.unit[count]                  # unit 
                     feature   = strat.sequence[count]              # sequence
-                    gx, gy, gz = 0,0,1                             # normal vector to surface (flat) 
+                    gx, gy, gz = np.nan, np.nan, np.nan                              # normal vector to surface (flat) 
                     formatted_data.append([boreid, easting, northing, bottom, val, unit, feature, gx, gy, gz, data_type])    
                     current_bottom = np.copy(bottom)    
                 count+=1
@@ -218,7 +218,7 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
                     val       = strat.val[count]                   # designated isovalue
                     unit      = strat.unit[count]                  # unit 
                     feature   = strat.sequence[count]              # sequence
-                    gx, gy, gz = 0,0,1                             # normal vector to surface (flat) 
+                    gx, gy, gz = np.nan, np.nan, np.nan                            # normal vector to surface (flat) 
                     formatted_data.append([boreid, easting, northing, Z, val, unit, feature, gx, gy, gz, data_type])      
                 count+=1
                 
@@ -245,9 +245,9 @@ def create_structuralmodel(structuralmodel):
     model = GeologicalModel(origin, maximum)
     model.set_model_data(structuralmodel.data)  
     
-    Ground     = model.create_and_add_foliation("Ground", nelements=1e4)
+    Ground     = model.create_and_add_foliation("Ground", nelements=1e4, interpolatortype = "FDI")
     Ground_UC  = model.add_unconformity(Ground, structuralmodel.strat[structuralmodel.strat.unit == 'Ground'].val.iloc[0]) 
-    Yarragadee         = model.create_and_add_foliation("Yarragadee", nelements=1e4)
+    Yarragadee         = model.create_and_add_foliation("Yarragadee", nelements=1e4 , interpolatortype = "FDI")
     #TQ_UC      = model.add_unconformity(TQ, structuralmodel.strat[structuralmodel.strat.unit == 'TQ'].val.iloc[0]) 
     
     #model.create_and_add_foliation("Kcok", nelements=1e4, buffer=0.1)
