@@ -64,16 +64,17 @@ def add_geo_boundaries(structuralmodel, spatial):
     OP_boundary['ID'] = ['OP_boundary' + str(i) for i in range(len(OP_boundary))]
     OP_boundary['Data_type'] = 'Control'
     OP_boundary['Source'] = 'DMIRS geology shapefile'
-    OP_boundary['Kp'] = 0
-    OP_boundary = OP_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp']]
+    OP_boundary['Kp'] = -10
+    OP_boundary['Kpo'] = '-'
+    OP_boundary = OP_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([df, OP_boundary], ignore_index=True)
     #print(combined_df)
     YO_boundary = pd.DataFrame(spatial.YO_nodes, columns=['Easting', 'Northing'])
     YO_boundary['ID'] = ['YO_boundary' + str(i) for i in range(len(YO_boundary))]
     YO_boundary['Data_type'] = 'Control'
     YO_boundary['Source'] = 'DMIRS geology shapefile'
-    YO_boundary['Kp'] = 0
-    YO_boundary['Kpo'] = 0
+    YO_boundary['Kp'] = '-'
+    YO_boundary['Kpo'] = -10
     YO_boundary = YO_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([combined_df, YO_boundary], ignore_index=True)
     #write the combined data to a new excel sheet in the same file
@@ -224,65 +225,15 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
     data = pd.DataFrame(formatted_data)
     data.columns =['ID','X','Y','Z','val','lithcode','feature_name', 'gx', 'gy', 'gz','data_type']
 
-# ---------- Prepare fault details ----------------   
-    if Fault:
-
-        fx, fy = [], []
-        for point in spatial.faults_gdf.geometry[0].coords:
-            x,y = point[0], point[1]
-            fx.append((x))
-            fy.append((y))
-        fz = [-500] # making a plane
-
-        from LoopStructural.utils import strikedip2vector # array of arrays
-        dip = 90 # Vertical fault
-        fault_rows= []
-
-        for v in range(len(fz)):# vertical points 
-            z = fz[v]
-            for n in range(len(fx)-1): # fault segments = number of fault points - 1
-
-                if fx[n+1] - fx[n] == 0: # fault due N-S
-                    strike = 0
-                    x = fx[n]
-                    if fy[n+1] > fy[n]: # moving north
-                        y = fy[n] + (fy[n+1] - fy[n]) / 2
-                        nx, ny, nz = strikedip2vector([strike], [dip])[0]
-                        fault_rows.append([x, y, z, nx, ny, nz])
-
-                    else: # moving south
-                        y = fy[n] - (fy[n+1] - fy[n]) / 2
-                        nx, ny, nz = strikedip2vector([strike], [dip])[0]
-                        fault_rows.append([x, y, z, nx, ny, nz])
-                else:
-                    grad = (fy[n+1] - fy[n]) / (fx[n+1] - fx[n]) # gradient of segment
-                    x = fx[n] + (fx[n+1] - fx[n])/2 # midpoint along fault segment
-                    y = fy[n] + (fy[n+1] - fy[n])/2 # midpoint along fault segment
-                    strike = np.rad2deg(np.arctan((fx[n+1] - fx[n]) / abs(fy[n+1] - fy[n])))
-                    #strike = 90 - np.rad2deg(np.arctan(abs(fy[n+1] - fy[n]) / (fx[n+1] - fx[n])))
-                    nx, ny, nz = strikedip2vector([strike], [dip])[0]
-                    fault_rows.append([x, y, z, nx, ny, nz])
-        
-        for i in fault_rows:
-            df_new_row = pd.DataFrame.from_records(
-                    {
-                        "X": [i[0]],
-                        "Y": [i[1]],
-                        "Z": [i[2]],
-                        "val": [0.0],
-                        "feature_name": ["Fault"],
-                        "nx": [i[3]],
-                        "ny": [i[4]],
-                        "nz": [i[5]],
-                        "ID" : ["Fault_cloud"],
-                        "data_type" : ["Fault"]
-                    }
-                )
-            data = pd.concat([data, df_new_row], ignore_index=True)      
-    
     structuralmodel.data = data
 
-def create_structuralmodel(structuralmodel, Fault = True):
+    output_excel_path = structuralmodel.geodata_fname
+    new_sheet_name = 'structuralmodel_data'
+    with pd.ExcelWriter(output_excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+        data.to_excel(writer, sheet_name=new_sheet_name, index=False)
+    print(f"\nUpdated DataFrame written to new sheet: '{new_sheet_name}' in file: {output_excel_path}")
+
+def create_structuralmodel(structuralmodel):
     
     origin  = (structuralmodel.x0, structuralmodel.y0, structuralmodel.z0)
     maximum = (structuralmodel.x1, structuralmodel.y1, structuralmodel.z1)
@@ -299,10 +250,6 @@ def create_structuralmodel(structuralmodel, Fault = True):
     Yarragadee         = model.create_and_add_foliation("Yarragadee", nelements=1e4)
     #TQ_UC      = model.add_unconformity(TQ, structuralmodel.strat[structuralmodel.strat.unit == 'TQ'].val.iloc[0]) 
     
-    if Fault:
-        print('Fault included!')
-        Fault = model.create_and_add_fault('Fault', displacement = 400,)
-        
     #model.create_and_add_foliation("Kcok", nelements=1e4, buffer=0.1)
     #model.create_and_add_foliation("Leed", nelements=1e4, buffer=0.1)    
     model.set_stratigraphic_column(structuralmodel.strat_col)
