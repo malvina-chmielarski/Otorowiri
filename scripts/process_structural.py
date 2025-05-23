@@ -247,7 +247,13 @@ def create_structuralmodel(structuralmodel):
     
     Ground     = model.create_and_add_foliation("Ground", nelements=1e4, interpolatortype = "FDI")
     Ground_UC  = model.add_unconformity(Ground, structuralmodel.strat[structuralmodel.strat.unit == 'Ground'].val.iloc[0]) 
-    Yarragadee         = model.create_and_add_foliation("Yarragadee", nelements=1e4 , interpolatortype = "FDI")
+    #Yarragadee         = model.create_and_add_foliation("Yarragadee", nelements=1e4 , interpolatortype = "FDI")
+
+    Kp        = model.create_and_add_foliation("Kp", nelements=1e4 , interpolatortype = "FDI", buffer = 0.1)
+    Kp_UC     = model.add_unconformity(Kp, structuralmodel.strat[structuralmodel.strat.unit == 'Kp'].val.iloc[0])
+    Kpo        = model.create_and_add_foliation("Kpo", nelements=1e4 , interpolatortype = "FDI", buffer = 0.1)
+
+
     #TQ_UC      = model.add_unconformity(TQ, structuralmodel.strat[structuralmodel.strat.unit == 'TQ'].val.iloc[0]) 
     
     #model.create_and_add_foliation("Kcok", nelements=1e4, buffer=0.1)

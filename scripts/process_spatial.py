@@ -195,12 +195,13 @@ def outcrop(spatial, buffer_distance, node_spacing, threshold):
     spatial.outcrop_gdf = gpd.GeoDataFrame(geometry = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly])
     spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
 
-def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
+def geo_boundaries(spatial, simplify_tolerance, node_spacing):
     df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
     df = df.dropna(subset=['Easting', 'Northing'])
     points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
     line = LineString(points)
-    ls_resample = resample_linestring(line, 2500) # Resample linestring
+    ls_simple = line.simplify(tolerance=simplify_tolerance, preserve_topology=True)
+    ls_resample = resample_linestring(ls_simple, node_spacing) # Resample linestring
     spatial.op_ls = LineString(ls_resample)
     spatial.op_gdf = gpd.GeoDataFrame(geometry = [spatial.op_ls], crs=spatial.epsg)
     spatial.op_gdf = gpd.clip(spatial.op_gdf, spatial.model_boundary_poly).reset_index(drop=True)
@@ -210,7 +211,8 @@ def geo_boundaries(spatial, buffer_distance, node_spacing, threshold):
     df = df.dropna(subset=['Easting', 'Northing'])
     points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
     line = LineString(points)
-    ls_resample = resample_linestring(line, 2500) # Resample linestring
+    ls_simple = line.simplify(tolerance=simplify_tolerance, preserve_topology=True)
+    ls_resample = resample_linestring(ls_simple, node_spacing) # Resample linestring
     spatial.yo_ls = LineString(ls_resample)
     spatial.yo_gdf = gpd.GeoDataFrame(geometry = [spatial.yo_ls], crs=spatial.epsg)
     spatial.yo_gdf = gpd.clip(spatial.yo_gdf, spatial.model_boundary_poly).reset_index(drop=True)
