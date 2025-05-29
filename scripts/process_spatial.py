@@ -196,7 +196,7 @@ def outcrop(spatial, buffer_distance, node_spacing, threshold):
     spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
 
 def geo_boundaries(spatial, simplify_tolerance, node_spacing):
-    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Otorowiri-Parmelia contact')
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'O-P contact simplified')
     df = df.dropna(subset=['Easting', 'Northing'])
     points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
     line = LineString(points)
@@ -207,7 +207,7 @@ def geo_boundaries(spatial, simplify_tolerance, node_spacing):
     spatial.op_gdf = gpd.clip(spatial.op_gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.OP_nodes = spatial.op_ls.coords
 
-    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Yarragadee-Otorowiri contact')
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Y-O contact simplified')
     df = df.dropna(subset=['Easting', 'Northing'])
     points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
     line = LineString(points)
