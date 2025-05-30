@@ -44,9 +44,10 @@ def make_bbox_shp(spatial, x0, x1, y0, y1):
     spatial.bbox_gdf = bbox_gdf
 
 def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
-    model_boundary_shp_fname = '../data/data_shp/Otorowiri_Model_Extent_update_new.shp'
+    #model_boundary_shp_fname = '../data/data_shp/Otorowiri_Model_Extent_update_new.shp'
+    model_boundary_shp_fname = '../modelfiles/model_boundary_polygon.shp'
     model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
-    model_boundary_gdf.to_crs(epsg=spatial.epsg, inplace=True) 
+    model_boundary_gdf.to_crs(epsg=spatial.crs, inplace=True) 
     model_boundary_poly = Polygon(model_boundary_gdf.geometry.iloc[0])
     model_boundary_gs = model_boundary_gdf.geometry.simplify(tolerance=simplify_tolerance, preserve_topology=True) # simplify 
     model_boundary_poly = resample_gdf_poly(model_boundary_gs, node_spacing) # resample 
@@ -64,6 +65,9 @@ def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     spatial.model_boundary_poly = model_boundary_poly
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
+
+
+
 
 def head_boundary(spatial):    
 
@@ -195,29 +199,6 @@ def outcrop(spatial, buffer_distance, node_spacing, threshold):
     spatial.outcrop_gdf = gpd.GeoDataFrame(geometry = [Otorowiri_1_poly, Otorowiri_2_poly, Otorowiri_3_poly])
     spatial.outcrop_nodes = list(spatial.outcrop_gdf.geometry[0].exterior.coords) 
 
-def geo_boundaries(spatial, simplify_tolerance, node_spacing):
-    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'O-P contact simplified')
-    df = df.dropna(subset=['Easting', 'Northing'])
-    points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
-    line = LineString(points)
-    ls_simple = line.simplify(tolerance=simplify_tolerance, preserve_topology=True)
-    ls_resample = resample_linestring(ls_simple, node_spacing) # Resample linestring
-    spatial.op_ls = LineString(ls_resample)
-    spatial.op_gdf = gpd.GeoDataFrame(geometry = [spatial.op_ls], crs=spatial.epsg)
-    spatial.op_gdf = gpd.clip(spatial.op_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    spatial.OP_nodes = spatial.op_ls.coords
-
-    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Y-O contact simplified')
-    df = df.dropna(subset=['Easting', 'Northing'])
-    points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
-    line = LineString(points)
-    ls_simple = line.simplify(tolerance=simplify_tolerance, preserve_topology=True)
-    ls_resample = resample_linestring(ls_simple, node_spacing) # Resample linestring
-    spatial.yo_ls = LineString(ls_resample)
-    spatial.yo_gdf = gpd.GeoDataFrame(geometry = [spatial.yo_ls], crs=spatial.epsg)
-    spatial.yo_gdf = gpd.clip(spatial.yo_gdf, spatial.model_boundary_poly).reset_index(drop=True)
-    spatial.YO_nodes = spatial.yo_ls.coords
-
 def lakes(spatial):  
 
     gdf = gpd.read_file('../data/shp/EPP_Lakes.shp')
@@ -322,14 +303,14 @@ def rivers(spatial, buffer_distance, node_spacing, threshold):
     spatial.river_gdf = gpd.GeoDataFrame(geometry = [Arrowsmith_poly, Small_creek_poly, Sand_Plain_Creek_poly])
     spatial.river_nodes = list(spatial.river_gdf.geometry[0].exterior.coords) 
     
-def plot_spatial(spatial, 
+def plot_spatial(spatial, structuralmodel,
                  labels = False,
                  obsbores = False, 
                  pumpbores = True, 
                  geobores = True, 
                  rivers = False,
                  arrow = True,
-                 outcrop = True,
+                 structuralmodel_data = True,
                  xsections = True,
                  extent = None):    # extent[[x0,x1], [y0,y1]]
     
@@ -359,14 +340,6 @@ def plot_spatial(spatial,
     if arrow:
         spatial.arrow_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
 
-    if outcrop:
-        #spatial.outcrop_gdf.plot(ax=ax, color = 'orange', lw = 0.5, zorder=2)
-        for nodes in spatial.YO_nodes:
-            x, y = nodes[0], nodes[1]
-            ax.plot(x, y, 'o', ms = 2, color='purple')
-        for nodes in spatial.OP_nodes:
-            x, y = nodes[0], nodes[1]
-            ax.plot(x, y, 'o', ms = 2, color='orange')
     if obsbores == True:
         spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)
         for x, y, label in zip(spatial.obsbore_gdf.geometry.x, spatial.obsbore_gdf.geometry.y, spatial.obsbore_gdf.ID):
@@ -384,3 +357,6 @@ def plot_spatial(spatial,
         if labels:
             for x, y, label in zip(spatial.geobore_gdf.geometry.x, spatial.geobore_gdf.geometry.y, spatial.geobore_gdf.ID):
                 ax.annotate(label, xy=(x, y), xytext=(2, 2), size = 7, textcoords="offset points")
+
+    if structuralmodel_data:
+        ax.plot(structuralmodel.data.X, structuralmodel.data.Y, 'o', ms = 1, color = 'red')

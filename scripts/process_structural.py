@@ -9,6 +9,7 @@ from loopflopy.mesh_routines import resample_linestring
 import rasterio
 from rasterio.transform import rowcol
 from openpyxl import load_workbook
+from shapely.geometry import LineString, Point
 
 def prepare_strat_column(structuralmodel):
     
@@ -49,18 +50,44 @@ def prepare_strat_column(structuralmodel):
         if i == 0: mn = vals[i] #work around for the ground
         stratigraphic_column[sequences[i]][strat_names[i]] = {'min': mn, 'max': mx, 'id': lithids[i], 'color': stratcolors[i]}
     ###########################    
-           
+    print(strat)
     structuralmodel.strat = strat
     structuralmodel.strat_col = stratigraphic_column
     structuralmodel.strat_names = strat_names
     structuralmodel.cmap = cmap
     structuralmodel.norm = norm
+    structuralmodel.sequence = sequence
+    structuralmodel.lithids = lithids
+    structuralmodel.vals = vals
+
+def geo_boundaries(project, structuralmodel, geo_crop_poly, simplify_tolerance, node_spacing):
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'O-P contact simplified')
+    df = df.dropna(subset=['Easting', 'Northing'])
+    points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
+    line = LineString(points)
+    ls_simple = line.simplify(tolerance=simplify_tolerance, preserve_topology=True)
+    ls_resample = resample_linestring(ls_simple, node_spacing) # Resample linestring
+    op_ls = LineString(ls_resample)
+    op_gdf = gpd.GeoDataFrame(geometry = [op_ls], crs=project.crs)
+    structuralmodel.op_gdf = gpd.clip(op_gdf, geo_crop_poly).reset_index(drop=True)
+    structuralmodel.OP_nodes = op_ls.coords
+
+    df = pd.read_excel('../data/data_geology/Otorowiri_outcrop.xlsx', sheet_name = 'Y-O contact simplified')
+    df = df.dropna(subset=['Easting', 'Northing'])
+    points = [Point(xy) for xy in zip(df['Easting'], df['Northing'])]
+    line = LineString(points)
+    ls_simple = line.simplify(tolerance=simplify_tolerance, preserve_topology=True)
+    ls_resample = resample_linestring(ls_simple, node_spacing) # Resample linestring
+    yo_ls = LineString(ls_resample)
+    yo_gdf = gpd.GeoDataFrame(geometry = [yo_ls], crs=project.crs)
+    structuralmodel.yo_gdf = gpd.clip(yo_gdf, geo_crop_poly).reset_index(drop=True)
+    structuralmodel.YO_nodes = yo_ls.coords
 
 # bring in the data from the outcrop in process spatial to add 'obs' points from the outcrop
-def add_geo_boundaries(structuralmodel, spatial):
+def add_geo_boundaries(structuralmodel):
     df = pd.read_excel(structuralmodel.geodata_fname, sheet_name='geo') #Refer to the geology spreadsheet
     #import all the relative boundary information points
-    OP_boundary = pd.DataFrame(spatial.OP_nodes, columns=['Easting', 'Northing'])
+    OP_boundary = pd.DataFrame(structuralmodel.OP_nodes, columns=['Easting', 'Northing'])
     OP_boundary['ID'] = ['OP_boundary' + str(i) for i in range(len(OP_boundary))]
     OP_boundary['Data_type'] = 'Control'
     OP_boundary['Source'] = 'DMIRS geology shapefile'
@@ -69,12 +96,12 @@ def add_geo_boundaries(structuralmodel, spatial):
     OP_boundary = OP_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([df, OP_boundary], ignore_index=True)
     #print(combined_df)
-    YO_boundary = pd.DataFrame(spatial.YO_nodes, columns=['Easting', 'Northing'])
+    YO_boundary = pd.DataFrame(structuralmodel.YO_nodes, columns=['Easting', 'Northing'])
     YO_boundary['ID'] = ['YO_boundary' + str(i) for i in range(len(YO_boundary))]
     YO_boundary['Data_type'] = 'Control'
     YO_boundary['Source'] = 'DMIRS geology shapefile'
     YO_boundary['Kp'] = '-'
-    YO_boundary['Kpo'] = -6
+    YO_boundary['Kpo'] = -15
     YO_boundary = YO_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([combined_df, YO_boundary], ignore_index=True)
     #write the combined data to a new excel sheet in the same file
@@ -170,7 +197,7 @@ def elevation_fill(structuralmodel):
     return df
 
 # ---------- Prepare borehole data ----------------
-def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
+def prepare_geodata(structuralmodel, extent = None, Fault = True):
     df= pd.read_excel(structuralmodel.geodata_fname, sheet_name='geodata_elevation') #this should be the corrected data with elevations
     df['Ground_mAHD'] = pd.to_numeric(df['Ground_mAHD'], errors='coerce')  # Ensure values are numeric, convert invalid to NaN
     print(f"{len(df)} valid elevation points retained for further processing.")
@@ -188,7 +215,7 @@ def prepare_geodata(structuralmodel, spatial, extent = None, Fault = True):
             groundlevel = data_list[i][5]  
 
             # Add ground level to dataframe
-            formatted_data.append([boreid, easting, northing, groundlevel, 232, 'Ground', 'Ground', 0, 0, 1, data_type]) 
+            formatted_data.append([boreid, easting, northing, groundlevel, 0, 'Ground', 'Ground', 0, 0, 1, data_type]) 
 
             #print(df.shape[1])
             count = 1  # Add data row for each lithology
@@ -252,7 +279,7 @@ def create_structuralmodel(structuralmodel):
     #Kp        = model.create_and_add_foliation("Kp", nelements=1e4 , interpolatortype = "FDI", buffer = 0.1)
     #Kp_UC     = model.add_unconformity(Kp, structuralmodel.strat[structuralmodel.strat.unit == 'Kp'].val.iloc[0])
     #Kpo        = model.create_and_add_foliation("Kpo", nelements=1e4 , interpolatortype = "FDI", buffer = 0.1)
-    
+    model.set_stratigraphic_column(structuralmodel.strat_col)
     structuralmodel.model = model
     
 
