@@ -212,9 +212,21 @@ def make_obs_gdf(df, geomodel, mesh, spatial):
 
     gdf = gdf[gdf['zobs'] != np.nan] # Don't include obs with no zobs
     gdf = gdf[gdf['zobs'] > geomodel.z0] # Don't include obs deeper than flow model bottom
-    geomodel.zcenters = geomodel.botm + geomodel.thick/2
+    gdf = gdf.reset_index(drop=True)
 
     # Perform the intersection
+    gdf['icpl'] = gdf.apply(lambda row: mesh.vgrid.intersect(row.Easting,row.Northing), axis=1)
+    gdf['ground'] = gdf.apply(lambda row: geomodel.top_geo[row.icpl], axis=1)
+    gdf['model_bottom'] = gdf.apply(lambda row: geomodel.botm[-1, row.icpl], axis=1)
+    gdf['zobs-bot'] = gdf.apply(lambda row: row['zobs'] - row['model_bottom'], axis=1)
+
+    for idx, row in gdf.iterrows():
+        result = row['zobs'] - row['model_bottom']
+        if result < 0:
+            print(f"Bore {row['id']} has a zobs elevation below model bottom by: {result} m, removing from obs list")
+
+    gdf = gdf[gdf['zobs-bot'] > 0] # filters out observations that are below the model bottom
+
     gdf['cell_disv'] = gdf.apply(lambda row: utils.xyz_to_disvcell(geomodel, row.Easting, row.Northing, row.zobs), axis=1)
     gdf['cell_disu'] = gdf.apply(lambda row: utils.disvcell_to_disucell(geomodel, row['cell_disv']), axis=1)  
 

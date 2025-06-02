@@ -11,12 +11,12 @@ from rasterio.io import MemoryFile
 from rasterio.mask import mask
 from pyproj import CRS
 
-def model_DEM(spatial):
+def model_DEM(crop_polygon, crs):
     # Read the DEM file and set the CRS
-    asc_path = "C:\\Users\\00105010\\Projects\\Otorowiri\\data\\data_elevation\\rasters_COP30\\output_hh.asc"
+    asc_path = "../Data/data_elevation/rasters_COP30/output_hh.asc"
     #crs=spatial.epsg
-    crs = rasterio.crs.CRS.from_epsg(spatial.epsg) # Set the CRS to EPSG:28350
-    model_geom = [mapping(spatial.model_boundary_poly)] # Convert the polygon to a format suitable for rasterio
+    crs = rasterio.crs.CRS.from_epsg(28350)# Set the CRS to EPSG:28350
+    model_geom = [mapping(crop_polygon)] # Convert the polygon to a format suitable for rasterio
 
     with rasterio.open(asc_path) as src:
         # reproject the ASC crs to the model crs
@@ -48,9 +48,9 @@ def model_DEM(spatial):
     output_filename = "Otorowiri_Model_DEM.asc"
     output_path = os.path.join("..", "data", "data_dem", output_filename)
     ## Create the gdf for the DEM data    
-    spatial.dem_gdf = gpd.GeoDataFrame({'geometry': [spatial.model_boundary_poly]}, crs=crs)
+    dem_gdf = gpd.GeoDataFrame({'geometry': [crop_polygon]}, crs=crs) #KB
     masked_data = np.ma.masked_equal(out_image, -9999)  # Mask the NoData values
-    spatial.dem_gdf['elevation'] = [float(masked_data.mean())]  # Calculate the mean elevation
+    dem_gdf['elevation'] = [float(masked_data.mean())]  # Calculate the mean elevation KB
     # Save the clipped DEM to the new ASC file
     with open(output_path, 'w') as asc_file:
         # Write the ASC header
@@ -73,8 +73,9 @@ def model_DEM(spatial):
     tiff_output_filename = "Otorowiri_Model_DEM.tif"
     tiff_output_path = os.path.join("..", "modelfiles", tiff_output_filename)
     
-    spatial.model_DEM = output_path
-    spatial.model_DEM_2 = tiff_output_path ###use the geotiff option if the asc option doesn't work
+
+    #spatial.model_DEM = output_path
+    #spatial.model_DEM_2 = tiff_output_path ###use the geotiff option if the asc option doesn't work
 
     with rasterio.open(tiff_output_path,
     'w',

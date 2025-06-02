@@ -3,20 +3,23 @@ import numpy as np
 from shapely.geometry import LineString,Point,Polygon,MultiPolygon,shape
 import loopflopy.utils as utils
 import pickle
+import geopandas as gpd
 from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
+import flopy
 
 class Data:
     def __init__(self):
 
             self.data_label = "DataBaseClass"
 
-    def process_rch(self, geomodel, mesh):
+    def process_rch(self, geomodel):
    
         rec = []
 
-        for icpl in range(mesh.ncpl):
+        for icpl in range(geomodel.ncpl):
             lay = 0
-            cell_disv = icpl + lay*mesh.ncpl
+            cell_disv = icpl + lay*geomodel.ncpl
             cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
             rch = 0.035
             if cell_disu != -1: # if cell is not pinched out...
@@ -24,6 +27,21 @@ class Data:
 
         self.rch_rec = {}      
         self.rch_rec[0] = rec 
+
+
+
+    def process_evta(self, geomodel):
+       
+        #  fixed_cell (boolean) indicates that evapotranspiration will not be
+        #      reassigned to a cell underlying the cell specified in the list if the
+        #      specified cell is inactive.
+        
+        fixed_cell = True 
+        surface = geomodel.top_geo # ground elevation
+        depth = 1 * np.ones((geomodel.ncpl))   # extinction depth
+        rate = 1e-3 * np.ones((geomodel.ncpl))  # ET max
+        self.evta_pars = [fixed_cell, surface, depth, rate]
+
 
     def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
                   # geo layer pumping from
@@ -153,6 +171,80 @@ class Data:
                         if cell_disu != -1:
                             self.ghb_rec.append([cell_disu, props.ghb_west_stage[geo_lay], 
                                                  props.ghb_west_cond[geo_lay]]) # node, stage, conductance
+
+    def process_drn_linestrings(self, spatial):
+
+        gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
+        gdf.to_crs(epsg=28350, inplace=True)
+        gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+
+        ##Arrowsmith River polygons
+        Arrowsmith_gdf = gdf[((gdf['something'] == 'Arrowsmith_1') | (gdf['something'] == 'Arrowsmith_2') | (gdf['something'] == 'Arrowsmith_3'))]
+        ls1 = Arrowsmith_gdf.iloc[0].geometry
+        ls2 = Arrowsmith_gdf.iloc[1].geometry
+        ls3 = Arrowsmith_gdf.iloc[2].geometry
+
+        linestrings = [ls1, ls2, ls3]
+        labels = ['ls1', 'ls2', 'ls3']
+        def plot_linestrings(lines, labels):
+            fig, ax = plt.subplots() 
+            for line, label in zip(lines, labels):
+                x, y = line.xy
+                ax.plot(x, y, '-o', ms = 2, label = label)  # You can set color, linestyle, etc.
+
+            ax.set_aspect('equal')
+            ax.legend()
+            plt.show()
+        plot_linestrings(linestrings, labels)
+        return linestrings
+
+    def get_drain_cells(self, linestrings, geomodel):
+        ixs = flopy.utils.GridIntersect(geomodel.vgrid, method="vertex")
+        cellids = []
+        for seg in linestrings:
+            v = ixs.intersect(seg, sort_by_cellid=True)
+            cellids += v["cellids"].tolist()
+        intersection_rg = np.zeros(geomodel.vgrid.shape[1:])
+        for loc in cellids:
+            intersection_rg[loc] = 1
+
+        # intersect stream segs to simulate as drains
+        ixs = flopy.utils.GridIntersect(geomodel.vgrid, method="vertex")
+        drn_cellids = []
+        drn_lengths = []
+        i = 0
+        for seg in linestrings:
+            v = ixs.intersect(LineString(seg), sort_by_cellid=True)
+            drn_cellids += v["cellids"].tolist()
+            drn_lengths += v["lengths"].tolist()
+            i+=1
+        print('Number of drain cells = ', len(drn_cellids))
+
+        ibd = np. zeros((geomodel.ncpl), dtype=int)
+        for i, cellid in enumerate(drn_cellids):
+            ibd[cellid] = 1
+
+        return ibd, drn_cellids, drn_lengths
+
+
+    def make_drain_rec(self, geomodel, drn_cellids, drn_lengths):
+        
+        # not sure what the next few lines are about, but copied from here: https://flopy.readthedocs.io/en/latest/Notebooks/mf6_parallel_model_splitting_example.html
+        # I'm guessing that dv0 is depth of drain, and the "leakance" is based on head difference between middle and bottom of drain
+        dv0 = 5. # I think this means depth of drain?
+        leakance = 1.0 / (0.5 * dv0)  # kv / b
+        self.drn_rec = []
+        for icpl, length in zip(drn_cellids, drn_lengths):
+            model_lay = 0 # drain in top flow model layer
+            cell_disv = icpl + model_lay*geomodel.ncpl # find the disv cell...
+            cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv) # convert to the disu cell..
+        
+            width = 10 # Assume a constant width of 10m for all drains
+            conductance = leakance * length * width
+
+            if cell_disu != -1: # if cell is not pinched out...
+                self.drn_rec.append((cell_disu, geomodel.vgrid.top[icpl], conductance))
+
 '''
         stageleft = 10.0
         stageright = 10.0

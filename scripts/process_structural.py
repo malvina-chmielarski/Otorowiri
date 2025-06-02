@@ -58,6 +58,7 @@ def prepare_strat_column(structuralmodel):
     structuralmodel.norm = norm
     structuralmodel.sequence = sequence
     structuralmodel.lithids = lithids
+    structuralmodel.sequences = sequences
     structuralmodel.vals = vals
 
 def geo_boundaries(project, structuralmodel, geo_crop_poly, simplify_tolerance, node_spacing):
