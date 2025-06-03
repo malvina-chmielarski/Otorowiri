@@ -12,15 +12,18 @@ def gather_boundary_linestrings(project):
     ls = gdf.geometry[0]
     line1 = LineString(resample_linestring(ls, 1000))  
 
-    #fname = '../Data/Data_shp/Groundwater_divide.shp'
-    #gdf = gpd.read_file(fname)
-    #gdf.to_crs(epsg=project.crs, inplace=True)
-    #ls = gdf.geometry[0]
-    #line2 = LineString(resample_linestring(ls, 1000))  
+    fname = '../Data/Data_shp/Groundwater_divide.shp'
+    gdf = gpd.read_file(fname)
+    gdf.to_crs(epsg=project.crs, inplace=True)
+    ls = gdf.geometry[0]
+    line2 = LineString(resample_linestring(ls, 1000))
+
     ######### CHEATING!!!! ###################
+    '''
     coords = [(350000, 6680000), (388000, 6690000)]
     ls = LineString(coords)
-    line2 = LineString(resample_linestring(ls, 1000))  
+    line2 = LineString(resample_linestring(ls, 1000))
+    '''
     ##########################################
 
     fname = '../modelfiles/surface_contours.shp'
@@ -29,14 +32,8 @@ def gather_boundary_linestrings(project):
     ls = gdf.geometry[0]
     line3 = LineString(resample_linestring(ls, 1000))   
 
-    ######### CHEATING!!!! ###################
-    coords = [(343000, 6767000), (360000, 6764000)]
-    ls = LineString(coords)
-    line4 = LineString(resample_linestring(ls, 1000))    
-    ##########################################
-
-    raw_lines = [line1, line2, line3, line4] 
-    labels = ['line1', 'line2', 'line3', 'line4']
+    raw_lines = [line1, line2, line3] 
+    labels = ['line1', 'line2', 'line3']
     return raw_lines, labels
 
 def plot_linestrings(lines, labels):
@@ -49,38 +46,58 @@ def plot_linestrings(lines, labels):
     ax.legend()
     plt.show()
 
+
+from shapely.ops import split
+from shapely.geometry import LineString, Point
+
+
 def trim_boundary_linestrings(raw_lines):
     
-    line1, line2, line3, line4 = raw_lines[0], raw_lines[1], raw_lines[2], raw_lines[3]
+    line1, line2, line3 = raw_lines[0], raw_lines[1], raw_lines[2]
 
     trimmed = split(line3, line2) # line to be trimmer, cutter line
     line3 = trimmed.geoms[0]
 
-    trimmed = split(line3, line4) # line to be trimmer, cutter line
-    line3 = trimmed.geoms[1]
-
-    trimmed = split(line1, line4) # line to be trimmer, cutter line
-    line1 = trimmed.geoms[1]
-
     trimmed = split(line1, line2) # line to be trimmer, cutter line
     line1 = trimmed.geoms[0]
 
-    trimmed = split(line4, line3) # line to be trimmer, cutter line
-    line4 = trimmed.geoms[1]
-
-    trimmed = split(line4, line1) # line to be trimmer, cutter line
-    line4 = trimmed.geoms[0]
-
     trimmed = split(line2, line3) # line to be trimmer, cutter line
-    line2 = trimmed.geoms[1]
+    if len(trimmed.geoms) > 1:
+        line2 = trimmed.geoms[1]
+    elif len(trimmed.geoms) == 1:
+        # If the split didn't create two parts, keep the original line2
+        print("Warning: Split did not create two parts for line2, keeping original line2.")
+        line2 = trimmed.geoms[0]
+    else:
+        raise ValueError("Split resulted in no geometries, check the input linestrings.")
 
     trimmed = split(line2, line1) # line to be trimmer, cutter line
     line2 = trimmed.geoms[0]
 
-    trimmed_lines = [line1, line2, line3, line4]        
+    trimmed = split(line3, line1) # line to be trimmer, cutter line
+    if len(trimmed.geoms) > 1:
+        line3 = trimmed.geoms[1]
+    elif len(trimmed.geoms) == 1:
+        # If the split didn't create two parts, keep the original line2
+        print("Warning: Split did not create two parts for line3, keeping original line3.")
+        line3 = trimmed.geoms[0]
+    else:
+        raise ValueError("Split resulted in no geometries, check the input linestrings.")
+    
+    trimmed = split(line1, line3) # line to be trimmer, cutter line
+    if len(trimmed.geoms) > 1:
+        line1 = trimmed.geoms[1]
+    elif len(trimmed.geoms) == 1:
+        # If the split didn't create two parts, keep the original line2
+        print("Warning: Split did not create two parts for line1, keeping original line1.")
+        line1 = trimmed.geoms[0]
+    else:
+        raise ValueError("Split resulted in no geometries, check the input linestrings.")
+
+    trimmed_lines = [line1, line2, line3]        
     return  trimmed_lines
 
-def snap_linestring_endpoints(lines, tolerance=1e-6):
+def snap_linestring_endpoints(lines, tolerance=1e-5):
     # Collect all endpoints
     endpoints = []
     for line in lines:
@@ -111,7 +128,12 @@ def snap_linestring_endpoints(lines, tolerance=1e-6):
         new_lines.append(LineString(coords))
     return new_lines
 
-def make_boundary_polygon(snapped_lines):
+def make_boundary_polygon(trimmed_lines, snapped_lines):
+
+    for i, line in enumerate(trimmed_lines):
+        start = Point(line.coords[0])
+        end = Point(line.coords[-1])
+        print(f"Line {i+1} start: {start}, end: {end}")
     
     polygons = list(polygonize(snapped_lines))
     if len(polygons) == 0:

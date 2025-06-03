@@ -125,7 +125,7 @@ def head_boundary2(spatial):
     spatial.chd_west_ls = coast_ls
 
 def geo_bores(spatial):   
-    df = pd.read_excel('../data/data_geology/bore_data.xlsx', sheet_name = 'geo')
+    df = pd.read_excel('../data/data_geology/bore_data_Otorowiri.xlsx', sheet_name = 'geo')
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.geobore_gdf = gdf
@@ -134,7 +134,7 @@ def geo_bores(spatial):
     spatial.nobs = len(spatial.xygeobores)
 
 def obs_bores(spatial): #, observations):   
-    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'mAHD')
+    df = pd.read_excel('../data/data_geology/bore_data_Otorowiri.xlsx', sheet_name = 'geo')
     #df = observations.df_boredetails
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
@@ -144,7 +144,7 @@ def obs_bores(spatial): #, observations):
     spatial.nobs = len(spatial.xyobsbores)
 
 def pump_bores(spatial):    
-    df = pd.read_excel('../data/data_geology/Otorowiri_Model_Geology.xlsx', sheet_name = 'pumping_bores')
+    df = pd.read_excel('../data/data_geology/bore_data_Otorowiri.xlsx', sheet_name = 'pumping_bores')
     gdf = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.Easting, df.Northing), crs=spatial.epsg)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
     spatial.pumpbore_gdf = gdf

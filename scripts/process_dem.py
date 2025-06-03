@@ -11,7 +11,7 @@ from rasterio.io import MemoryFile
 from rasterio.mask import mask
 from pyproj import CRS
 
-def model_DEM(crop_polygon, crs):
+def model_DEM(crop_polygon):
     # Read the DEM file and set the CRS
     asc_path = "../Data/data_elevation/rasters_COP30/output_hh.asc"
     #crs=spatial.epsg
@@ -71,8 +71,7 @@ def model_DEM(crop_polygon, crs):
 
     # Save the GeoTIFF version of the DEM
     tiff_output_filename = "Otorowiri_Model_DEM.tif"
-    tiff_output_path = os.path.join("..", "modelfiles", tiff_output_filename)
-    
+    tiff_output_path = os.path.join("..", "data", "data_dem", tiff_output_filename)
 
     #spatial.model_DEM = output_path
     #spatial.model_DEM_2 = tiff_output_path ###use the geotiff option if the asc option doesn't work
@@ -99,4 +98,4 @@ def model_DEM(crop_polygon, crs):
     plt.tight_layout()
     plt.show()
 
-    return output_filename
+    return tiff_output_filename
