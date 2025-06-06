@@ -66,9 +66,6 @@ def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds
 
-
-
-
 def head_boundary(spatial):    
 
     # WEST

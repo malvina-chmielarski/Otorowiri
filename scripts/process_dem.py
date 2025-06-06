@@ -99,3 +99,46 @@ def model_DEM(crop_polygon):
     plt.show()
 
     return tiff_output_filename
+
+def geomodel_DEM(tiff_input_path):
+    #shapefile_path = 'C://Users//00105010//Projects//Otorowiri//data//data_shp//structuralmodel.shp'
+    shapefile_path = '../modelfiles/model_boundary_polygon.shp'
+    shapefile = gpd.read_file(shapefile_path)
+    shapefile = shapefile.to_crs(CRS.from_epsg(28350)) #Keep all CRS the same
+
+    with rasterio.open(tiff_input_path) as src:
+        # Convert shapefile geometry to GeoJSON-like mapping
+        shapes = [mapping(geom) for geom in shapefile.geometry]
+
+        # Clip the raster with the shapefile
+        out_image, out_transform = mask(src, shapes, crop=True)
+        out_meta = src.meta.copy()
+        out_meta.update({
+            "driver": "GTiff",
+            "height": out_image.shape[1],
+            "width": out_image.shape[2],
+            "transform": out_transform,
+            "nodata": -9999
+        })
+    
+    geomodel_dem_output_path = os.path.join("..", "data", "data_dem", "Otorowiri_Geomodel_DEM.tif")
+
+    # Save the clipped raster
+    with rasterio.open(geomodel_dem_output_path, "w", **out_meta) as dest:
+        dest.write(out_image)
+
+    nodata_val = out_meta.get("nodata", -9999)
+    out_image = np.ma.masked_equal(out_image, nodata_val)
+    
+    #plotting the figure
+    fig, ax = plt.subplots(figsize=(8, 6))
+    image = rasterio.plot.show(out_image[0], transform=out_transform, cmap='terrain', ax=ax)
+    if image is not None:
+        cbar = plt.colorbar(image.get_images()[0], ax=ax, label='Elevation (m)')
+    ax.set_title("Clipped Elevation Map")
+    ax.set_xlabel("Easting (m)")
+    ax.set_ylabel("Northing (m)")
+    plt.tight_layout()
+    plt.show()
+
+    print(f"Clipped GeoTIFF saved to: {geomodel_dem_output_path}")

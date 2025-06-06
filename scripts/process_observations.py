@@ -6,6 +6,7 @@ import numpy as np
 import loopflopy.utils as utils
 import flopy
 import math
+import os
 
 def convert_static_to_ahd(row):
     key = (row['Site Short Name'], row['Collect Date'])
@@ -18,6 +19,102 @@ def convert_static_to_ahd(row):
         return row['GL mAHD'] - row['Reading Value']
     else:
         return pd.NA
+
+#####STEP 0: Extract a csv file of borehole IDs from the DWER extract that can be fed into the WIR data request#####
+def create_bore_list():
+    DWER_extract = gpd.read_file("../data/data_waterlevels/WIN_Sites_ArrowsmithExtract.shp")
+    valid_bores = DWER_extract[DWER_extract['SITE_ID'].astype(str).str.match(r'^\d{8}$')]  # Filter for 8-digit borehole IDs
+    bore_IDs = valid_bores['SITE_ID'].astype(int).reset_index(drop=True) #change to astype(str) to set back to strings
+    # WIR can only accept bore IDs of less than 1000, so the total list needs to be split into chunks of 1000
+    output_dir = "../data/data_waterlevels/obs/bore_id_chunks"
+    os.makedirs(output_dir, exist_ok=True)
+    chunk_size = 999
+    num_chunks = math.ceil(len(bore_IDs) / chunk_size)
+    for i in range(num_chunks):
+        chunk = bore_IDs[i * chunk_size : (i + 1) * chunk_size]
+        output_path = os.path.join(output_dir, f"bore_id_list_{i+1:02d}.txt")
+        chunk.to_csv(output_path, index=False, header=False, float_format='%.0f') # take off float_format to get strings
+        print(f"Saved chunk {i+1} with {len(chunk)} IDs to: {output_path}")
+    # Save a full csv with no header and no index for easy WIR data request
+    output_path = "../data/data_waterlevels/obs/bore_id_list.txt"
+    bore_IDs.to_csv(output_path, index=False, header=False)
+    print(f"{len(bore_IDs)} BORE_IDs written to: {output_path}")
+
+#####STEP 1: Trim ALL the observation points extracted from DWER to model boundary shape#####
+    # This will likely still contain a lot of information from bores which are NOT screened in the Parmelia aquifer
+
+def trim_obs_to_shape(geomodel_shapefile):
+    all_extracted_obs = gpd.read_file("../data/data_waterlevels/WIN_Sites_ArrowsmithExtract.shp")
+    model_boundary = gpd.read_file(geomodel_shapefile)
+    if all_extracted_obs.crs != model_boundary.crs:
+        print("CRS mismatch: reprojecting observation points to match model boundary.")
+        all_extracted_obs = all_extracted_obs.to_crs(model_boundary.crs)
+
+    # keep only bore points that fall within the model polygon
+    bores_in_model = gpd.sjoin(all_extracted_obs, model_boundary, how="inner", predicate="within")
+
+    # drop extra columns from the spatial join
+    bores_in_model = bores_in_model.drop(columns=[col for col in bores_in_model.columns if 'index_right' in col])
+
+    # Filter for SITE_IDs that are exactly 8 digits - these are the only borehole IDs (the rest are surface or weather stations)
+    bores_in_model = bores_in_model[
+        bores_in_model['SITE_ID'].astype(str).str.match(r'^\d{8}$')]
+
+    print(f"{len(bores_in_model)} bore points retained within model boundary.")
+
+    bore_ids = bores_in_model['SITE_ID'].astype(int).reset_index(drop=True)
+    output_path = "../data/data_waterlevels/obs/filtered_bore_ids.txt"
+    bore_ids.to_csv(output_path, index=False, header=False)
+    print(f"Filtered bore ID list written to: {output_path}")
+
+    '''fig, ax = plt.subplots(figsize=(8, 8))
+    model_boundary.boundary.plot(ax=ax, edgecolor='black', linewidth=1)
+    bores_in_model.plot(ax=ax, color='red', markersize=25, label='Filtered Bores')
+    ax.set_title("Filtered Bore Locations Within Model Boundary")
+    ax.set_xlabel("Easting (m)")
+    ax.set_ylabel("Northing (m)")
+    ax.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()'''
+    
+    return bores_in_model
+
+def assign_aquifer(bores_in_model):
+    #filter the full bore list to be only those spatially within the model
+    site_details = pd.read_excel('../data/data_waterlevels/model_area_raw/174416/Site - All Site Details (Excel).xlsx', sheet_name='Site Details')
+    bore_in_model_filter = bores_in_model['SITE_ID'].astype(str).unique()
+    site_details['Site Ref'] = site_details['Site Ref'].astype(str)
+    site_in_model_details = site_details[site_details['Site Ref'].isin(bore_in_model_filter)]
+    print(f"{len(site_in_model_details)} site records matched to model bore IDs.")
+
+    # Extract the fields of interest from site details and create the preliminary dataframe to add to
+    columns_from_site_details = ['Site Ref', 'Site Name', 'Site Short Name', 'Easting', 'Northing', 'Latitude', 'Longitude']
+    df = site_in_model_details[columns_from_site_details]
+    df = df.sort_values('Site Ref').reset_index(drop=True)
+
+    # Add the Elevations where they exist
+    elevations = pd.read_excel('../data/data_waterlevels/model_area_raw/174416/Site - All Site Details (Excel).xlsx', sheet_name='Depth Measurement Points')
+    elevations = elevations[elevations['Measurement Point Type'] == 'Ground level'].drop_duplicates(subset=['Site Ref'])
+    elevations['Site Ref'] = elevations['Site Ref'].astype(str)
+    df = df.merge(
+        elevations[['Site Ref', 'Elevation (m as per Datum Plane)']],
+        on='Site Ref',
+        how='left')
+    df = df.rename(columns={'Elevation (m as per Datum Plane)': 'Elevation_DWER'})
+
+    # Add the drilled depths
+    drilled_depths = pd.read_excel('../data/data_waterlevels/model_area_raw/174416/Site - All Site Details (Excel).xlsx', sheet_name='Borehole Information')
+    drilled_depths['Site Ref'] = drilled_depths['Site Ref'].astype(str)
+    df = df.merge(
+        drilled_depths[['Site Ref', 'Drilled Depth (m)']],
+        on='Site Ref',
+        how='left')
+    df = df.rename(columns={'Drilled Depth (m)': 'Drilled Depth'})
+
+    output_path = "../data/data_waterlevels/obs/01_All_Groundwater_bores.xlsx"
+    df.to_excel(output_path, index=False)
+
 
 #filter all the raw WIR data to narrow down the bores screened in the lithology of interest
 def prefilter_data():

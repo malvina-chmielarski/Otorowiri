@@ -115,7 +115,7 @@ def add_geo_boundaries(structuralmodel):
 #fill in any blank z values with an extract from the asc file
 def elevation_fill(structuralmodel):
     #clipped_DEM = spatial.model_DEM #path to the clipped DEM file
-    clipped_DEM = '../modelfiles/Otorowiri_Model_DEM.tif'
+    clipped_DEM = '../data/data_dem/Otorowiri_Model_DEM.tif'
     with rasterio.open(clipped_DEM) as src:
         ##check the DEM bounds
         bounds = src.bounds
