@@ -92,7 +92,7 @@ def add_geo_boundaries(structuralmodel):
     OP_boundary['ID'] = ['OP_boundary' + str(i) for i in range(len(OP_boundary))]
     OP_boundary['Data_type'] = 'Control'
     OP_boundary['Source'] = 'DMIRS geology shapefile'
-    OP_boundary['Kp'] = -10
+    OP_boundary['Kp'] = 0
     OP_boundary['Kpo'] = '-'
     OP_boundary = OP_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([df, OP_boundary], ignore_index=True)
@@ -102,7 +102,7 @@ def add_geo_boundaries(structuralmodel):
     YO_boundary['Data_type'] = 'Control'
     YO_boundary['Source'] = 'DMIRS geology shapefile'
     YO_boundary['Kp'] = '-'
-    YO_boundary['Kpo'] = -15
+    YO_boundary['Kpo'] = 0
     YO_boundary = YO_boundary[['ID', 'Easting', 'Northing', 'Data_type', 'Source', 'Kp', 'Kpo']]
     combined_df = pd.concat([combined_df, YO_boundary], ignore_index=True)
     #write the combined data to a new excel sheet in the same file
@@ -113,7 +113,7 @@ def add_geo_boundaries(structuralmodel):
     print(f"\nUpdated DataFrame with geo_boundaries written to new sheet: '{new_sheet_name}' in file: {output_excel_path}")
 
 #fill in any blank z values with an extract from the asc file
-def elevation_fill(structuralmodel):
+def elevation_fill_unknown(structuralmodel):
     #clipped_DEM = spatial.model_DEM #path to the clipped DEM file
     clipped_DEM = '../data/data_dem/Otorowiri_Model_DEM.tif'
     with rasterio.open(clipped_DEM) as src:
@@ -194,6 +194,57 @@ def elevation_fill(structuralmodel):
     with pd.ExcelWriter(output_excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
         df.to_excel(writer, sheet_name=new_sheet_name, index=False)
     print(f"\nUpdated DataFrame written to new sheet: '{new_sheet_name}' in file: {output_excel_path}")
+
+    return df
+
+# elevation fill ALL data - this will match all borehole tops to the DEM
+def elevation_fill_all(structuralmodel):
+    clipped_DEM = '../data/data_dem/Otorowiri_Model_DEM.tif'
+    df = pd.read_excel(structuralmodel.geodata_fname, sheet_name='geo_boundaries') #Refer to the geology spreadsheet
+    #see QAQC code above in elevation_fill_unknown if needed
+    
+    # Open the DEM file and get its bounds and nodata value
+    with rasterio.open(clipped_DEM) as src:
+        nodata = src.nodata
+        bounds = src.bounds
+
+        # list all coordinates within the geological spreadsheet
+        coords = list(zip(df['Easting'], df['Northing']))
+
+        # Filter coordinates within DEM bounds
+        valid_idx = [
+            idx for idx, (x, y) in zip(df.index, coords)
+            if bounds.left <= x <= bounds.right and bounds.bottom <= y <= bounds.top]
+        valid_coords = [
+            (df.at[idx, 'Easting'], df.at[idx, 'Northing']) for idx in valid_idx]
+
+        if not valid_coords:
+            print("No valid coordinates inside the DEM bounds.")
+            return df
+
+        sampled_values = list(src.sample(valid_coords))
+
+        # Replace ALL elevation values with DEM elevation
+        for idx, val in zip(valid_idx, sampled_values):
+            elevation = val[0]
+            if elevation != nodata:
+                df.at[idx, 'Ground_mAHD'] = elevation
+            else:
+                df.at[idx, 'Ground_mAHD'] = np.nan
+
+        print(f"Replaced elevation values for {len(valid_coords)} points from DEM.")
+
+    # Remove invalid values
+    df = df.dropna(subset=['Ground_mAHD'])  # Drop NaNs
+    df = df[df['Ground_mAHD'] != 0]         # Drop 0 elevations if invalid for your region
+
+    # Save to a new sheet in the same Excel file
+    output_excel_path = structuralmodel.geodata_fname
+    new_sheet_name = 'geodata_elevation'
+    with pd.ExcelWriter(output_excel_path, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
+        df.to_excel(writer, sheet_name=new_sheet_name, index=False)
+
+    print(f"Updated elevations written to sheet: '{new_sheet_name}' in {output_excel_path}")
 
     return df
 

@@ -26,7 +26,7 @@ def gather_boundary_linestrings(project):
     '''
     ##########################################
 
-    fname = '../modelfiles/surface_contours.shp'
+    fname = '../Data/Data_shp/surface_contours.shp'
     gdf = gpd.read_file(fname)
     gdf.to_crs(epsg=project.crs, inplace=True)
     ls = gdf.geometry[0]
@@ -70,7 +70,7 @@ def trim_boundary_linestrings(raw_lines):
         line2 = trimmed.geoms[0]
     else:
         raise ValueError("Split resulted in no geometries, check the input linestrings.")
-
+    
     trimmed = split(line2, line1) # line to be trimmer, cutter line
     line2 = trimmed.geoms[0]
 
@@ -97,7 +97,9 @@ def trim_boundary_linestrings(raw_lines):
     trimmed_lines = [line1, line2, line3]        
     return  trimmed_lines
 
-def snap_linestring_endpoints(lines, tolerance=1e-5):
+
+
+def snap_linestring_endpoints(lines, tolerance=5000.0):
     # Collect all endpoints
     endpoints = []
     for line in lines:
@@ -118,6 +120,17 @@ def snap_linestring_endpoints(lines, tolerance=1e-5):
     # Replace endpoints in lines
     new_lines = []
     for line in lines:
+        new_coords = []
+        for pt in line.coords:
+            pt = tuple(pt)
+            pt = snapped_points.get(pt, pt)  # snap if close match found
+            new_coords.append(pt)
+        new_lines.append(LineString(new_coords))
+    return new_lines
+    
+    '''
+    new_lines = []
+    for line in lines:
         coords = list(line.coords)
         start = tuple(coords[0])
         end = tuple(coords[-1])
@@ -126,7 +139,7 @@ def snap_linestring_endpoints(lines, tolerance=1e-5):
         if end in snapped_points:
             coords[-1] = snapped_points[end]
         new_lines.append(LineString(coords))
-    return new_lines
+    return new_lines'''
 
 def make_boundary_polygon(trimmed_lines, snapped_lines):
 
@@ -143,6 +156,6 @@ def make_boundary_polygon(trimmed_lines, snapped_lines):
 
     poly = polygons[0]
     gdf = gpd.GeoDataFrame(geometry=[poly], crs='EPSG:28350')
-    gdf.to_file('../modelfiles/model_boundary_polygon.shp')
+    gdf.to_file('../Data/data_shp/model_boundary_polygon.shp')
 
     return poly

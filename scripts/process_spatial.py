@@ -45,7 +45,7 @@ def make_bbox_shp(spatial, x0, x1, y0, y1):
 
 def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     #model_boundary_shp_fname = '../data/data_shp/Otorowiri_Model_Extent_update_new.shp'
-    model_boundary_shp_fname = '../modelfiles/model_boundary_polygon.shp'
+    model_boundary_shp_fname = '../Data/data_shp/model_boundary_polygon.shp'
     model_boundary_gdf = gpd.read_file(model_boundary_shp_fname)
     model_boundary_gdf.to_crs(epsg=spatial.crs, inplace=True) 
     model_boundary_poly = Polygon(model_boundary_gdf.geometry.iloc[0])
@@ -61,7 +61,7 @@ def model_boundary(spatial, boundary_buff, simplify_tolerance, node_spacing):
     #refinement_boundary_poly = resample_poly(refinement_boundary_gs, 3000) 
     spatial.boundary_buff = boundary_buff
     spatial.model_boundary_gdf = model_boundary_gdf
-    model_boundary_gdf.to_file('../modelfiles/model_boundary.shp')
+    model_boundary_gdf.to_file('../Data/data_shp/model_boundary.shp')
     spatial.model_boundary_poly = model_boundary_poly
     spatial.inner_boundary_poly = inner_boundary_poly
     spatial.x0, spatial.y0, spatial.x1, spatial.y1 = model_boundary_poly.bounds

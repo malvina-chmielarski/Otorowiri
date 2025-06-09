@@ -102,7 +102,7 @@ def model_DEM(crop_polygon):
 
 def geomodel_DEM(tiff_input_path):
     #shapefile_path = 'C://Users//00105010//Projects//Otorowiri//data//data_shp//structuralmodel.shp'
-    shapefile_path = '../modelfiles/model_boundary_polygon.shp'
+    shapefile_path = '../Data/data_shp/model_boundary_polygon.shp'
     shapefile = gpd.read_file(shapefile_path)
     shapefile = shapefile.to_crs(CRS.from_epsg(28350)) #Keep all CRS the same
 
