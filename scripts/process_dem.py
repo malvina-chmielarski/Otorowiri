@@ -11,14 +11,18 @@ from rasterio.io import MemoryFile
 from rasterio.mask import mask
 from pyproj import CRS
 
-def model_DEM(crop_polygon):
+def model_DEM(original_asc_path, crop_polygon_shp_path, output_tif_path):
     # Read the DEM file and set the CRS
     asc_path = "../Data/data_elevation/rasters_COP30/output_hh.asc"
     #crs=spatial.epsg
     crs = rasterio.crs.CRS.from_epsg(28350)# Set the CRS to EPSG:28350
+
+    # retrieve polygon
+    gdf = gpd.read_file(crop_polygon_shp_path)
+    crop_polygon = gdf.geometry.iloc[0]
     model_geom = [mapping(crop_polygon)] # Convert the polygon to a format suitable for rasterio
 
-    with rasterio.open(asc_path) as src:
+    with rasterio.open(original_asc_path) as src:
         # reproject the ASC crs to the model crs
         transform, width, height = calculate_default_transform(
         src.crs, crs, src.width, src.height, *src.bounds)
@@ -69,14 +73,10 @@ def model_DEM(crop_polygon):
     with open(prj_path, 'w') as prj_file:
         prj_file.write(crs.to_wkt())
 
-    # Save the GeoTIFF version of the DEM
-    tiff_output_filename = "Otorowiri_Model_DEM.tif"
-    tiff_output_path = os.path.join("..", "data", "data_dem", tiff_output_filename)
-
     #spatial.model_DEM = output_path
     #spatial.model_DEM_2 = tiff_output_path ###use the geotiff option if the asc option doesn't work
 
-    with rasterio.open(tiff_output_path,
+    with rasterio.open(output_tif_path,
     'w',
     driver='GTiff',
     height=out_image.shape[1],
@@ -98,15 +98,15 @@ def model_DEM(crop_polygon):
     plt.tight_layout()
     plt.show()
 
-    return tiff_output_filename
+    return output_tif_path
 
-def geomodel_DEM(tiff_input_path):
-    #shapefile_path = 'C://Users//00105010//Projects//Otorowiri//data//data_shp//structuralmodel.shp'
-    shapefile_path = '../Data/data_shp/model_boundary_polygon.shp'
-    shapefile = gpd.read_file(shapefile_path)
+def crop_geotiff(original_tif_path, crop_polygon_shp_path, output_tif_path):
+
+    crop_polygon_shp_path = '../Data/data_shp/model_boundary_polygon.shp'
+    shapefile = gpd.read_file(crop_polygon_shp_path)
     shapefile = shapefile.to_crs(CRS.from_epsg(28350)) #Keep all CRS the same
 
-    with rasterio.open(tiff_input_path) as src:
+    with rasterio.open(original_tif_path) as src:
         # Convert shapefile geometry to GeoJSON-like mapping
         shapes = [mapping(geom) for geom in shapefile.geometry]
 
@@ -120,11 +120,9 @@ def geomodel_DEM(tiff_input_path):
             "transform": out_transform,
             "nodata": -9999
         })
-    
-    geomodel_dem_output_path = os.path.join("..", "data", "data_dem", "Otorowiri_Geomodel_DEM.tif")
 
     # Save the clipped raster
-    with rasterio.open(geomodel_dem_output_path, "w", **out_meta) as dest:
+    with rasterio.open(output_tif_path, "w", **out_meta) as dest:
         dest.write(out_image)
 
     nodata_val = out_meta.get("nodata", -9999)
@@ -141,4 +139,4 @@ def geomodel_DEM(tiff_input_path):
     plt.tight_layout()
     plt.show()
 
-    print(f"Clipped GeoTIFF saved to: {geomodel_dem_output_path}")
+    print(f"Clipped GeoTIFF saved to: {output_tif_path}")
