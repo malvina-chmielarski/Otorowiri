@@ -9,18 +9,7 @@ import math
 import os
 import rasterio
 from scipy.interpolate import griddata
-
-def convert_static_to_ahd(row):
-    key = (row['Site Short Name'], row['Collect Date'])
-    if (
-        row['Variable Name'] == 'Static water level (m)' and
-        key not in ahd_index and
-        pd.notna(row['GL mAHD']) and
-        pd.notna(row['Reading Value'])
-    ):
-        return row['GL mAHD'] - row['Reading Value']
-    else:
-        return pd.NA
+from adjustText import adjust_text
 
 #####STEP 0: Extract a csv file of borehole IDs from the DWER extract that can be fed into the WIR data request#####
 def create_bore_list():
@@ -69,7 +58,8 @@ def trim_obs_to_shape(geomodel_shapefile):
     bore_ids.to_csv(output_path, index=False, header=False)
     print(f"Filtered bore ID list written to: {output_path}")
 
-    '''fig, ax = plt.subplots(figsize=(8, 8))
+    #plot all the initial points within the polygon
+    fig, ax = plt.subplots(figsize=(8, 8))
     model_boundary.boundary.plot(ax=ax, edgecolor='black', linewidth=1)
     bores_in_model.plot(ax=ax, color='red', markersize=25, label='Filtered Bores')
     ax.set_title("Filtered Bore Locations Within Model Boundary")
@@ -78,9 +68,12 @@ def trim_obs_to_shape(geomodel_shapefile):
     ax.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()'''
+    plt.show()
     
     return bores_in_model
+
+#####STEP 2: For all points within geomodel boundary start merging all essential details from all the different Excel sheets#####
+        #this step collates all the data fields of interest but does NOT filter out any unusable/incomplete bores
 
 def create_merged_obs(bores_in_model):
     #filter the full bore list to be only those spatially within the model
@@ -95,7 +88,7 @@ def create_merged_obs(bores_in_model):
     df = site_in_model_details[columns_from_site_details]
     df = df.sort_values('Site Ref').reset_index(drop=True)
 
-    # Add the Elevations where they exist
+    # Add the Elevations where they exist from the 'Depth Measurement Points' sheet
     elevations = pd.read_excel('../data/data_waterlevels/model_area_raw/174416/Site - All Site Details (Excel).xlsx', sheet_name='Depth Measurement Points')
     elevations = elevations[elevations['Measurement Point Type'] == 'Ground level'].drop_duplicates(subset=['Site Ref'])
     elevations['Site Ref'] = elevations['Site Ref'].astype(str)
@@ -130,6 +123,10 @@ def create_merged_obs(bores_in_model):
     output_path = "../data/data_waterlevels/obs/01_All_Groundwater_bores.xlsx"
     df.to_excel(output_path, index=False)
 
+#####STEP 3: Assign elevations from the project DEM file to all the boreholes#####
+        #this step allows us to include bores that were not surveyed, and makes sure that even those that DO contain elevation data are
+        #compatible with the geomodel (no issues later with depth/geomodel mismatches)
+
 def fill_bore_elevations():
     # Fill in the elevations from the DEM data for all bores
     df = pd.read_excel("../data/data_waterlevels/obs/01_All_Groundwater_bores.xlsx")
@@ -148,7 +145,6 @@ def fill_bore_elevations():
                 return 'PASS' if abs(row['Elevation_diff']) <= 5 else 'FAIL'
             return np.nan
         df['Elevation_QAQC'] = df.apply(check_qaqc, axis=1)
-
         insert_after = 'Elevation_DWER'
         col_order = df.columns.tolist()
         for col in ['Elevation_DEM', 'Elevation_diff', 'Elevation_QAQC']:
@@ -165,6 +161,10 @@ def fill_bore_elevations():
     output_path = "../data/data_waterlevels/obs/02_Model_bores_elevations.xlsx"
     df.to_excel(output_path, index=False)
 
+#####STEP 3: Assign aquifer by evaluating the bore information, attached to new DEM elevations, against the geomodel #####
+        #this step will convert all bore depth and screened interval data to mbGL according to DEM-extracted elevations
+        #aquifer is assigned by checking either the screened interval data or depth data against geomodel aquifer bottom
+
 def assign_aquifer(mesh, geomodel):
     df = pd.read_excel("../data/data_waterlevels/obs/02_Model_bores_elevations.xlsx")
     parmelia_bottom = geomodel.botm_geo[0] # Bottom of the Parmelia aquifer
@@ -174,17 +174,19 @@ def assign_aquifer(mesh, geomodel):
 
     # Putting all the drills depths and screen intervals into mAHD from the DEM data
     df['Bore_bottom_elevation'] = df['Elevation_DEM'] - df['Drilled Depth']
+    zero_screen_mask = (df['Screen From (mbGL)'] == 0) & (df['Screen To (mbGL)'] == 0)
+    df.loc[zero_screen_mask, ['Screen From (mbGL)', 'Screen To (mbGL)']] = np.nan
     if {'Screen From (mbGL)', 'Screen To (mbGL)'}.issubset(df.columns):
         df['Screen_top_elevation'] = df['Elevation_DEM'] - df['Screen From (mbGL)']
         df['Screen_bottom_elevation'] = df['Elevation_DEM'] - df['Screen To (mbGL)']
+        df['zobs'] = df['Screen_bottom_elevation'] + (df['Screen_top_elevation'] - df['Screen_bottom_elevation'])/2
 
-    # Create a df to track unused bores
+    # Create a df to track unused bores - these will be added to tracker spreadsheet
     unused_bores = pd.DataFrame(columns=['Site Ref', 'Site Name', 'Site Short Name', 'Owner Name', 'Reason'])
 
     # Filter out bores that have both a depth of 0 and no screen information
     zero_depth = df['Drilled Depth'].fillna(0) == 0
     no_screen_info = df[['Screen From (mbGL)', 'Screen To (mbGL)']].isna().all(axis=1)
-    #mask = ~(zero_depth & no_screen_info)
     insufficient_info_mask = zero_depth & no_screen_info
     if insufficient_info_mask.any():
         filtered_df = df.loc[insufficient_info_mask, ['Site Ref', 'Site Name', 'Site Short Name', 'Owner Name']].copy()
@@ -193,7 +195,18 @@ def assign_aquifer(mesh, geomodel):
     df = df[~insufficient_info_mask].copy()
     print(f"{len(df)} bores retained after filtering out zero-depth with no screen info.")
 
+    # If bores have a depth of 0 but some screen information, assume the screen bottom is the drilled depth
+    #(we're going to assume that even if the bore is drilled deeper, the screens represent the sampled aquifer)
+    depth_is_zero = df['Drilled Depth'].fillna(0) == 0
+    has_screen_info = df[['Screen From (mbGL)', 'Screen To (mbGL)']].notna().any(axis=1)
+    assumed_depth_mask = depth_is_zero & has_screen_info
+    df.loc[assumed_depth_mask, 'Drilled Depth'] = df.loc[assumed_depth_mask, 'Screen To (mbGL)']
+    assumed_depth_bores = df.loc[assumed_depth_mask, 'Site Short Name'].tolist()
+    if assumed_depth_bores:
+        print(f"The bores {assumed_depth_bores} have assumed drill depths based on screen information.")
+
     # Assign aquifer based on the screen bottom elevation first, where available
+    # If screen bottom elevations aren't available, then the bore bottom will be used
     def choose_aquifer(row):
         kp_botm = row['Kp_botm']
         if pd.isna(kp_botm):
@@ -220,87 +233,45 @@ def assign_aquifer(mesh, geomodel):
     df = df[~not_parmelia_mask].copy()
     print(f"{len(df)} bores retained after filtering for Parmelia aquifer.")
 
+    # Once all the bores that are not screened in Parmelia are filtered out, a second pass at filling in the zobs using the bottom of the bore
+    zobs_missing_before = df['zobs'].isna().sum()
+    df['zobs'] = df['zobs'].fillna(df['Elevation_DEM'] - df['Drilled Depth'] / 2)
+    zobs_missing_after = df['zobs'].isna().sum()
+    zobs_filled_by_depth = zobs_missing_before - zobs_missing_after
+    if zobs_filled_by_depth > 0:
+        print(f"{zobs_filled_by_depth} bores had 'zobs' filled in using (Elevation_DEM - Drilled Depth / 2).")
+    df['DEM-zobs'] = df['Elevation_DEM'] - df['zobs']
+    df['zobs-Kp_botm'] = df['zobs'] - df['Kp_botm']
+    
+    # Also once only bores screened in Parmelia are left, any boreholes that have two screened intervals should be merged into one
+    parmelia_df = df.copy()
+    screen_intervals = ['Screen From (mbGL)', 'Screen To (mbGL)']
+    grouped = df.groupby('Site Ref')
+    merged_screens = grouped[screen_intervals].agg({
+        'Screen From (mbGL)': 'min',  # shallowest entry
+        'Screen To (mbGL)': 'max'     # deepest entry
+        }).reset_index()
+    first_rows = grouped.first().reset_index() #this will keep only the first line of the duplicate entry
+    first_rows = first_rows.drop(columns=screen_intervals)
+    df = pd.merge(first_rows, merged_screens, on='Site Ref', how='left')
+    original_cols = parmelia_df.columns.tolist() #re-order columns to be the same as they were in the previous spreadsheet
+    final_cols = [] 
+    for col in original_cols:
+        if col in df.columns:
+            final_cols.append(col)
+    for col in df.columns: 
+        if col not in final_cols:
+            final_cols.append(col)
+    df = df[final_cols]
+    print(f"{len(parmelia_df) - len(df)} duplicate screened intervals merged into single entries.")
+
     output_path = "../data/data_waterlevels/obs/03_Bores_within_aquifer.xlsx"
     with pd.ExcelWriter(output_path) as writer:
         df.to_excel(writer, index=False, sheet_name='Parmelia bores')
         unused_bores.to_excel(writer, index=False, sheet_name='Unused bore tracker')
 
-'''
-#filter all the raw WIR data to narrow down the bores screened in the lithology of interest
-def prefilter_data():
-    # Import all bore data available, and filter to include only Parmelia
-    aquifers = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Aquifers')
-    df = aquifers[
-        (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
-        (aquifers['Aquifer Name'] == 'Perth-Leederville-Parmelia')]
-    # Add Site Short Name, Easting, Northing to df
-    details = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Site Details')
-    df = pd.merge(df, details[['Site Ref', 'Site Short Name', 'Easting', 'Northing']], on='Site Ref', how='left')
-        
-    # Import screen details
-    casing = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Casing')
-    casing = casing[casing['Element'] == 'Inlet (screen)']
-
-    # Identify wells with multiple screen intervals and remove from df
-    duplicates = casing[casing.duplicated('Site Ref', keep=False)]
-    duplicates = pd.merge(duplicates, details[['Site Ref', 'Site Short Name']], on='Site Ref', how='left')
-    duplicate_site_refs = duplicates['Site Ref'].unique()
-    df_boreids = df[~df['Site Ref'].isin(duplicate_site_refs)]
-
-    # Add screened interval to df
-    df_boreids = pd.merge(df_boreids, casing[['Site Ref', 'From (mbGL)', 'To (mbGL)', 'Inside Dia. (mm)']], on='Site Ref', how='left')
-
-    # Export desired obs bores as csv
-    df_boreids.to_csv('../data/data_waterlevels/obs/cleaned_obs_bores.csv', index=False)
-    parmelia_boreids = df_boreids['Site Short Name'].unique()
-    print(f"Unique Parmelia bore IDs: {parmelia_boreids}")
-
-    # Use df_cleaned for data request on Water Information Reporting
-    return df_boreids
-    #print (f"Unique Parmelia bore IDs: {df_boreids.columns}")
-
-def assemble_clean_data(df_boreids): #df_boreids is used here as df_filtered
-    # Now we have get extra bore details from WIR, we can add groundlevel and well screens to our dataframe
-
-    # Add GL to main df
-    measurements = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Depth Measurement Points')
-    ground_level = measurements[measurements['Measurement Point Type'] == 'Ground level'].drop_duplicates(subset=['Site Ref'])
-    toc = measurements[measurements['Measurement Point Type'] == 'Top of casing'].drop_duplicates(subset=['Site Ref'])
-    mp = measurements[measurements['Measurement Point Type'] == 'Measurement Point'].drop_duplicates(subset=['Site Ref'])
-
-    # First use groundlevel measurement
-    df = pd.merge(df_boreids, ground_level[['Site Ref', 'Measurement Point Type', 'Elevation (m as per Datum Plane)']], on='Site Ref', how='left')
-    df = df.rename(columns={'Elevation (m as per Datum Plane)': 'GL mAHD'})
-    df = df.rename(columns={'Measurement Point Type': 'GL source'})
-
-    # If no groundlevel, then Top of Casing - 700mm for ground level
-    df = pd.merge(df, toc[['Site Ref', 'Measurement Point Type', 'Elevation (m as per Datum Plane)']], on='Site Ref', how='left')
-    df.loc[df['GL mAHD'].isna(), 'GL source'] = 'Top of casing'
-    df.loc[df['GL mAHD'].isna(), 'GL mAHD'] = df['Elevation (m as per Datum Plane)'] - 0.7
-    df = df.drop(columns=['Elevation (m as per Datum Plane)'])
-    df = df.drop(columns=['Measurement Point Type'])
-
-    # If no groundlevel or Top of Casing, use measurement point
-    df = pd.merge(df, mp[['Site Ref', 'Measurement Point Type', 'Elevation (m as per Datum Plane)']], on='Site Ref', how='left')
-    df.loc[df['GL mAHD'].isna(), 'GL source'] = 'Measurement Point'
-    df.loc[df['GL mAHD'].isna(), 'GL mAHD'] = df['Elevation (m as per Datum Plane)'] - 0.7
-    df = df.drop(columns=['Elevation (m as per Datum Plane)'])
-    #df = df.drop(columns=['Measurement Point Type'])
-    df = df.drop(columns=['Comments'])
-    df = df.drop(columns=['Depth From/To (mbGL)'])
-
-    # Get top and bottom of screen in mAHD
-    df['Screen top'] = df['GL mAHD'] - df['From (mbGL)']
-    df['Screen bot'] = df['GL mAHD'] - df['To (mbGL)']
-    df['zobs'] = df['Screen bot'] + (df['Screen top'] - df['Screen bot'])/2
-        
-    #df = df.rename(columns={'Site Short Name': 'ID'})
-    df_boredetails = df
-    df_boredetails.to_csv('../data/data_waterlevels/obs/cleaned_obs_bores.csv', index=False) #add information to the csv
-    print_bore_details = df_boredetails.columns
-    print(f"Bore detail columns are: {print_bore_details}")
-
-    return df_boredetails'''
+#####STEP 4: Bring in the water level information from the other WIR extract for the narrowed down bores#####
+        #this step filters out all the points that are either missing any water level information, or have no dates available
 
 def filtered_groundwater_obs(geomodel_shapefile):
     raw_WL_df = pd.read_excel('../data/data_waterlevels/model_area_raw/174415/WaterLevelsDiscreteForSiteCrossTab.xlsx')
@@ -308,7 +279,7 @@ def filtered_groundwater_obs(geomodel_shapefile):
     borehole_df = pd.read_excel('../data/data_waterlevels/obs/03_Bores_within_aquifer.xlsx', sheet_name='Parmelia bores')
     unused_df = pd.read_excel('../data/data_waterlevels/obs/03_Bores_within_aquifer.xlsx', sheet_name='Unused bore tracker')
 
-    # Create a df to track unused bores
+    # Continue tracking boreholes that can't be used
     unused_bores = pd.DataFrame(columns=['Site Ref', 'Site Name', 'Site Short Name', 'Owner Name', 'Reason'])
 
     # Filter out any boreholes that do not contain water level data
@@ -362,10 +333,10 @@ def filtered_groundwater_obs(geomodel_shapefile):
     print(f"Unique bore IDs in water level data after filtering to Parmelia and dropping where there's no WL data: {len(WL_df['Site Ref'].unique())}")
 
     # Merge with the borehole details to get the Site Short Name and Easting/Northing
-    WL_df = pd.merge(WL_df, borehole_df[['Site Ref', 'Site Short Name', 'Easting', 'Northing', 'Elevation_DEM']], on='Site Ref', how='left')
+    WL_df = pd.merge(WL_df, borehole_df[['Site Ref', 'Site Short Name', 'Easting', 'Northing', 'Elevation_DEM', 'zobs']], on='Site Ref', how='left')
 
-    # Figure out whether the 'static water level is the depth to water
-    # Add m_AHD where there is SLE data and statis water level data
+    # Figure out whether the 'static water level' is the depth to water
+    # Add m_AHD where there is SLE data and static water level data
     conflict_mask = WL_df['Static water level (m)'].notna() & WL_df['Water level (SLE) (m)'].notna()
     if conflict_mask.any():
         print(f"Warning: {conflict_mask.sum()} rows have both Static WL and SLE WL — dropping these rows.")
@@ -395,8 +366,8 @@ def filtered_groundwater_obs(geomodel_shapefile):
     plt.tight_layout()
     plt.show()
 
-    #output_path = '../data/data_waterlevels/obs/05_Water_levels_clean.xlsx'
-    #WL_df.to_excel(output_path, index=False)
+    output_path = '../data/data_waterlevels/obs/05_Water_levels_clean.xlsx'
+    WL_df.to_excel(output_path, index=False)
 
 def seasonal_flows(geomodel_shapefile):
     WL_df = pd.read_excel('../data/data_waterlevels/obs/05_Water_levels_clean.xlsx')
@@ -444,6 +415,14 @@ def seasonal_flows(geomodel_shapefile):
 
         # Overlay bore locations
         ax.scatter(x, y, color='red', s=10, label='Bores')
+        texts = []
+        for _, row in group.iterrows():
+            texts.append(ax.text(row['Easting'] + 5, row['Northing'] + 5, row['Site Short Name'],
+                         fontsize=6, color='black', alpha=0.7))
+        adjust_text(texts, ax=ax, only_move={'points':'y', 'texts':'y'}, arrowprops=dict(arrowstyle='->', color='gray'))
+        for _, row in group.iterrows():
+            ax.text(row['Easting'] + 5, row['Northing'] + 5, row['Site Short Name'],
+                fontsize=6, color='black', alpha=0.7)
         ax.set_title(f"Groundwater Contours – {timeframe}")
         ax.set_xlabel("Easting (m)")
         ax.set_ylabel("Northing (m)")
@@ -456,9 +435,73 @@ def seasonal_flows(geomodel_shapefile):
         output_path = os.path.join(output_dir, f"Groundwater_Contours_{timeframe}.png")
         plt.savefig(output_path, dpi=300)
         plt.close(fig)
-
-#def steady_state_obs():
     
+    output_path = '../data/data_waterlevels/obs/06_Water_levels_over_time.xlsx'
+    WL_df.to_excel(output_path, index=False)
+  
+def make_steady_state_gdf(df, geomodel, mesh, spatial):
+
+    # as above, group by the sample timeframe (Year_Season) and where there are more than 10 bores of data available
+    timeframe_counts = df.groupby('Sample timeframe')['Site Ref'].nunique()
+    eligible_timeframes = timeframe_counts[timeframe_counts >= 10].sort_index()
+    if eligible_timeframes.empty:
+        print("No timeframe with at least 10 bores found.")
+        return None
+    
+    #find the earliest timeframe where the condition of >10 bores sampled within the season is met
+    earliest_timeframe = eligible_timeframes.index[0]
+    print(f"Using earliest timeframe with ≥10 bores: {earliest_timeframe}")
+    steady_state_df = df[df['Sample timeframe'] == earliest_timeframe].copy() #save this earliest timeframe as the steady state dataframe
+    steady_state_df = steady_state_df.sort_values('Collect Date').groupby('Site Ref', as_index=False).last() #if there are multiple entries for a timeframe, this will take the latest entry
+
+    gdf = gpd.GeoDataFrame(steady_state_df, geometry=gpd.points_from_xy(steady_state_df.Easting, steady_state_df.Northing), crs=spatial.epsg)
+
+    mask = gdf.geometry.within(spatial.model_boundary_poly)
+    if not mask.all():
+        print("The following geometries are NOT within the polygon:")
+        print(gdf[~mask])
+    else:
+        print("All geometries are within the polygon.")
+    gdf = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points outside model
+
+    gdf = gdf[gdf['zobs'] != np.nan] # Don't include obs with no zobs
+    gdf = gdf[gdf['zobs'] > geomodel.z0] # Don't include obs deeper than flow model bottom
+    gdf = gdf.reset_index(drop=True)
+
+    # Perform the intersection
+    gdf['icpl'] = gdf.apply(lambda row: mesh.vgrid.intersect(row.Easting,row.Northing), axis=1)
+    gdf['ground'] = gdf.apply(lambda row: geomodel.top_geo[row.icpl], axis=1)
+    gdf['model_bottom'] = gdf.apply(lambda row: geomodel.botm[-1, row.icpl], axis=1)
+    gdf['zobs-bot'] = gdf.apply(lambda row: row['zobs'] - row['model_bottom'], axis=1)
+
+    for idx, row in gdf.iterrows():
+        result = row['zobs'] - row['model_bottom']
+        if result < 0:
+            print(f"Bore {row['id']} has a zobs elevation below model bottom by: {result} m, removing from obs list")
+    print(gdf)
+
+    gdf = gdf[gdf['zobs-bot'] > 0] # filters out observations that are below the model bottom
+
+    gdf['cell_disv'] = gdf.apply(lambda row: utils.xyz_to_disvcell(geomodel, row.Easting, row.Northing, row.zobs), axis=1)
+    gdf['cell_disu'] = gdf.apply(lambda row: utils.disvcell_to_disucell(geomodel, row['cell_disv']), axis=1)  
+
+    gdf['(lay,icpl)'] = gdf.apply(lambda row: utils.disvcell_to_layicpl(geomodel, row['cell_disv']), axis = 1)
+    gdf['lay']        = gdf.apply(lambda row: row['(lay,icpl)'][0], axis = 1)
+    gdf['icpl']       = gdf.apply(lambda row: row['(lay,icpl)'][1], axis = 1)
+    gdf['obscell_xy'] = gdf['icpl'].apply(lambda icpl: (mesh.xcyc[icpl][0], mesh.xcyc[icpl][1]))
+    gdf['obscell_z']  = gdf.apply(lambda row: geomodel.zc[row['lay'], row['icpl']], axis=1)
+    gdf['obs_zpillar']  = gdf.apply(lambda row: geomodel.zc[:, row['icpl']], axis=1)
+    gdf['geolay']       = gdf.apply(lambda row: math.floor(row['lay']/geomodel.nls), axis = 1) # model layer to geolayer
+
+    gdf.rename(columns={'Easting': 'x', 'Northing': 'y', 'zobs': 'z', 'ID' : 'id'}, inplace=True) # to be consistent when creating obs_rec array
+
+    # Make sure no pinched out observations
+    if -1 in gdf['cell_disu'].values:
+        print('Warning: some observations are pinched out. Check the model and data.')
+        print('Number of pinched out observations: ', len(gdf[gdf['cell_disu'] == -1]))
+        gdf = gdf[gdf['cell_disu'] != -1] # delete pilot points where layer is pinched out
+
+    return gdf 
 
 def plot_hydrograph(df_boredetails, spatial):
     # Import all water level observations from WIR
@@ -577,3 +620,82 @@ def make_obs_gdf(df, geomodel, mesh, spatial):
         gdf = gdf[gdf['cell_disu'] != -1] # delete pilot points where layer is pinched out
 
     return gdf
+
+
+
+'''
+#filter all the raw WIR data to narrow down the bores screened in the lithology of interest
+def prefilter_data():
+    # Import all bore data available, and filter to include only Parmelia
+    aquifers = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Aquifers')
+    df = aquifers[
+        (aquifers['Aquifer Name'] == 'Perth-Parmelia') | 
+        (aquifers['Aquifer Name'] == 'Perth-Leederville-Parmelia')]
+    # Add Site Short Name, Easting, Northing to df
+    details = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Site Details')
+    df = pd.merge(df, details[['Site Ref', 'Site Short Name', 'Easting', 'Northing']], on='Site Ref', how='left')
+        
+    # Import screen details
+    casing = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Casing')
+    casing = casing[casing['Element'] == 'Inlet (screen)']
+
+    # Identify wells with multiple screen intervals and remove from df
+    duplicates = casing[casing.duplicated('Site Ref', keep=False)]
+    duplicates = pd.merge(duplicates, details[['Site Ref', 'Site Short Name']], on='Site Ref', how='left')
+    duplicate_site_refs = duplicates['Site Ref'].unique()
+    df_boreids = df[~df['Site Ref'].isin(duplicate_site_refs)]
+
+    # Add screened interval to df
+    df_boreids = pd.merge(df_boreids, casing[['Site Ref', 'From (mbGL)', 'To (mbGL)', 'Inside Dia. (mm)']], on='Site Ref', how='left')
+
+    # Export desired obs bores as csv
+    df_boreids.to_csv('../data/data_waterlevels/obs/cleaned_obs_bores.csv', index=False)
+    parmelia_boreids = df_boreids['Site Short Name'].unique()
+    print(f"Unique Parmelia bore IDs: {parmelia_boreids}")
+
+    # Use df_cleaned for data request on Water Information Reporting
+    return df_boreids
+    #print (f"Unique Parmelia bore IDs: {df_boreids.columns}")
+
+def assemble_clean_data(df_boreids): #df_boreids is used here as df_filtered
+    # Now we have get extra bore details from WIR, we can add groundlevel and well screens to our dataframe
+
+    # Add GL to main df
+    measurements = pd.read_excel('../data/data_waterlevels/Otorowiri_site_details.xlsx', sheet_name='Depth Measurement Points')
+    ground_level = measurements[measurements['Measurement Point Type'] == 'Ground level'].drop_duplicates(subset=['Site Ref'])
+    toc = measurements[measurements['Measurement Point Type'] == 'Top of casing'].drop_duplicates(subset=['Site Ref'])
+    mp = measurements[measurements['Measurement Point Type'] == 'Measurement Point'].drop_duplicates(subset=['Site Ref'])
+
+    # First use groundlevel measurement
+    df = pd.merge(df_boreids, ground_level[['Site Ref', 'Measurement Point Type', 'Elevation (m as per Datum Plane)']], on='Site Ref', how='left')
+    df = df.rename(columns={'Elevation (m as per Datum Plane)': 'GL mAHD'})
+    df = df.rename(columns={'Measurement Point Type': 'GL source'})
+
+    # If no groundlevel, then Top of Casing - 700mm for ground level
+    df = pd.merge(df, toc[['Site Ref', 'Measurement Point Type', 'Elevation (m as per Datum Plane)']], on='Site Ref', how='left')
+    df.loc[df['GL mAHD'].isna(), 'GL source'] = 'Top of casing'
+    df.loc[df['GL mAHD'].isna(), 'GL mAHD'] = df['Elevation (m as per Datum Plane)'] - 0.7
+    df = df.drop(columns=['Elevation (m as per Datum Plane)'])
+    df = df.drop(columns=['Measurement Point Type'])
+
+    # If no groundlevel or Top of Casing, use measurement point
+    df = pd.merge(df, mp[['Site Ref', 'Measurement Point Type', 'Elevation (m as per Datum Plane)']], on='Site Ref', how='left')
+    df.loc[df['GL mAHD'].isna(), 'GL source'] = 'Measurement Point'
+    df.loc[df['GL mAHD'].isna(), 'GL mAHD'] = df['Elevation (m as per Datum Plane)'] - 0.7
+    df = df.drop(columns=['Elevation (m as per Datum Plane)'])
+    #df = df.drop(columns=['Measurement Point Type'])
+    df = df.drop(columns=['Comments'])
+    df = df.drop(columns=['Depth From/To (mbGL)'])
+
+    # Get top and bottom of screen in mAHD
+    df['Screen top'] = df['GL mAHD'] - df['From (mbGL)']
+    df['Screen bot'] = df['GL mAHD'] - df['To (mbGL)']
+    df['zobs'] = df['Screen bot'] + (df['Screen top'] - df['Screen bot'])/2
+        
+    #df = df.rename(columns={'Site Short Name': 'ID'})
+    df_boredetails = df
+    df_boredetails.to_csv('../data/data_waterlevels/obs/cleaned_obs_bores.csv', index=False) #add information to the csv
+    print_bore_details = df_boredetails.columns
+    print(f"Bore detail columns are: {print_bore_details}")
+
+    return df_boredetails'''

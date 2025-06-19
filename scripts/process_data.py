@@ -28,8 +28,6 @@ class Data:
         self.rch_rec = {}      
         self.rch_rec[0] = rec 
 
-
-
     def process_evta(self, geomodel):
        
         #  fixed_cell (boolean) indicates that evapotranspiration will not be
@@ -37,9 +35,9 @@ class Data:
         #      specified cell is inactive.
         
         fixed_cell = True 
-        surface = geomodel.top_geo # ground elevation
-        depth = 1 * np.ones((geomodel.ncpl))   # extinction depth
-        rate = 1e-3 * np.ones((geomodel.ncpl))  # ET max
+        surface = np.ones((geomodel.ncell_disu)) # ground elevation
+        depth = 1 * np.ones((geomodel.ncell_disu))   # extinction depth
+        rate = 1e-3 * np.ones((geomodel.ncell_disu))  # ET max
         self.evta_pars = [fixed_cell, surface, depth, rate]
 
 
