@@ -33,13 +33,17 @@ class Data:
         #  fixed_cell (boolean) indicates that evapotranspiration will not be
         #      reassigned to a cell underlying the cell specified in the list if the
         #      specified cell is inactive.
-        
-        fixed_cell = True 
-        surface = np.ones((geomodel.ncell_disu)) # ground elevation
-        depth = 1 * np.ones((geomodel.ncell_disu))   # extinction depth
-        rate = 1e-3 * np.ones((geomodel.ncell_disu))  # ET max
-        self.evta_pars = [fixed_cell, surface, depth, rate]
 
+        evt_cells = np.arange(geomodel.ncpl) # Assume evapotranspiration occurs in top layer of model (and no pinched out cells)
+        
+        depth = 1    # extinction depth (m)
+        rate = 1e-3  # ET max (m/d)
+
+        self.evta_rec = [] # Create a list to store the evapotranspiration records
+        for cell in evt_cells:
+            disucell = utils.disvcell_to_disucell(geomodel, cell) # zerobased
+            surface = geomodel.top_geo[cell] # ground elevation at the cell
+            self.evta_rec.append([disucell, surface, rate, depth])
 
     def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
                   # geo layer pumping from
@@ -229,19 +233,20 @@ class Data:
         
         # not sure what the next few lines are about, but copied from here: https://flopy.readthedocs.io/en/latest/Notebooks/mf6_parallel_model_splitting_example.html
         # I'm guessing that dv0 is depth of drain, and the "leakance" is based on head difference between middle and bottom of drain
-        dv0 = 5. # I think this means depth of drain?
+        riv_depth = 1. # I think this means depth of drain?
         leakance = 1.0 / (0.5 * dv0)  # kv / b
         self.drn_rec = []
         for icpl, length in zip(drn_cellids, drn_lengths):
             model_lay = 0 # drain in top flow model layer
             cell_disv = icpl + model_lay*geomodel.ncpl # find the disv cell...
             cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv) # convert to the disu cell..
-        
+            land_surface = geomodel.top_geo[icpl] # ground elevation at the cell
+            drain_elevation = land_surface - riv_depth # bottom of drain elevation
             width = 10 # Assume a constant width of 10m for all drains
             conductance = leakance * length * width
 
             if cell_disu != -1: # if cell is not pinched out...
-                self.drn_rec.append((cell_disu, geomodel.vgrid.top[icpl], conductance))
+                self.drn_rec.append((cell_disu, drain_elevation, conductance))
 
 '''
         stageleft = 10.0

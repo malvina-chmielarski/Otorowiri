@@ -115,7 +115,7 @@ def add_geo_boundaries(structuralmodel):
 #fill in any blank z values with an extract from the asc file
 def elevation_fill_unknown(structuralmodel):
     #clipped_DEM = spatial.model_DEM #path to the clipped DEM file
-    clipped_DEM = '../data/data_dem/Otorowiri_Model_DEM.tif'
+    clipped_DEM = '../data/data_dem/structuralmodel_dem.tif' #Otorowiri_Model_DEM.tif'
     with rasterio.open(clipped_DEM) as src:
         ##check the DEM bounds
         bounds = src.bounds
@@ -199,7 +199,7 @@ def elevation_fill_unknown(structuralmodel):
 
 # elevation fill ALL data - this will match all borehole tops to the DEM
 def elevation_fill_all(structuralmodel):
-    clipped_DEM = '../data/data_dem/Otorowiri_Model_DEM.tif'
+    clipped_DEM = '../data/data_dem/structuralmodel_dem.tif' #Otorowiri_Model_DEM.tif'
     df = pd.read_excel(structuralmodel.geodata_fname, sheet_name='geo_boundaries') #Refer to the geology spreadsheet
     #see QAQC code above in elevation_fill_unknown if needed
     
@@ -247,6 +247,7 @@ def elevation_fill_all(structuralmodel):
     print(f"Updated elevations written to sheet: '{new_sheet_name}' in {output_excel_path}")
 
     return df
+
 
 # ---------- Prepare borehole data ----------------
 def prepare_geodata(structuralmodel, extent = None, Fault = True):

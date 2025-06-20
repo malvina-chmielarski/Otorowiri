@@ -129,14 +129,14 @@ def crop_geotiff(original_tif_path, crop_polygon_shp_path, output_tif_path):
     out_image = np.ma.masked_equal(out_image, nodata_val)
     
     #plotting the figure
-    fig, ax = plt.subplots(figsize=(8, 6))
-    image = rasterio.plot.show(out_image[0], transform=out_transform, cmap='terrain', ax=ax)
-    if image is not None:
-        cbar = plt.colorbar(image.get_images()[0], ax=ax, label='Elevation (m)')
-    ax.set_title("Clipped Elevation Map")
-    ax.set_xlabel("Easting (m)")
-    ax.set_ylabel("Northing (m)")
-    plt.tight_layout()
-    plt.show()
+    #fig, ax = plt.subplots(figsize=(8, 6))
+    #image = rasterio.plot.show(out_image[0], transform=out_transform, cmap='terrain', ax=ax)
+    #if image is not None:
+    #    cbar = plt.colorbar(image.get_images()[0], ax=ax, label='Elevation (m)')
+    #ax.set_title("Clipped Elevation Map")
+    #ax.set_xlabel("Easting (m)")
+    #ax.set_ylabel("Northing (m)")
+    #plt.tight_layout()
+    #plt.show()
 
     print(f"Clipped GeoTIFF saved to: {output_tif_path}")

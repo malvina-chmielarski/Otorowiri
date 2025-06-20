@@ -9,7 +9,7 @@ import math
 import os
 import rasterio
 from scipy.interpolate import griddata
-from adjustText import adjust_text
+#from adjustText import adjust_text
 
 #####STEP 0: Extract a csv file of borehole IDs from the DWER extract that can be fed into the WIR data request#####
 def create_bore_list():
@@ -607,8 +607,8 @@ def make_obs_gdf(df, geomodel, mesh, spatial):
     gdf['lay']        = gdf.apply(lambda row: row['(lay,icpl)'][0], axis = 1)
     gdf['icpl']       = gdf.apply(lambda row: row['(lay,icpl)'][1], axis = 1)
     gdf['obscell_xy'] = gdf['icpl'].apply(lambda icpl: (mesh.xcyc[icpl][0], mesh.xcyc[icpl][1]))
-    gdf['obscell_z']  = gdf.apply(lambda row: geomodel.zcenters[row['lay'], row['icpl']], axis=1)
-    gdf['obs_zpillar']  = gdf.apply(lambda row: geomodel.zcenters[:, row['icpl']], axis=1)
+    gdf['obscell_z']  = gdf.apply(lambda row: geomodel.zc[row['lay'], row['icpl']], axis=1)
+    gdf['obs_zpillar']  = gdf.apply(lambda row: geomodel.zc[:, row['icpl']], axis=1)
     gdf['geolay']       = gdf.apply(lambda row: math.floor(row['lay']/geomodel.nls), axis = 1) # model layer to geolayer
 
     gdf.rename(columns={'Easting': 'x', 'Northing': 'y', 'zobs': 'z', 'ID' : 'id'}, inplace=True) # to be consistent when creating obs_rec array
