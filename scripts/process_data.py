@@ -21,29 +21,31 @@ class Data:
             lay = 0
             cell_disv = icpl + lay*geomodel.ncpl
             cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-            rch = 0.035
+            rch = 0.000000001  # 0.035 --> 35mm/yr
             if cell_disu != -1: # if cell is not pinched out...
                 rec.append(((0, icpl), rch)) # Assume for now 35mm over entire year
 
         self.rch_rec = {}      
         self.rch_rec[0] = rec 
 
-    def process_evta(self, geomodel):
+    def process_evt(self, geomodel):
        
         #  fixed_cell (boolean) indicates that evapotranspiration will not be
         #      reassigned to a cell underlying the cell specified in the list if the
         #      specified cell is inactive.
 
         evt_cells = np.arange(geomodel.ncpl) # Assume evapotranspiration occurs in top layer of model (and no pinched out cells)
-        
-        depth = 1    # extinction depth (m)
-        rate = 1e-3  # ET max (m/d)
-
-        self.evta_rec = [] # Create a list to store the evapotranspiration records
+       
+        depth = 10    # extinction depth (m)
+        rate = 1e-6  # ET max (m/d)
+ 
+        evt = [] # Create a list to store the evapotranspiration records
         for cell in evt_cells:
             disucell = utils.disvcell_to_disucell(geomodel, cell) # zerobased
             surface = geomodel.top_geo[cell] # ground elevation at the cell
-            self.evta_rec.append([disucell, surface, rate, depth])
+            evt.append([disucell, surface, rate, depth])
+        self.evt_rec = {}      
+        self.evt_rec[0] = evt
 
     def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
                   # geo layer pumping from
@@ -233,8 +235,8 @@ class Data:
         
         # not sure what the next few lines are about, but copied from here: https://flopy.readthedocs.io/en/latest/Notebooks/mf6_parallel_model_splitting_example.html
         # I'm guessing that dv0 is depth of drain, and the "leakance" is based on head difference between middle and bottom of drain
-        riv_depth = 1. # I think this means depth of drain?
-        leakance = 1.0 / (0.5 * dv0)  # kv / b
+        riv_depth = 10. # I think this means depth of drain? This is the river stage
+        leakance = 100.0 / (0.5 * riv_depth)  # kv / b
         self.drn_rec = []
         for icpl, length in zip(drn_cellids, drn_lengths):
             model_lay = 0 # drain in top flow model layer

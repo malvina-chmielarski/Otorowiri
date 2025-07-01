@@ -53,7 +53,7 @@ def clip_veg_to_model(spatial, model_boundary):
 def print_clipped_veg_figures(model_boundary):
     clipped_veg_files = [str(p) for p in Path('../data/data_woody/clipped_woody').glob('*.shp')]
     output_dir = '../data/data_woody/clipped_woody/veg_figures/'
-    os.makedirs(dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     
     for shp_path in clipped_veg_files:
         veg = gpd.read_file(shp_path)

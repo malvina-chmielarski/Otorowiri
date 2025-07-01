@@ -1,11 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def plot_surfaceflows():
-    # Load the continuous water level data from the CSV file
-    continuous_df = pd.read_excel('../data/data_surfacewater/174345/WaterLevelsContinuousForSiteCrossTab.xlsx')
-    discrete_df = pd.read_excel('../data/data_surfacewater/174344/WaterLevelsDiscreteForSiteCrossTab.xlsx')
-    
+def plot_surfaceflows(continuous_df, discrete_df):
     # Standardise the critical column names -------------------------------
     rename_map = {
         # Continuous file
@@ -62,3 +58,5 @@ def plot_surfaceflows():
 
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])
         plt.show()
+
+'''def steady_state_stage(continuous_df, discrete_df):'''
