@@ -97,73 +97,30 @@ class Data:
     
         print(self.wel_screens)
 
-    def process_ic(self):
-        self.strt = -50. 
+    def process_ic(self, geomodel):
+        self.strt = 200 #geomodel.top_geo - 1 # Initial water table 1m below ground surface 
 
-    def process_chd(self, geomodel, spatial, mesh):
+    def process_chd(self, geomodel, mesh):
+   
+        xcoords = np.zeros((mesh.ncpl,))  # Initialize an array to hold x-coordinates of drain cells
+        for cell in self.drain_cells:
+            xcoords[cell] = mesh.xcyc[cell][0]  # appends the x-coordinate of each drain cell
+        west_x = np.min(xcoords[xcoords != 0])  # Find the minimum x-coordinate of drain cells
+        print('West x-coordinate of drain cells:', west_x)
+        chd_cell = np.where(xcoords == west_x)[0][0]  # Find the cell index of the westernmost drain cell
+        print('Westernmost drain cell index:', chd_cell)
 
-        # Open PRAMS heads - north boundary
-        pickleoff = open('../data/data_prams/chd_north.pkl','rb')
-        xczc_north_bd, head_north_bd = pickle.load(pickleoff)
-        pickleoff.close()
-        print('northern boundary min and max head: ', head_north_bd.min(), head_north_bd.max())
+        chd_ibd = np.zeros(mesh.ncpl, dtype=int)
+        chd_ibd[chd_cell] = 1  # Set the westernmost drain cell to 1 in the chd_ibd array
 
-        # Open PRAMS heads - south boundary
-        pickleoff = open('../data/data_prams/chd_south.pkl','rb')
-        xczc_south_bd, head_south_bd = pickle.load(pickleoff)
-        pickleoff.close()
-        print('southern boundary min and max head: ', head_south_bd.min(), head_south_bd.max())
-       
-        self.chd_rec = []
-
-        #------- NORTH - Interpolate PRAMS heads onto regular grid
-        points = xczc_north_bd # 2D array of xz points
-        values = head_north_bd
-                
-        xi = [] # generate a 2D of x,z coords along north boundary in PERTH_MODEL
-        for lay in range(geomodel.nlay):
-            for icpl in mesh.chd_north_cells:
-                x = mesh.xcyc[icpl][0]
-                z = geomodel.zc[lay, icpl]
-                xi.append([x,z])
-        xi = np.array(xi)
-        chd_north = griddata(points, values, xi, method='linear')
-        chd_north = chd_north.reshape((geomodel.nlay, len(mesh.chd_north_cells)))
-
-        for lay in range(geomodel.nlay):
-            for i, icpl in enumerate(mesh.chd_north_cells):
-                head = chd_north[lay,i]
-                if not np.isnan(head): #if head is not nan...
-                    if head > geomodel.botm[lay, icpl]: # if head is not below cell bottom...
-                        cell_disv = icpl + lay*mesh.ncpl
-                        cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-                        if cell_disu != -1: # if cell is not pinched out...
-                            self.chd_rec.append([cell_disu, head]) 
-
-        #------- SOUTH - Interpolate PRAMS heads onto regular grid
-        points = xczc_south_bd # 2D array of xz points
-        values = head_south_bd
-                
-        xi = [] # generate a 2D of x,z coords along north boundary in PERTH_MODEL
-        for lay in range(geomodel.nlay):
-            for icpl in mesh.chd_south_cells:
-                x = mesh.xcyc[icpl][0]
-                z = geomodel.zc[lay, icpl]
-                xi.append([x,z])
-        xi = np.array(xi)
-        chd_south = griddata(points, values, xi, method='linear')
-        chd_south = chd_south.reshape((geomodel.nlay, len(mesh.chd_south_cells)))
-
-        for lay in range(geomodel.nlay):
-            for i, icpl in enumerate(mesh.chd_south_cells):
-                head = chd_south[lay, i]
-                if not np.isnan(head): #if head is not nan...
-                    if head > geomodel.botm[lay, icpl]: # if head is not below cell bottom...
-                        cell_disv = icpl + lay*mesh.ncpl
-                        cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-                        if cell_disu != -1: # if cell is not pinched out...
-                            self.chd_rec.append([cell_disu, head]) 
-              
+        head = geomodel.top_geo[chd_cell] - 5 #assumes head 5m below land surface
+        print('Head in CHD cell :', head)
+        chd_rec = []
+        chd_rec.append([chd_cell, head])
+        
+        self.chd_rec = chd_rec
+        self.chd_ibd = chd_ibd
+         
     def process_ghb(self, geomodel, mesh, props): # Coast line
         self.ghb_rec = []
         for icpl in mesh.ghb_west_cells: # for each chd_cell in plan...
@@ -228,6 +185,7 @@ class Data:
         for i, cellid in enumerate(drn_cellids):
             ibd[cellid] = 1
 
+        self.drain_cells = drn_cellids
         return ibd, drn_cellids, drn_lengths
 
 
