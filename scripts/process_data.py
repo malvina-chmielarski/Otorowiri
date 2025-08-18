@@ -7,45 +7,156 @@ import geopandas as gpd
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 import flopy
+import json
+from scipy.spatial import KDTree
 
 class Data:
     def __init__(self):
 
             self.data_label = "DataBaseClass"
 
-    def process_rch(self, geomodel):
-   
+    def process_rch(self, geomodel, mode, mesh, precipitation_df, steady_veg_json):
+        # Recharge values in woody areas (identified in the veg_YEAR_cells file) should be <12 mm/yr
+        # Recharge in regular areas (i.e. on the surface but not in veg_YEAR_cells file) should be 20-50 mm/yr
+
         rec = []
 
-        for icpl in range(geomodel.ncpl):
-            lay = 0
-            cell_disv = icpl + lay*geomodel.ncpl
-            cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
-            rch = 0.000000001  # 0.035 --> 35mm/yr
-            if cell_disu != -1: # if cell is not pinched out...
-                rec.append(((0, icpl), rch)) # Assume for now 35mm over entire year
+        if mode == 'converge':
+            for icpl in range(geomodel.ncpl): #this is ALL the cells in the top layer of the model
+                #geomodel.idomain[(0,0)] = 0
+                lay = 0
+                cell_disv = icpl + lay*geomodel.ncpl
+                cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                if cell_disu == -1: # if cell is not pinched out...
+                    continue # skip pinched out cells
+                rch = 0.0001  # 0.035 --> 35mm/yr, 0.0000001 allows for convergence
+                rec.append(((0, icpl), rch))
+            print('Recharge is', rec)
+            self.rch_rec = {}      
+            self.rch_rec[0] = rec
 
-        self.rch_rec = {}      
-        self.rch_rec[0] = rec 
+        if mode == 'steady':
 
-    def process_evt(self, geomodel):
+            # Define the period precipitation for the steady state timestamp
+            steady_state_timestamp = "1969_Wet" #from process_filtering outcomes = "Using earliest timeframe with ≥10 bores: 1969_Wet"
+            total_rainfall = precipitation_df.loc[
+                precipitation_df['Class'] == steady_state_timestamp, 
+                'Total Rainfall (mm)'
+                ].sum()
+            # the total rainfall needs to be converted from mm in a variable numbers of months to mm/yr
+            num_months = precipitation_df.loc[
+                precipitation_df['Class'] == steady_state_timestamp, 
+                'Date'
+                ].nunique()
+            print(num_months, 'months of data for', steady_state_timestamp)
+            annualised_rainfall = (total_rainfall / num_months) * 12  # Convert to mm/yr as the rate for cells
+            print(f"Annualised rainfall for {steady_state_timestamp}: {annualised_rainfall} mm/yr")
+
+            #Define the woody vegetation domain for 1972 (our proxy for 'steady state' since this is the earliest vegetation data we have)
+            with open(steady_veg_json, 'r') as f:
+                woody_cells = json.load(f)
+            woody_cells = np.array(woody_cells, dtype = int) #this gives an array of cells that are woody vegetation
+            print(woody_cells)
+            print(len(woody_cells), 'woody cells')
+
+            # vegetation coefficients
+            #veg_coeff = {"woody": 0.05, "non-woody": 0.15} # recharge coefficients for woody and non-woody areas
+
+            #create slope for each cell
+            # x and y are stored in mesh as xc and yc
+            centroids = np.array([mesh.xc, mesh.yc]).T  # shape (ncpl, 2)
+            cell_elevation = geomodel.top_geo  # shape (ncpl,)
+            tree = KDTree(centroids)
+            distances, _ = tree.query(centroids, k=2)
+            avg_spacing = np.mean(distances[:, 1])  # average cell spacing
+            neighbors = [tree.query_ball_point(c, r=avg_spacing * 1.5) for c in centroids] # Get neighbors within 1.5× spacing
+            slopes = np.zeros_like(cell_elevation)
+            for i, elev_i in enumerate(cell_elevation):
+                neigh_ids = neighbors[i]
+                if len(neigh_ids) <= 1:
+                    continue
+                slope_sum = 0
+                count = 0
+                for j in neigh_ids:
+                    if j == i:
+                        continue
+                    elev_j = cell_elevation[j]
+                    dx = np.linalg.norm(centroids[i] - centroids[j])
+                    if dx > 0:
+                        slope_sum += abs(elev_i - elev_j) / dx
+                        count += 1
+                slopes[i] = slope_sum / count if count > 0 else 0
+            slope_factor = 1 - (slopes / slopes.max()) * 0.5 # Normalize slopes to range [0.5, 1.0] as a factor
+
+            for icpl in range(geomodel.ncpl): #this is ALL the cells in the top layer of the model
+                lay = 0
+                cell_disv = icpl + lay*geomodel.ncpl
+                cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                if cell_disu == -1: # if cell is not pinched out...
+                    continue # skip pinched out cells
+                #rch = 0.000001  # 0.035 --> 35mm/yr, 0.0000001 allows for convergence
+                if icpl in woody_cells:
+                    cell_precip = (0.05 * annualised_rainfall)  # should stay around 12mm/yr in woody areas
+                else:
+                    cell_precip = (0.15 * annualised_rainfall) # about three times the woody area recharge
+                rch = cell_precip
+                #rch = cell_precip * slope_factor[icpl] # Apply slope factor to the recharge
+                rec.append(((0, icpl), rch))
+            print(rec)
+            self.rch_rec = {}      
+            self.rch_rec[0] = rec
+
+        elif mode == 'transient':
+            # Define the period precipitation for the transient timestamp
+
+            self.rch_rec = {}      
+            self.rch_rec[0] = rec
+
+    def process_evt(self, geomodel, mode, precipitation_df, steady_veg_json):
        
         #  fixed_cell (boolean) indicates that evapotranspiration will not be
         #      reassigned to a cell underlying the cell specified in the list if the
         #      specified cell is inactive.
 
-        evt_cells = np.arange(geomodel.ncpl) # Assume evapotranspiration occurs in top layer of model (and no pinched out cells)
-       
-        depth = 10    # extinction depth (m)
-        rate = 1e-6  # ET max (m/d)
- 
-        evt = [] # Create a list to store the evapotranspiration records
-        for cell in evt_cells:
-            disucell = utils.disvcell_to_disucell(geomodel, cell) # zerobased
-            surface = geomodel.top_geo[cell] # ground elevation at the cell
-            evt.append([disucell, surface, rate, depth])
-        self.evt_rec = {}      
-        self.evt_rec[0] = evt
+        evt = []
+
+        if mode == 'converge':
+            evt_cells = np.arange(geomodel.ncpl) # Assume evapotranspiration occurs in top layer of model (and no pinched out cells)
+        
+            depth = 2    # extinction depth (m) --> this needs to be smaller for evapotranspiration to occur sooner (i.e more evap power)
+            rate = 1e-4  # ET max (m/d)
+    
+            for cell in evt_cells:
+                disucell = utils.disvcell_to_disucell(geomodel, cell) # zerobased
+                surface = geomodel.top_geo[cell] # ground elevation at the cell
+                evt.append([disucell, surface, rate, depth])
+            self.evt_rec = {}      
+            self.evt_rec[0] = evt
+        
+        if mode == 'steady':
+
+            #Define the woody vegetation domain for 1972 (our proxy for 'steady state' since this is the earliest vegetation data we have)
+            with open(steady_veg_json, 'r') as f:
+                woody_cells = json.load(f)
+            woody_cells = np.array(woody_cells, dtype = int) #this gives an array of cells that are woody vegetation
+            print(woody_cells)
+            print(len(woody_cells), 'woody cells')
+
+            for icpl in range(geomodel.ncpl): #this is ALL the cells in the top layer of the model
+                lay = 0
+                cell_disv = icpl + lay*geomodel.ncpl
+                cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
+                #print ('cell_disu', cell_disu)
+                if icpl in woody_cells:
+                    depth = 0.5    # extinction depth (m) --> this needs to be smaller for evapotranspiration to occur sooner (i.e more evap power)
+                    rate = 1e-4  # ET max (m/d)
+                else:
+                    depth = 2    # extinction depth (m) --> this needs to be smaller for evapotranspiration to occur sooner (i.e more evap power)
+                    rate = 1e-4  # ET max (m/d)
+                if cell_disu != -1: # if cell is not pinched out...
+                    evt.append([disucell, surface, rate, depth])
+            self.evt_rec = {}
+            self.evt_rec[0] = evt
 
     def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
                   # geo layer pumping from
@@ -98,7 +209,16 @@ class Data:
         print(self.wel_screens)
 
     def process_ic(self, geomodel):
-        self.strt = 200 #geomodel.top_geo - 1 # Initial water table 1m below ground surface 
+        '''top_cells = np.arange(geomodel.ncpl)
+        starting_WL = []
+        for cell in top_cells:
+            disucell = utils.disvcell_to_disucell(geomodel, cell) # zerobased
+            initial_WL = geomodel.top_geo[cell] - 10 # ground elevation at the cell
+            starting_WL.append([disucell, initial_WL])
+        self.strt = {}      
+        self.strt[0] = starting_WL'''
+
+        self.strt = 215 #geomodel.top_geo - 1 # Initial water table 1m below ground surface #215
 
     def process_chd(self, geomodel, mesh):
    
@@ -185,73 +305,43 @@ class Data:
         for i, cellid in enumerate(drn_cellids):
             ibd[cellid] = 1
 
+        print('the drain lengths are ', drn_lengths)
+
         self.drain_cells = drn_cellids
         return ibd, drn_cellids, drn_lengths
 
+    def make_drain_rec(self, geomodel, setting, drn_cellids, drn_lengths):
+        self.drn_rec = []
 
-    def make_drain_rec(self, geomodel, drn_cellids, drn_lengths):
-        
         # not sure what the next few lines are about, but copied from here: https://flopy.readthedocs.io/en/latest/Notebooks/mf6_parallel_model_splitting_example.html
         # I'm guessing that dv0 is depth of drain, and the "leakance" is based on head difference between middle and bottom of drain
-        riv_depth = 10. # I think this means depth of drain? This is the river stage
-        leakance = 100.0 / (0.5 * riv_depth)  # kv / b
-        self.drn_rec = []
-        for icpl, length in zip(drn_cellids, drn_lengths):
-            model_lay = 0 # drain in top flow model layer
-            cell_disv = icpl + model_lay*geomodel.ncpl # find the disv cell...
-            cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv) # convert to the disu cell..
-            land_surface = geomodel.top_geo[icpl] # ground elevation at the cell
-            drain_elevation = land_surface - riv_depth # bottom of drain elevation
-            width = 10 # Assume a constant width of 10m for all drains
-            conductance = leakance * length * width
+        if setting == 'unconfined':
+            riv_depth = 2.0 # I think this means depth of drain? This is the river stage
+            leakance = 100.0 / (0.5 * riv_depth)  # kv / b --> the higher the leakance, the more water can flow through the drain
+            for icpl, length in zip(drn_cellids, drn_lengths):
+                model_lay = 0 # drain in top flow model layer
+                cell_disv = icpl + model_lay*geomodel.ncpl # find the disv cell...
+                cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv) # convert to the disu cell...
+                land_surface = geomodel.top_geo[icpl] # ground elevation at the cell
+                drain_elevation = land_surface - riv_depth # bottom of drain elevation
+                width = 10 # Assume a constant width of 10m for all drains
+                conductance = leakance * length * width
 
-            if cell_disu != -1: # if cell is not pinched out...
-                self.drn_rec.append((cell_disu, drain_elevation, conductance))
+                if cell_disu != -1: # if cell is not pinched out...
+                    self.drn_rec.append((cell_disu, drain_elevation, conductance))
+        
+        elif setting == 'surficial confinement':
+            #depth_of_surficial_confinement = 10.0 # This is the depth of the surficial confinement layer
+            #also no leakance, just conductance
+            for icpl in zip(drn_cellids, drn_lengths): #here bring in the cell ids of the surficial confinement layer
+                model_lay = 0
+                cell_disv = icpl + model_lay*geomodel.ncpl
+                cell_disu = utils.disvcell_to_disucell(geomodel, cell_disv)
+                land_surface = geomodel.top_geo[icpl]
+                drain_elevation = land_surface #- depth_of_surficial_confinement # keep drain elevation as the top of the geomodel surface
+                #width not included in the surface confinement layer???
+                conductance = 100.0 #/ (0.5 * #depth_of_surficial_confinement) --> number itself doesn't matter (just needs to control the pressure of system)
+                if cell_disu != -1: # if cell is not pinched out...
+                    self.drn_rec.append((cell_disu, drain_elevation, conductance))
 
-'''
-        stageleft = 10.0
-        stageright = 10.0
-        bound_sp1 = []
-        for il in range(nlay):
-            condleft = hk * (stageleft - zbot) * delc
-            condright = hk * (stageright - zbot) * delc
-            for ir in range(nrow):
-                bound_sp1.append([il, ir, 0, stageleft, condleft])
-                bound_sp1.append([il, ir, ncol - 1, stageright, condright])
-        print("Adding ", len(bound_sp1), "GHBs for stress period 1.")
-        
-        
-        # General-Head Boundaries
-        ghb_period = {}
-        ghb_period_array = []
-        for layer, cond in zip(range(1, 3), [15.0, 1500.0]):
-            for row in range(0, 15):
-                ghb_period_array.append(((layer, row, 9), "tides", cond, "Estuary-L2"))
-        ghb_period[0] = ghb_period_array
-        ghb = flopy.mf6.ModflowGwfghb(gwf, stress_period_data=ghb_period,)
-        ts_recarray = []
-        fd = open(os.path.join(data_pth, "tides.txt"))
-        for line in fd:
-            line_list = line.strip().split(",")
-            ts_recarray.append((float(line_list[0]), float(line_list[1])))
-        ghb.ts.initialize(
-            filename="tides.ts",
-            timeseries=ts_recarray,
-            time_series_namerecord="tides",
-            interpolation_methodrecord="linear",
-        )
-        obs_recarray = {
-            "ghb_obs.csv": [
-                ("ghb-2-6-10", "GHB", (1, 5, 9)),
-                ("ghb-3-6-10", "GHB", (2, 5, 9)),
-            ],
-            "ghb_flows.csv": [
-                ("Estuary2", "GHB", "Estuary-L2"),
-                ("Estuary3", "GHB", "Estuary-L3"),
-            ],
-        }
-        ghb.obs.initialize(
-            filename=f"{model_name}.ghb.obs",
-            print_input=True,
-            continuous=obs_recarray,
-        )'''
+                    # if a cell is both river and confinement, then use river depth but confinement conductance

@@ -273,7 +273,7 @@ def assign_aquifer(mesh, geomodel):
 #####STEP 4: Bring in the water level information from the other WIR extract for the narrowed down bores#####
         #this step filters out all the points that are either missing any water level information, or have no dates available
 
-def filtered_transient_obs(geomodel_shapefile):
+def filtered_transient_obs(geomodel_shapefile, seasonal_df):
     raw_WL_df = pd.read_excel('../data/data_waterlevels/model_area_raw/174415/WaterLevelsDiscreteForSiteCrossTab.xlsx')
     #raw_continuous_WL_df = pd.read_excel('../data/data_waterlevels/model_area_raw/174415/WaterLevelsContinuousForSiteCrossTab.xlsx')
     borehole_df = pd.read_excel('../data/data_waterlevels/obs/03_Bores_within_aquifer.xlsx', sheet_name='Parmelia bores')
@@ -351,8 +351,16 @@ def filtered_transient_obs(geomodel_shapefile):
     WL_df['Derived WL (mAHD)'] = WL_df.apply(derive_wl, axis=1)
 
     # Create bins for the seasons (dry versus wet season) for seasonal snapshots
-    WL_df['Season'] = WL_df['Collect Month'].apply(lambda x: 'Wet' if x in [5, 6, 7, 8, 9, 10] else 'Dry')
-    WL_df['Sample timeframe'] = WL_df['Collect Year'].astype(str) + '_' + WL_df['Season'] #this is now Year_Season
+    period_ranges = pd.read_csv(seasonal_df, parse_dates=['Start', 'End'])
+    WL_df['Collect Date'] = pd.to_datetime(WL_df['Collect Date'], dayfirst=True)  # if DD/MM/YYYY
+    def assign_season_class(row, periods):
+        for _, season in periods.iterrows():
+            if season['Start'] <= row['Collect Date'] <= season['End']:
+                return season['Class']
+        return 'Unknown'
+    WL_df['Sample timeframe'] = WL_df.apply(assign_season_class, periods=period_ranges, axis=1)
+    #WL_df['Season'] = WL_df['Collect Month'].apply(lambda x: 'Wet' if x in [5, 6, 7, 8, 9, 10] else 'Dry')
+    #WL_df['Sample timeframe'] = WL_df['Collect Year'].astype(str) + '_' + WL_df['Season'] #this is now Year_Season
 
     #plot and label all the bores on a map
     fig, ax = plt.subplots(figsize=(8, 8))

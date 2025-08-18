@@ -7,12 +7,23 @@ import matplotlib.pyplot as plt
 import glob
 from pathlib import Path
 import flopy.plot
+import pickle
 
 def clip_veg_to_model(spatial, model_boundary):
     #list_of_veg_files = ['../data/data_woody/MC_WC_l1emm_1972_NCAS_sh50_woody_geo_GDA94_MGA50.shp']
     list_of_veg_files = [str(p) for p in Path('../data/data_woody').glob('*.shp')]
     output_dir = '../data/data_woody/clipped_woody/'
     os.makedirs(output_dir, exist_ok=True)
+
+    cache_path = os.path.join(output_dir, "veg_multipolygons_by_year.pkl")
+
+    if os.path.exists(cache_path):
+        with open(cache_path, "rb") as f:
+            veg_multipolygons_by_year = pickle.load(f)
+        for year, multipoly in veg_multipolygons_by_year.items():
+            setattr(spatial, f"{year}_multipoly", multipoly)
+        print(f"Loaded multipolygons from cache: {cache_path}")
+        return
 
     veg_multipolygons_by_year = {}
 
@@ -50,6 +61,10 @@ def clip_veg_to_model(spatial, model_boundary):
         veg_clipped.to_file(out_shp_path)
         print(f"Saved: {out_shp_path}")
 
+    with open(cache_path, "wb") as f:
+        pickle.dump(veg_multipolygons_by_year, f)
+    print(f"Saved multipolygons to cache: {cache_path}")
+
 def print_clipped_veg_figures(model_boundary):
     clipped_veg_files = [str(p) for p in Path('../data/data_woody/clipped_woody').glob('*.shp')]
     output_dir = '../data/data_woody/clipped_woody/veg_figures/'
@@ -72,6 +87,7 @@ def print_clipped_veg_figures(model_boundary):
         plt.close(fig)
         print(f"Saved figure: {fig_path}")
 
+'''
 def project_veg_onto_mesh(mesh, model_boundary):
     clipped_veg_files = [str(p) for p in Path('../data/data_woody/clipped_woody').glob('*.shp')]
     output_dir = '../data/data_woody/clipped_woody/veg_on_mesh_figures/'
@@ -95,4 +111,4 @@ def project_veg_onto_mesh(mesh, model_boundary):
         fig.savefig(fig_path, dpi=300)
         plt.close(fig)
 
-        print(f"Saved: {fig_path}")
+        print(f"Saved: {fig_path}")'''

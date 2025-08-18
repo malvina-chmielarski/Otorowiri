@@ -103,7 +103,7 @@ class Flowmodel:
                                                        angle2 = self.geomodel.angle2,
                                                        angle3 = self.geomodel.angle3, 
                                                        #angle1 = 0., angle2 = 0., angle3 = 0.,
-                                                       icelltype = self.geomodel.iconvert,
+                                                       icelltype = self.geomodel.iconvert, #.astype(int), #had to change to int for mf6
                                                        save_flows = True, 
                                                        save_specific_discharge = True,)
                                                        #dev_minimum_saturated_thickness = 1)# try 0.1 then 0.001... no more than 1m!
@@ -144,6 +144,11 @@ class Flowmodel:
             evt = flopy.mf6.ModflowGwfevt(gwf,
                                             maxbound = len(self.data.evt_rec),
                                             stress_period_data = self.data.evt_rec)      
+        # -------------- DRN -------------------------
+        if self.drn:
+            drn = flopy.mf6.ModflowGwfdrn(gwf, 
+                                          maxbound = len(self.data.drn_rec),
+                                          stress_period_data = self.data.drn_rec)
         
         # -------------- OBS -------------------------
         if self.obs: 

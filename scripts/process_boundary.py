@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from loopflopy.mesh_routines import resample_linestring
 from shapely.ops import split, polygonize
+import pandas as pd
 
 def gather_boundary_linestrings(project):
     fname = '../Data/Data_shp/Fault_eastern_boundary.shp'
@@ -98,7 +99,6 @@ def trim_boundary_linestrings(raw_lines):
     return  trimmed_lines
 
 
-
 def snap_linestring_endpoints(lines, tolerance=5000.0):
     # Collect all endpoints
     endpoints = []
@@ -158,4 +158,24 @@ def make_boundary_polygon(trimmed_lines, snapped_lines):
     gdf = gpd.GeoDataFrame(geometry=[poly], crs='EPSG:28350')
     gdf.to_file('../Data/data_shp/model_boundary_polygon.shp')
 
+    return poly
+
+def boundary_from_shapefile(shapefile_path, structuralmodel):
+    df = pd.read_excel(shapefile_path, sheet_name = 'Otorowiri_boundary')
+    gdf = gpd.GeoDataFrame(
+        df,
+        geometry=[Point(xy) for xy in zip(df['Easting'], df['Northing'])],
+        crs='EPSG:28350')
+    poly = Polygon(gdf.geometry.tolist())
+    poly_gdf = gpd.GeoDataFrame(geometry=[poly], crs='EPSG:28350')
+    poly_gdf.to_file('../Data/data_shp/model_boundary_polygon.shp')
+
+    fig, ax = plt.subplots()
+    x, y = poly.exterior.xy  # Get x and y coordinates from polygon
+    ax.plot(x, y, color='blue', linewidth=2)
+    ax.plot(structuralmodel.data.X, structuralmodel.data.Y, 'o', ms = 1, color = 'red')
+    ax.set_aspect('equal', 'box')
+    ax.set_title("Model Boundary Polygon")
+    plt.show()
+    
     return poly
