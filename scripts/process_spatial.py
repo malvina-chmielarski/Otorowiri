@@ -259,32 +259,57 @@ def arrow(spatial, buffer_distance, node_spacing, threshold):
     spatial.arrow_gdf = gpd.GeoDataFrame(geometry = [poly])
     spatial.arrow_nodes = list(spatial.arrow_gdf.geometry[0].exterior.coords) 
 
-def rivers(spatial, buffer_distance, node_spacing, threshold):  
+def small_creek(spatial, buffer_distance, node_spacing, threshold):  
 
     gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
     gdf.to_crs(epsg=28350, inplace=True)
     gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
-
-    ##Arrowsmith River polygons
-    Arrowsmith_gdf = gdf[((gdf['something'] == 'Arrowsmith_1') | (gdf['something'] == 'Arrowsmith_2') | (gdf['something'] == 'Arrowsmith_3'))]
-    Arrowsmith_gs = Arrowsmith_gdf.buffer(buffer_distance)
-    Arrowsmith_poly = unary_union(Arrowsmith_gs)
-    print(Arrowsmith_poly)
-    Arrowsmith_poly = resample_shapely_poly(Arrowsmith_poly, node_spacing) # streams_multipoly = streams_gdf
-
-    from loopflopy.mesh_routines import remove_close_points
-    cleaned_coords = remove_close_points(list(Arrowsmith_poly.exterior.coords), threshold) # Clean the polygon exterior
-    Arrowsmith_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
     
     ##Another_Creek River polygons
     Small_creek_gdf = gdf[(gdf['something'] == 'Another_Creek')]
     Small_creek_gs = Small_creek_gdf.buffer(buffer_distance)
     Small_creek_poly = unary_union(Small_creek_gs)
-    Small_creek_poly = resample_shapely_poly(Small_creek_poly, node_spacing) # streams_multipoly = streams_gdf
+    poly = resample_shapely_poly(Small_creek_poly, node_spacing) # streams_multipoly = streams_gdf
 
     from loopflopy.mesh_routines import remove_close_points
     cleaned_coords = remove_close_points(list(Small_creek_poly.exterior.coords), threshold) # Clean the polygon exterior
     Small_creek_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    # Removing nodes too close to inner and outer boundary so mesh doesn't go crazy refined (threshold_distance)
+    nodes_to_remove = []
+    for coord in poly.exterior.coords:
+        p1 = Point(coord)
+        for p2 in spatial.inner_boundary_poly.exterior.coords:
+            p2 = Point(p2)
+            if p1.distance(p2) <= threshold:
+                nodes_to_remove.append(p1)
+        for p3 in spatial.model_boundary_poly.exterior.coords:
+            p3 = Point(p3)
+            if p1.distance(p3) <= threshold:
+                nodes_to_remove.append(p1)
+
+    nodes_to_remove = set(nodes_to_remove) # Remove duplicates
+
+    if nodes_to_remove:
+        print('Removing ', len(set(nodes_to_remove)), ' that are too close to the boundary.')
+
+    new_coords = []
+    for node in poly.exterior.coords:
+        if Point(node) not in nodes_to_remove:
+            new_coords.append(node)
+
+    # Saving coordinates as polygon
+    poly = Polygon(new_coords) ## list of shapely points
+
+    spatial.small_creek_poly = poly #Arrowsmith_poly,
+    spatial.small_creek_gdf = gpd.GeoDataFrame(geometry = [poly]) #Arrowsmith_poly, 
+    spatial.small_creek_nodes = list(spatial.small_creek_gdf.geometry[0].exterior.coords)
+
+def sand_plain_creek(spatial, buffer_distance, node_spacing, threshold):
+
+    gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
+    gdf.to_crs(epsg=28350, inplace=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
 
     ##Sand_Plain_Creek River polygons
     Sand_Plain_Creek_gdf = gdf[(gdf['something'] == 'Sand_Plain_Creek_1')]#| (gdf['something'] == 'Sand_Plain_Creek_2')]
@@ -295,18 +320,93 @@ def rivers(spatial, buffer_distance, node_spacing, threshold):
     from loopflopy.mesh_routines import remove_close_points
     cleaned_coords = remove_close_points(list(Sand_Plain_Creek_poly.exterior.coords), threshold) # Clean the polygon exterior
     Sand_Plain_Creek_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+    
+    # Removing nodes too close to inner and outer boundary so mesh doesn't go crazy refined (threshold_distance)
+    nodes_to_remove = []
+    for coord in Sand_Plain_Creek_poly.exterior.coords:
+        p1 = Point(coord)
+        for p2 in spatial.inner_boundary_poly.exterior.coords:
+            p2 = Point(p2)
+            if p1.distance(p2) <= threshold:
+                nodes_to_remove.append(p1)
+        for p3 in spatial.model_boundary_poly.exterior.coords:
+            p3 = Point(p3)
+            if p1.distance(p3) <= threshold:
+                nodes_to_remove.append(p1)
 
-    spatial.river_poly = [Arrowsmith_poly, Small_creek_poly, Sand_Plain_Creek_poly]
-    spatial.river_gdf = gpd.GeoDataFrame(geometry = [Arrowsmith_poly, Small_creek_poly, Sand_Plain_Creek_poly])
-    spatial.river_nodes = list(spatial.river_gdf.geometry[0].exterior.coords) 
+    nodes_to_remove = set(nodes_to_remove) # Remove duplicates
+
+    if nodes_to_remove:
+        print('Removing ', len(set(nodes_to_remove)), ' that are too close to the boundary.')
+
+    new_coords = []
+    for node in Sand_Plain_Creek_poly.exterior.coords:
+        if Point(node) not in nodes_to_remove:
+            new_coords.append(node)
+
+    # Saving coordinates as polygon
+    Sand_Plain_Creek_poly = Polygon(new_coords) ## list of shapely points
+
+    spatial.sand_plain_poly = Sand_Plain_Creek_poly #[Arrowsmith_poly, small_creek_poly]
+    spatial.sand_plain_gdf = gpd.GeoDataFrame(geometry = [Sand_Plain_Creek_poly]) #Arrowsmith_poly, 
+    spatial.sand_plain_nodes = list(spatial.sand_plain_gdf.geometry[0].exterior.coords)
+
+def fault_trace(spatial, buffer_distance, node_spacing, threshold):  
+    gdf = gpd.read_file('../data/data_shp/southern_fault.shp')
+    gdf.to_crs(epsg=28350, inplace=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+
+    ##fault trace polygon
+    southern_fault_gdf = gdf.iloc[[0]]
+    print(southern_fault_gdf)
+    southern_fault_gs = southern_fault_gdf.buffer(buffer_distance)
+    southern_fault_poly = unary_union(southern_fault_gs)
+    print(southern_fault_poly)
+    poly = resample_shapely_poly(southern_fault_poly, node_spacing) # streams_multipoly = streams_gdf
+
+    from loopflopy.mesh_routines import remove_close_points
+    cleaned_coords = remove_close_points(list(southern_fault_poly.exterior.coords), threshold) # Clean the polygon exterior
+    southern_fault_poly = Polygon(cleaned_coords) # Create a new polygon with cleaned coordinates
+
+    # Removing nodes too close to inner and outer boundary so mesh doesn't go crazy refined (threshold_distance)
+    nodes_to_remove = []
+    for coord in poly.exterior.coords:
+        p1 = Point(coord)
+        for p2 in spatial.inner_boundary_poly.exterior.coords:
+            p2 = Point(p2)
+            if p1.distance(p2) <= threshold:
+                nodes_to_remove.append(p1)
+        for p3 in spatial.model_boundary_poly.exterior.coords:
+            p3 = Point(p3)
+            if p1.distance(p3) <= threshold:
+                nodes_to_remove.append(p1)
+
+    nodes_to_remove = set(nodes_to_remove) # Remove duplicates
+
+    if nodes_to_remove:
+        print('Removing ', len(set(nodes_to_remove)), ' that are too close to the boundary.')
+
+    new_coords = []
+    for node in poly.exterior.coords:
+        if Point(node) not in nodes_to_remove:
+            new_coords.append(node)
+
+    # Saving coordinates as polygon
+    poly = Polygon(new_coords) ## list of shapely points
+    
+    spatial.southern_fault_poly = poly 
+    spatial.southern_fault_gdf = gpd.GeoDataFrame(geometry = [poly])
+    spatial.southern_fault_nodes = list(spatial.southern_fault_gdf.geometry[0].exterior.coords) 
     
 def plot_spatial(spatial, structuralmodel,
                  labels = False,
                  obsbores = False, 
                  pumpbores = True, 
                  geobores = True, 
-                 rivers = False,
                  arrow = True,
+                 small_creek = True,
+                 sand_plain = True,
+                 fault_trace = True,
                  structuralmodel_data = True,
                  xsections = True,
                  extent = None):    # extent[[x0,x1], [y0,y1]]
@@ -331,11 +431,17 @@ def plot_spatial(spatial, structuralmodel,
             name = spatial.xsection_names[i]
             ax.annotate(name, xy=(x0-1000, y0), xytext=(2, 2), size = 10, textcoords="offset points")
 
-    if rivers:
-        spatial.river_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
-
     if arrow:
         spatial.arrow_gdf.plot(ax=ax, color = 'darkblue', lw = 0.5, zorder=2)
+    
+    if small_creek:
+        spatial.small_creek_gdf.plot(ax=ax, color = 'lightblue', lw = 0.5, zorder=2)
+    
+    if sand_plain:
+        spatial.sand_plain_gdf.plot(ax=ax, color = 'lightblue', lw = 0.5, zorder=2)
+
+    if fault_trace:
+        spatial.southern_fault_gdf.plot(ax=ax, color = 'darkred', lw = 0.5, zorder=2)
 
     if obsbores == True:
         spatial.obsbore_gdf.plot(ax=ax, markersize = 5, color = 'black', zorder=2)

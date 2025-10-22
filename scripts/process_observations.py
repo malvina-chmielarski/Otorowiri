@@ -36,7 +36,7 @@ def make_obs_gdf(df, geomodel, mesh, spatial):
     for idx, row in gdf.iterrows():
         result = row['zobs'] - row['model_bottom']
         if result < 0:
-            print(f"Bore {row['id']} has a zobs elevation below model bottom by: {result} m, removing from obs list")
+            print(f"Bore {row['Site Ref']} has a zobs elevation below model bottom by: {result} m, removing from obs list")
 
     gdf = gdf[gdf['zobs-bot'] > 0] # filters out observations that are below the model bottom
 

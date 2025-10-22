@@ -148,7 +148,12 @@ class Flowmodel:
         if self.drn:
             drn = flopy.mf6.ModflowGwfdrn(gwf, 
                                           maxbound = len(self.data.drn_rec),
-                                          stress_period_data = self.data.drn_rec)
+                                          stress_period_data = self.data.drn_rec,
+                                          save_flows= True,
+                                          print_input = True,
+                                          print_flows = True,
+                                          boundnames= True,
+                                          )
         
         # -------------- OBS -------------------------
         if self.obs: 
@@ -162,7 +167,8 @@ class Flowmodel:
                                     budget_filerecord='{}.bud'.format(self.scenario), 
                                     head_filerecord='{}.hds'.format(self.scenario),
                                     saverecord=[('HEAD', 'LAST'),('BUDGET', 'ALL')], 
-                                    printrecord=None,)
+                                    printrecord = [("BUDGET", "LAST")] #printrecord=None,) #this is what Kerry had
+                                    )
         
         # -------------- WRITE SIMULATION -------------------------
             
@@ -305,7 +311,7 @@ class Flowmodel:
         ax = plt.subplot(111)
         ax.set_title(flowmodel.scenario, size = 10)
         mapview = flopy.plot.PlotMapView(modelgrid=geomodel.vgrid)#, layer = layer)
-        plan = mapview.plot_array(watertable, cmap='Spectral', alpha=0.8)#, vmin = vmin, vmax = vmax)
+        plan = mapview.plot_array(watertable, cmap='Spectral', alpha=0.8, **kwargs)#, vmin = vmin, vmax = vmax)
         #if vectors:
         #    mapview.plot_vector(flowmodel.spd["qx"], flowmodel.spd["qy"], alpha=0.5)
         ax.set_xlabel('x (m)', size = 10)

@@ -29,10 +29,11 @@ class Data:
                 cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
                 if cell_disu == -1: # if cell is not pinched out...
                     continue # skip pinched out cells
-                rch = 0.0001  # 0.035 --> 35mm/yr, 0.0000001 allows for convergence
-                rec.append(((0, icpl), rch))
+                rch = 0.0003  # 0.035 --> 35mm/yr, 0.0000001 allows for convergence
+                rec.append(((cell_disu), rch))
             print('Recharge is', rec)
-            self.rch_rec = {}      
+            #print('you are definitely changing parameters')
+            self.rch_rec = {}
             self.rch_rec[0] = rec
 
         if mode == 'steady':
@@ -96,13 +97,15 @@ class Data:
                     continue # skip pinched out cells
                 #rch = 0.000001  # 0.035 --> 35mm/yr, 0.0000001 allows for convergence
                 if icpl in woody_cells:
-                    cell_precip = (0.05 * annualised_rainfall)  # should stay around 12mm/yr in woody areas
+                    cell_precip = (0.05 * annualised_rainfall)/3000  # should stay around 12mm/yr in woody areas so 0.012
                 else:
-                    cell_precip = (0.15 * annualised_rainfall) # about three times the woody area recharge
-                rch = cell_precip
-                #rch = cell_precip * slope_factor[icpl] # Apply slope factor to the recharge
-                rec.append(((0, icpl), rch))
-            print(rec)
+                    cell_precip = (0.15 * annualised_rainfall)/3000 # about three times the woody area recharge so 0.036
+                #rch = cell_precip
+                rch = cell_precip * slope_factor[icpl] # Apply slope factor to the recharge
+                rec.append(((cell_disu), rch))
+            print("recharge matrix is:", rec)
+            print("recharge for woody cell 17 is:", rec[17])
+            print("recharge for non-woody cell 20 is:", rec[20])
             self.rch_rec = {}      
             self.rch_rec[0] = rec
 
@@ -112,7 +115,7 @@ class Data:
             self.rch_rec = {}      
             self.rch_rec[0] = rec
 
-    def process_evt(self, geomodel, mode, precipitation_df, steady_veg_json):
+    def process_evt(self, geomodel, mode, steady_veg_json):
        
         #  fixed_cell (boolean) indicates that evapotranspiration will not be
         #      reassigned to a cell underlying the cell specified in the list if the
@@ -124,7 +127,7 @@ class Data:
             evt_cells = np.arange(geomodel.ncpl) # Assume evapotranspiration occurs in top layer of model (and no pinched out cells)
         
             depth = 2    # extinction depth (m) --> this needs to be smaller for evapotranspiration to occur sooner (i.e more evap power)
-            rate = 1e-4  # ET max (m/d)
+            rate = 5e-3  # ET max (m/d)
     
             for cell in evt_cells:
                 disucell = utils.disvcell_to_disucell(geomodel, cell) # zerobased
@@ -148,15 +151,27 @@ class Data:
                 cell_disu = geomodel.cellid_disu.flatten()[cell_disv]
                 #print ('cell_disu', cell_disu)
                 if icpl in woody_cells:
+                    surface = geomodel.top_geo[icpl] # ground elevation at the cell
                     depth = 0.5    # extinction depth (m) --> this needs to be smaller for evapotranspiration to occur sooner (i.e more evap power)
-                    rate = 1e-4  # ET max (m/d)
+                    rate = 1e-3  # ET max (m/d)
                 else:
+                    surface = geomodel.top_geo[icpl] # ground elevation at the cell
                     depth = 2    # extinction depth (m) --> this needs to be smaller for evapotranspiration to occur sooner (i.e more evap power)
                     rate = 1e-4  # ET max (m/d)
                 if cell_disu != -1: # if cell is not pinched out...
-                    evt.append([disucell, surface, rate, depth])
+                    evt.append([cell_disu, surface, rate, depth])
+            print("evt is", evt)
+            print("evt for woody cell 17 is", evt[17])
             self.evt_rec = {}
             self.evt_rec[0] = evt
+        
+        #if mode == 'transient':
+
+            #clearing years
+
+            #post-clearing, pre-pumping years
+
+            #post-pumping years
 
     def process_wel(self, geomodel, mesh, spatial, wel_q, wel_qlay):
                   # geo layer pumping from
@@ -218,7 +233,7 @@ class Data:
         self.strt = {}      
         self.strt[0] = starting_WL'''
 
-        self.strt = 215 #geomodel.top_geo - 1 # Initial water table 1m below ground surface #215
+        self.strt = 210 #geomodel.top_geo - 1 # Initial water table 1m below ground surface #215
 
     def process_chd(self, geomodel, mesh):
    
@@ -265,8 +280,24 @@ class Data:
         ls2 = Arrowsmith_gdf.iloc[1].geometry
         ls3 = Arrowsmith_gdf.iloc[2].geometry
 
-        linestrings = [ls1, ls2, ls3]
-        labels = ['ls1', 'ls2', 'ls3']
+        '''##Small Creek polygons
+        Small_creek_gdf = gdf[gdf['something'] == 'Another_Creek']
+        ls4 = Small_creek_gdf.iloc[0].geometry
+
+        ##Sand Plain polygons
+        Sand_plain_gdf = gdf[gdf['something'] == 'Sand_Plain_Creek_1']
+        ls5 = Sand_plain_gdf.iloc[0].geometry
+
+        ##Fault trace polygons
+        gdf = gpd.read_file('../data/data_shp/southern_fault.shp')
+        gdf.to_crs(epsg=28350, inplace=True)
+        gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+        
+        southern_fault_gdf = gdf.iloc[[0]]
+        ls6 = southern_fault_gdf.iloc[0].geometry'''
+
+        linestrings = [ls1, ls2, ls3] #, ls4, ls5, ls6]
+        labels = ['ls1', 'ls2', 'ls3'] #, 'ls4', 'ls5', 'ls6']
         def plot_linestrings(lines, labels):
             fig, ax = plt.subplots() 
             for line, label in zip(lines, labels):
@@ -277,6 +308,8 @@ class Data:
             ax.legend()
             plt.show()
         plot_linestrings(linestrings, labels)
+
+        print("the lengths of the linestrings are:", sum([line.length for line in linestrings]))
         return linestrings
 
     def get_drain_cells(self, linestrings, geomodel):
@@ -306,6 +339,7 @@ class Data:
             ibd[cellid] = 1
 
         print('the drain lengths are ', drn_lengths)
+        print('the sum of the drain lengths is ', sum(drn_lengths))
 
         self.drain_cells = drn_cellids
         return ibd, drn_cellids, drn_lengths
@@ -317,7 +351,7 @@ class Data:
         # I'm guessing that dv0 is depth of drain, and the "leakance" is based on head difference between middle and bottom of drain
         if setting == 'unconfined':
             riv_depth = 2.0 # I think this means depth of drain? This is the river stage
-            leakance = 100.0 / (0.5 * riv_depth)  # kv / b --> the higher the leakance, the more water can flow through the drain
+            leakance = 1.0 / (0.5 * riv_depth)  # kv / b --> the higher the leakance, the more water can flow through the drain
             for icpl, length in zip(drn_cellids, drn_lengths):
                 model_lay = 0 # drain in top flow model layer
                 cell_disv = icpl + model_lay*geomodel.ncpl # find the disv cell...
@@ -329,9 +363,18 @@ class Data:
 
                 if cell_disu != -1: # if cell is not pinched out...
                     self.drn_rec.append((cell_disu, drain_elevation, conductance))
+                
+                print(f"Drain cell {icpl}: length={length}, conductance={conductance}")
         
         elif setting == 'surficial confinement':
-            #depth_of_surficial_confinement = 10.0 # This is the depth of the surficial confinement layer
+            ###here there will be two kinds of drain cells - the ones that correspond to the surface confinement, and the ones that are still part of the surface drainage
+            with open(steady_veg_json, 'r') as f:
+                woody_cells = json.load(f)
+            woody_cells = np.array(woody_cells, dtype = int) #this gives an array of cells that are woody vegetation
+            print(woody_cells)
+            print(len(woody_cells), 'woody cells')
+            
+            depth_of_surficial_confinement = 10.0
             #also no leakance, just conductance
             for icpl in zip(drn_cellids, drn_lengths): #here bring in the cell ids of the surficial confinement layer
                 model_lay = 0

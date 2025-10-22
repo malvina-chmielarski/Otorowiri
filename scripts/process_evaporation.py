@@ -88,4 +88,21 @@ def plot_average_evaporation():
 
 def create_seasonal_evaporation_summary(seasonal_df):
     evaporation_df = pd.read_excel('../data/data_evaporation/average_evaporation.xlsx')
-    
+    evaporation_df['Date'] = pd.to_datetime(evaporation_df['Date'], dayfirst=True)
+    seasonal_df['Start'] = pd.to_datetime(seasonal_df['Start'], dayfirst=True)
+    seasonal_df['End'] = pd.to_datetime(seasonal_df['End'], dayfirst=True)
+
+    results = []
+    for _, row in seasonal_df.iterrows():
+        mask = (evaporation_df['Date'] >= row['Start']) & (evaporation_df['Date'] <= row['End'])
+        subset = evaporation_df.loc[mask]
+        seasonal_evap = evaporation_df.loc[mask, 'Average_Evap'].sum()
+        results.append({
+            'Class': row['Class'],
+            'Start': row['Start'],
+            'End': row['End'],
+            'Total_Evaporation_mm': seasonal_evap
+        })
+
+    seasonal_evap = pd.DataFrame(results)
+    seasonal_evap.to_excel('../data/data_evaporation/seasonal_average_evaporation.xlsx', index=False)

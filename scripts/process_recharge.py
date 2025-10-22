@@ -9,7 +9,7 @@ from pathlib import Path
 import flopy.plot
 import pickle
 
-def clip_veg_to_model(spatial, model_boundary):
+def clip_veg_to_model(spatial, model_boundary, force_reclip = False):
     #list_of_veg_files = ['../data/data_woody/MC_WC_l1emm_1972_NCAS_sh50_woody_geo_GDA94_MGA50.shp']
     list_of_veg_files = [str(p) for p in Path('../data/data_woody').glob('*.shp')]
     output_dir = '../data/data_woody/clipped_woody/'
@@ -17,13 +17,15 @@ def clip_veg_to_model(spatial, model_boundary):
 
     cache_path = os.path.join(output_dir, "veg_multipolygons_by_year.pkl")
 
-    if os.path.exists(cache_path):
+    if os.path.exists(cache_path) and not force_reclip:
         with open(cache_path, "rb") as f:
             veg_multipolygons_by_year = pickle.load(f)
         for year, multipoly in veg_multipolygons_by_year.items():
             setattr(spatial, f"{year}_multipoly", multipoly)
         print(f"Loaded multipolygons from cache: {cache_path}")
         return
+    
+    print("Reclipping vegetation shapefiles to model boundary...")
 
     veg_multipolygons_by_year = {}
 

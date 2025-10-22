@@ -17,7 +17,7 @@ def plot_steady_state(observed_df, modelled_df):
 
     #print(merged_df)
 
-    sns.set_theme(style='whitegrid')
+    #sns.set_theme(style='whitegrid')
     plt.figure(figsize=(8, 6))
     scatter = sns.scatterplot(
         data=merged_df,
