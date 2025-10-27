@@ -463,69 +463,43 @@ def plot_seasonal_flows(geomodel_shapefile):
         plt.savefig(output_path, dpi=300)
         plt.close(fig)
 
-def plot_hydrograph(spatial):
-    df = pd.read_excel('../data/data_waterlevels/obs/05_Transient_groundwater_obs.xlsx')
+def plot_hydrograph():
+    df_boredetails = pd.read_excel('../data/data_waterlevels/obs/05_Transient_groundwater_obs.xlsx')
+
+    bore_counts = df_boredetails['Site Short Name'].value_counts()
+    valid_bores = bore_counts[bore_counts > 3].index
     
-    # Import all water level observations from WIR
-    df_WL = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
-    #append the df to have the 'Site Short Name' column, which matches the Site Ref in df_boreids   
-    df_WL = pd.merge(df_WL, df_boredetails[['Site Ref', 'Site Short Name', 'Easting', 'Northing', 'GL mAHD']], on='Site Ref', how='left')
-
-    # Plot water levels from the filtered bores
-    parmelia_boreids = df_boredetails['Site Short Name'].unique()
-    parmelia_WL_df = df_WL[df_WL['Site Short Name'].isin(parmelia_boreids)]
-    parmelia_WL_df['geometry'] =  parmelia_WL_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
-    gdf = gpd.GeoDataFrame(parmelia_WL_df, geometry='geometry', crs=spatial.epsg)
-    if gdf.empty:
-        print("GeoDataFrame is empty.")
-    else:
-        print("GeoDataFrame contains data.")
-
-    # Filter out points outside model boundary
-    #parmelia_WL_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon if any snuck in
-    parmelia_bore_refs = parmelia_WL_df['Site Ref'].unique()
-    parmelia_bores = parmelia_WL_df['Site Short Name'].unique()
-    print(f"Unique Parmelia bore IDs: {parmelia_bores}")
-    print(f"Unique Parmelia bore refs: {parmelia_bore_refs}")
-
-    #Cleaning up the data pre-hydrograph
-    #column_names = parmelia_WL_df.columns.unique()
-    parmelia_WL_df = parmelia_WL_df[parmelia_WL_df['Variable Type'] == 'Water level (discrete)'] # Filter for Water Level variable type (eliminates pump test data)
-    parmelia_WL_df = parmelia_WL_df[(parmelia_WL_df['Variable Name'] == 'Water level (AHD) (m)' )]
-                                    #| (parmelia_WL_df['Variable Name'] == 'Static water level (m)')] # Filter for Water Level variable name (eliminates water quality data)
-    parmelia_WL_df['Collect Date'] = pd.to_datetime(parmelia_WL_df['Collect Date'], errors='coerce') # Ensure Collect Date is datetime
-    parmelia_WL_df = parmelia_WL_df.dropna(subset=['Collect Date', 'Reading Value']) # Remove rows with NaNs in the Reading Value or Collect Date columns
-    parmelia_WL_df['Reading Value'] = ( # Remove the ~ character from the Reading Value column and convert to numeric
-        parmelia_WL_df['Reading Value']
-        .astype(str)                     # ensure it's all strings for replacement
-        .str.replace('~', '', regex=False)  # remove ~
-        .str.strip())                     # remove any leading/trailing whitespace
-    parmelia_WL_df['Reading Value'] = pd.to_numeric(parmelia_WL_df['Reading Value'], errors='coerce')
-    parmelia_WL_df = parmelia_WL_df.rename(columns={'Reading Value': 'Water level (m AHD)'}) # All values should now be in AHD so column renamed
+    parmelia_bores = [b for b in df_boredetails['Site Short Name'].unique() if b in valid_bores]
+    print(f"Plotting {len(parmelia_bores)} bores with >3 observations.")
 
     ##Plot all hydrographs on different pages
     bores_per_page = 12
-    total_bores = len(parmelia_bores)
-    pages = int(np.ceil(total_bores / bores_per_page))
+    pages = int(np.ceil(len(parmelia_bores) / bores_per_page))
 
     for page in range(pages):
         fig, axes = plt.subplots(3, 4, figsize=(12, 8), sharex=False, sharey=False)
         axes = axes.flatten()
 
         start = page * bores_per_page
-        end = min(start + bores_per_page, total_bores)
+        end = min(start + bores_per_page, len(parmelia_bores))
         selected_bores = parmelia_bores[start:end]
 
         for i, bore in enumerate(selected_bores):
             ax = axes[i]
-            df = parmelia_WL_df[parmelia_WL_df['Site Short Name'] == bore].dropna(subset=['Collect Date', 'Water level (m AHD)'])
-            if not df.empty:
-                ax.plot(df['Collect Date'], df['Water level (m AHD)'], '-o', label=bore)
+            df_bore = (
+            df_boredetails[df_boredetails['Site Short Name'] == bore]
+            .dropna(subset=['Collect Date', 'Derived WL (mAHD)', 'Elevation_DEM'])
+            .sort_values('Collect Date')
+        )
+            if not df_bore.empty:
+                ax.plot(df_bore['Collect Date'], df_bore['Derived WL (mAHD)'], '-o', label='Water Level (mAHD)')
+                elev = df_bore['Elevation_DEM'].iloc[0]
+                ax.axhline(elev, color='red', linestyle='--', label='Elevation_DEM')
                 ax.set_title(bore, fontsize=10)
                 ax.tick_params(axis='x', rotation=45)
             else:
                 ax.set_title(f"{bore} (No Data)", fontsize=10)
-        for j in range(i + 1, len(axes)):
+        for j in range(len(selected_bores), len(axes)):
                 fig.delaxes(axes[j])
 
         plt.tight_layout()
@@ -611,3 +585,37 @@ def assemble_clean_data(df_boreids): #df_boreids is used here as df_filtered
     print(f"Bore detail columns are: {print_bore_details}")
 
     return df_boredetails'''
+
+
+# Import all water level observations from WIR
+    #df_WL = pd.read_excel('../data/data_waterlevels/Otorowiri_water_levels.xlsx')
+    #append the df to have the 'Site Short Name' column, which matches the Site Ref in df_boreids   
+    #df_WL = pd.merge(df_WL, df_boredetails[['Site Ref', 'Site Short Name', 'Easting', 'Northing', 'Elevation_DEM']], on='Site Ref', how='left')
+
+'''# Plot water levels from the filtered bores
+    parmelia_boreids = df_boredetails['Site Short Name'].unique()
+    parmelia_WL_df = df_WL[df_WL['Site Short Name'].isin(parmelia_boreids)]
+    parmelia_WL_df['geometry'] =  parmelia_WL_df.apply(lambda row: Point(row['Easting'], row['Northing']), axis=1)
+    gdf = gpd.GeoDataFrame(parmelia_WL_df, geometry='geometry', crs=spatial.epsg)
+    if gdf.empty:
+        print("GeoDataFrame is empty.")
+    else:
+        print("GeoDataFrame contains data.")'''
+
+    # Filter out points outside model boundary
+    #parmelia_WL_df = gdf[gdf.geometry.within(spatial.model_boundary_poly)] # Filter points within the polygon if any snuck in
+
+    #Cleaning up the data pre-hydrograph
+    #column_names = parmelia_WL_df.columns.unique()
+'''parmelia_WL_df = parmelia_WL_df[parmelia_WL_df['Variable Type'] == 'Water level (discrete)'] # Filter for Water Level variable type (eliminates pump test data)
+    parmelia_WL_df = parmelia_WL_df[(parmelia_WL_df['Variable Name'] == 'Water level (AHD) (m)' )]
+                                    #| (parmelia_WL_df['Variable Name'] == 'Static water level (m)')] # Filter for Water Level variable name (eliminates water quality data)
+    parmelia_WL_df['Collect Date'] = pd.to_datetime(parmelia_WL_df['Collect Date'], errors='coerce') # Ensure Collect Date is datetime
+    parmelia_WL_df = parmelia_WL_df.dropna(subset=['Collect Date', 'Reading Value']) # Remove rows with NaNs in the Reading Value or Collect Date columns
+    parmelia_WL_df['Reading Value'] = ( # Remove the ~ character from the Reading Value column and convert to numeric
+        parmelia_WL_df['Reading Value']
+        .astype(str)                     # ensure it's all strings for replacement
+        .str.replace('~', '', regex=False)  # remove ~
+        .str.strip())                     # remove any leading/trailing whitespace
+    parmelia_WL_df['Reading Value'] = pd.to_numeric(parmelia_WL_df['Reading Value'], errors='coerce')
+    parmelia_WL_df = parmelia_WL_df.rename(columns={'Reading Value': 'Water level (m AHD)'}) # All values should now be in AHD so column renamed'''

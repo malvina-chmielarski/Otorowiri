@@ -48,6 +48,11 @@ class Flowmodel:
             
         if transient:  
             tdis = flopy.mf6.modflow.mftdis.ModflowTdis(sim, nper=len(self.perioddata), perioddata=self.perioddata)
+
+        #print("TDIS created with nper =", len(self.perioddata))
+        #print("TDIS first entries:", self.perioddata[:3])
+        #print("TDIS object nper =", tdis.nper.get_data())
+        #print("TDIS array shape:", len(tdis.perioddata.array))
         
         # -------------- IMS -------------------------
         # Make linear solver (inner) an order of magnitude tighter than non-linear solver (outer)
@@ -136,7 +141,8 @@ class Flowmodel:
         if self.rch:
             rch = flopy.mf6.modflow.mfgwfrch.ModflowGwfrch(gwf, 
                                                            maxbound = len(self.data.rch_rec),
-                                                           stress_period_data = self.data.rch_rec,)          
+                                                           stress_period_data = self.data.rch_rec,)
+            #print("RCH created with", len(self.data.rch_rec), "boundaries.")         
             
         # -------------- EVT-------------------------
         if self.evt:

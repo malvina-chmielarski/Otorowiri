@@ -202,14 +202,14 @@ def create_precip_summary():
     summary_df['Class'] = months['Class']
 
     # Save the summary DataFrame to CSV
-    summary_file = os.path.join(base_path, 'precipitation_summary.csv')
+    summary_file = os.path.join(base_path, 'precipitation_summary.csv')  ###here the 'Date' column comes out dd-mm-yyyy
     summary_df.to_csv(summary_file, index=False)
     print(f"Saved precipitation summary to: {summary_file}")
 
 def start_end_seasons():
     # Load the summary DataFrame
     base_path = '../data/data_precipitation/'
-    summary_df = pd.read_csv(os.path.join(base_path, 'precipitation_summary_classifications.csv'))
+    summary_df = pd.read_csv(os.path.join(base_path, 'precipitation_summary_editted.csv')) ###this is dd/mm/yyyy, where the day is always 1
     summary_df['Date'] = pd.to_datetime(summary_df['Date'], dayfirst =True)
 
     # Sort by date for correct plotting
@@ -242,8 +242,95 @@ def start_end_seasons():
 
     #save the period ranges to a CSV file
     period_ranges_file = os.path.join(base_path, 'start_end_seasons.csv')
-    period_ranges.to_csv(period_ranges_file, index=False)
+    period_ranges.to_csv(period_ranges_file, index=False) #this is correctly printing dd/mm/yyyy formatting
     print(f"Saved precipitation period ranges to: {period_ranges_file}")
+
+def days_in_season():
+    infile = '../data/data_precipitation/start_end_seasons.csv'
+    outfile = '../data/data_precipitation/periods.csv'
+
+    # Read CSV
+    period_df = pd.read_csv(infile, dtype=str)
+
+    # Convert ISO strings to datetime
+    period_df['Start_dt'] = pd.to_datetime(period_df['Start'], errors='raise')
+    period_df['End_dt']   = pd.to_datetime(period_df['End'], errors='raise')
+
+    # Compute number of days
+    period_df['Days'] = (period_df['End_dt'] - period_df['Start_dt']).dt.days
+
+    # Optional: check for negative or suspicious durations
+    anomalies = period_df[period_df['Days'] < 0]
+    if not anomalies.empty:
+        print("Negative duration periods found:")
+        print(anomalies[['Start','End','Days']])
+
+    # Save with consistent dd/mm/yyyy formatting
+    period_df['Start'] = period_df['Start_dt'].dt.strftime('%d/%m/%Y')
+    period_df['End']   = period_df['End_dt'].dt.strftime('%d/%m/%Y')
+
+    final_df = period_df[['Class','Start','End','Days']]
+    final_df.to_csv(outfile, index=False)
+    print(f" Saved cleaned periods to: {outfile}")
+
+def create_transient_precipitation(csv_path='../data/data_precipitation/precipitation_summary_editted.csv',
+                                   output_path='../data/data_precipitation/transient_rainfall_projection.xlsx',
+                                   start_year=1950):
+    # --- Read data ---
+    precipitation_df = pd.read_csv(csv_path)
+
+    bad_classes = precipitation_df[
+        precipitation_df['Class'].isna() |
+        (precipitation_df['Class'].str.contains(r'\d{4}') == False)
+        ]
+    print(bad_classes)
+    precipitation_df = precipitation_df.dropna(subset=['Class'])
+
+    # --- Extract year and Wet/Dry period type ---
+    precipitation_df['Period_Year'] = precipitation_df['Class'].str.extract(r'(\d{4})').astype(int)
+    precipitation_df['Period_Type'] = precipitation_df['Class'].str.extract(r'_(Wet|Dry)$')[0]
+
+    # Ensure Wet is before Dry
+    precipitation_df['Period_Type'] = pd.Categorical(
+        precipitation_df['Period_Type'], categories=['Wet', 'Dry'], ordered=True
+    )
+
+    # --- Keep only periods from start_year onwards, remove duplicates, sort correctly ---
+    classes_df = (
+        precipitation_df.loc[precipitation_df['Period_Year'] >= start_year, 
+                             ['Period_Year', 'Class', 'Period_Type']]
+        .drop_duplicates()
+        .sort_values(['Period_Year', 'Period_Type'])
+        .reset_index(drop=True)
+    )
+
+    print(f"Total unique periods from {start_year}: {len(classes_df)}")
+    print(classes_df.head(10))
+    print(classes_df.tail(10))
+
+    # --- Compute annualised rainfall per class ---
+    annualised_rainfall_records = []
+
+    for cls in classes_df['Class']:
+        subset = precipitation_df.loc[precipitation_df['Class'] == cls]
+        total_rainfall = subset['Total Rainfall (mm)'].sum()
+        num_months = subset['Date'].nunique()
+        annualised_rainfall = (total_rainfall / num_months) * 12 if num_months > 0 else None
+
+        annualised_rainfall_records.append({
+            'Timestamp': cls,
+            'Period_Year': int(subset['Class'].str.extract(r'(\d{4})').iloc[0, 0]),
+            'Num_Months': int(num_months),
+            'Total_Rainfall_mm': float(total_rainfall),
+            'Annualised_Rainfall_mm_per_yr': float(annualised_rainfall) if annualised_rainfall is not None else None
+        })
+
+    # --- Create DataFrame and export ---
+    annualised_rainfall_df = pd.DataFrame(annualised_rainfall_records)
+    annualised_rainfall_df.to_excel(output_path, index=False)
+
+    print(f"Transient rainfall projection saved to {output_path}")
+    return annualised_rainfall_df
 
 '''def plot_precip_summary():
     # Load the summary DataFrame
