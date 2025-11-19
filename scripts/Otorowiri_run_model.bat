@@ -1,0 +1,1 @@
+C:\Users\00105010\Anaconda3\envs\loopflopy\python.exe ../scripts/Otorowiri_flowmodel.py

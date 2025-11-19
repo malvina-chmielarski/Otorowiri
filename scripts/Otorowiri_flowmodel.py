@@ -5,7 +5,51 @@ import math
 import sys
 import os
 import matplotlib.pyplot as plt
+import pickle 
 #import disv2disu
+
+#unpickle (scenario, project, data, observations, mesh, geomodel) except scenario
+
+class geomodel:
+    pass
+
+class data:
+    pass
+
+class project:
+    pass
+
+class mesh:
+    pass
+
+class observations:
+    pass
+
+#Import inputs
+fname = '../modelfiles/otorowiri_geomodel.pkl'
+print('Importing inputs from ', fname)
+with open(fname, 'rb') as f:
+    geomodel = pickle.load(f)
+
+fname = '../modelfiles/otorowiri_data.pkl'
+print('Importing inputs from ', fname)
+with open(fname, 'rb') as f:
+    data = pickle.load(f)
+
+fname = '../modelfiles/otorowiri_mesh.pkl'
+print('Importing inputs from ', fname)
+with open(fname, 'rb') as f:
+    mesh = pickle.load(f)
+
+fname = '../modelfiles/otorowiri_observations.pkl'
+print('Importing inputs from ', fname)
+with open(fname, 'rb') as f:
+    observations = pickle.load(f)
+
+fname = '../modelfiles/otorowiri_project.pkl'
+print('Importing inputs from ', fname)
+with open(fname, 'rb') as f:
+    project = pickle.load(f)
 
 class Flowmodel:
     
@@ -421,4 +465,21 @@ class Flowmodel:
         plt.savefig('../figures/transect_%s.png' % array)
         plt.show()    
     
+scenario = 'steadymodel'
+#fm is object; Flowmodel is class
+fm = Flowmodel(scenario, project, data, observations, mesh, geomodel)
+#utils.print_object_details(fm)
 
+# Write and run flow model files
+sim = fm.write_flowmodel(chd = False, #not necessary when all model boundaries have implied boundary conditions
+                         wel = False, 
+                         obs = True, #put false to not record heads at the chosen cells
+                         rch = True, 
+                         evt = True, 
+                         drn = True, 
+                         ghb = False, 
+                         xt3d = True,
+                         staggered = False, # True made "fully connected". "False" is essentially DISV.
+                        )
+
+fm.run_flowmodel(sim)

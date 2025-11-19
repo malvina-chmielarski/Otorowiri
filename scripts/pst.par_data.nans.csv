@@ -1,0 +1,13 @@
+,parnme,partrans,parchglim,parval1,parlbnd,parubnd,pargp,scale,offset,dercom
+0,k_kp,log,factor,8.0,1.0,100.0,HK,1,0,1
+1,vk_kp,log,factor,0.1,0.01,10.0,VK,1,0,1
+2,sy,none,factor,0.1,0.05,0.5,SY,1,0,1
+3,ss,none,factor,0.0001,1e-05,0.001,SS,1,0,1
+4,rch_woody_coeff,none,factor,0.01,0.005,0.05,RCH,1,0,1
+5,rch_nonwoody_coeff,none,factor,0.06,0.01,0.1,RCH,1,0,1
+6,evt_woody_multiplier,none,factor,0.6,0.1,1.0,EVT,1,0,1
+7,evt_nonwoody_multiplier,none,factor,1.3,0.8,1.8,EVT,1,0,1
+8,evt_woody_depth,none,factor,5.0,3.0,10.0,EVT,1,0,1
+9,evt_nonwoody_depth,none,factor,2.0,0.1,5.0,EVT,1,0,1
+10,river_cond,none,factor,300.0,10.0,1000.0,DRN,1,0,1
+11,spring_height,none,factor,,,,DRN,1,0,1

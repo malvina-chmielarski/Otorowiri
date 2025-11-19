@@ -1,0 +1,26 @@
+pcf version=2
+* control data keyword
+pestmode                                 estimation
+noptmax                                 5
+phiredstp                         1.000000E-02
+nphistp                                 2
+nphinored                               2
+svdmode                                 1
+maxsing                          10000000
+eigthresh                           1e-06
+eigwrite                                1
+ies_num_reals                  3
+lambdas                        0.1,1,10,100
+ies_verbose_level              3
+* parameter groups external
+otorowiri.pargp_data.csv
+* parameter data external
+otorowiri.par_data.csv
+* observation data external
+otorowiri.obs_data.csv
+* model command line
+Otorowiri_run_model.bat
+* model input external
+otorowiri.tplfile_data.csv
+* model output external
+otorowiri.insfile_data.csv

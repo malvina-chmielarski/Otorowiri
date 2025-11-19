@@ -353,12 +353,18 @@ def filtered_transient_obs(geomodel_shapefile, seasonal_df):
     # Create bins for the seasons (dry versus wet season) for seasonal snapshots
     period_ranges = pd.read_csv(seasonal_df, parse_dates=['Start', 'End'])
     WL_df['Collect Date'] = pd.to_datetime(WL_df['Collect Date'], dayfirst=True)  # if DD/MM/YYYY
-    def assign_season_class(row, periods):
+    def find_season_info(row, periods):
         for _, season in periods.iterrows():
             if season['Start'] <= row['Collect Date'] <= season['End']:
-                return season['Class']
-        return 'Unknown'
-    WL_df['Sample timeframe'] = WL_df.apply(assign_season_class, periods=period_ranges, axis=1)
+                return pd.Series({
+                    'Sample timeframe': season['Class'],
+                    'model_timestamp': season['model_timestamp']
+                })
+        return pd.Series({
+        'Sample timeframe': 'Unknown',
+        'model_timestamp': pd.NA
+        })
+    WL_df[['Sample timeframe', 'model_timestamp']] = WL_df.apply(find_season_info, periods=period_ranges, axis=1)
     #WL_df['Season'] = WL_df['Collect Month'].apply(lambda x: 'Wet' if x in [5, 6, 7, 8, 9, 10] else 'Dry')
     #WL_df['Sample timeframe'] = WL_df['Collect Year'].astype(str) + '_' + WL_df['Season'] #this is now Year_Season
 

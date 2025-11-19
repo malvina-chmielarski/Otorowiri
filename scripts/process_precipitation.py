@@ -270,6 +270,8 @@ def days_in_season():
     period_df['End']   = period_df['End_dt'].dt.strftime('%d/%m/%Y')
 
     final_df = period_df[['Class','Start','End','Days']]
+    final_df['model_timestamp'] = final_df['Days'].cumsum()
+
     final_df.to_csv(outfile, index=False)
     print(f" Saved cleaned periods to: {outfile}")
 

@@ -60,3 +60,34 @@ def make_obs_gdf(df, geomodel, mesh, spatial):
         gdf = gdf[gdf['cell_disu'] != -1] # delete pilot points where layer is pinched out
 
     return gdf
+
+def reformat_obs_for_pest():
+    df = pd.read_excel('../data/data_waterlevels/obs/05_Transient_groundwater_obs.xlsx')
+
+    #keep only sites with more than 3 observations
+    valid_sites = (
+        df.groupby("Site Ref")["Derived WL (mAHD)"]
+        .count()
+        .loc[lambda x: x > 3]
+        .index)
+    df = df[df["Site Ref"].isin(valid_sites)]
+
+    # Average WLs for duplicate (model_timestamp, Site Ref) pairs
+    df_avg = (
+        df.groupby(["model_timestamp", "Site Ref"], as_index=False)
+        ["Derived WL (mAHD)"].mean())
+
+    # Pivot so model_timestamp is rows and Site Ref values become columns
+    wide_df = df_avg.pivot(
+        index="model_timestamp",
+        columns="Site Ref",
+        values="Derived WL (mAHD)")
+
+    # Sort columns naturally, optional
+    wide_df = wide_df.sort_index(axis=1)
+    wide_df = wide_df.reset_index()
+    wide_df = wide_df.sort_values("model_timestamp")
+
+    output_path = '../data/data_pest/measured_groundwater.xlsx'
+    
+    wide_df.to_excel(output_path, index=False)
