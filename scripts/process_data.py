@@ -11,6 +11,9 @@ import json
 from scipy.spatial import KDTree
 import os
 
+#bringing in the PEST parameter sheet which can then be used to control all the unknowns
+PEST_unknowns = pd.read_excel('../data/data_pest/pest_parameters_otorowiri.xlsx', sheet_name='pars')
+
 class Data:
     def __init__(self):
 
@@ -81,6 +84,8 @@ class Data:
                         count += 1
                 slopes[i] = slope_sum / count if count > 0 else 0
             slope_factor = 1 - (slopes / slopes.max()) * 0.5 # Normalize slopes to range [0.5, 1.0] as a factor
+            print("slope factor is:", slope_factor)
+            print("slopes are:", slopes)
 
             for icpl in range(geomodel.ncpl): #this is ALL the cells in the top layer of the model
                 lay = 0
@@ -90,6 +95,7 @@ class Data:
                     continue # skip pinched out cells
                 #rch = 0.000001  # 0.035 --> 35mm/yr, 0.0000001 allows for convergence
                 if icpl in woody_cells:
+
                     cell_precip = (0.01 * annualised_rainfall)/(1000*365)  # should stay around 12mm/yr in woody areas so 0.012
                 else:
                     cell_precip = (0.06 * annualised_rainfall)/(1000*365) # about three times the woody area recharge so 0.036
@@ -151,7 +157,7 @@ class Data:
             # If model is single layer (lay = 0) the mapping is simply:
             # cell_disu = geomodel.cellid_disu.flatten()[icpl]
             # but preserve the general approach to skip inactive cells.
-            ncpl_total = geomodel.ncpl
+            ncpl = geomodel.ncpl
             cellid_disu_flat = geomodel.cellid_disu.flatten()
             icpl_to_cell_disu = np.full(ncpl, -1, dtype=int)
             active_mask = np.zeros(ncpl, dtype=bool)
@@ -408,7 +414,8 @@ class Data:
         self.strt = {}      
         self.strt[0] = starting_WL'''
 
-        self.strt = 200 #geomodel.top_geo - 1 # Initial water table 1m below ground surface #215
+        self.strt = 215 #geomodel.top_geo - 1 # Initial water table 1m below ground surface #215
+        print("IC value is:", self.strt)
 
     def process_chd(self, geomodel, mesh):
    

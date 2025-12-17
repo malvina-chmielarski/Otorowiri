@@ -1,0 +1,2574 @@
+             pestpp-ies - a GLM iterative Ensemble Smoother
+                      for PEST(++) datasets 
+
+                 by the PEST++ development team
+
+
+
+
+
+version: 5.2.24
+binary compiled on Nov 12 2025 at 12:05:03
+using control file: "Otorowiri.pst"
+in directory: "C:\Users\00105010\Projects\Otorowiri\pest"
+on host: "DEP67731"
+on a(n) windows operating system
+with release configuration
+started at 11/19/25 11:10:13
+
+...reading external file 'otorowiri.pargp_data.csv'
+...header line: PARGPNME,INCTYP,DERINC,DERINCLB,FORCEN,DERINCMUL,DERMTHD,SPLITTHRESH,SPLITRELDIFF,SPLITACTION
+...read 8 lines from external file
+...reading external file 'otorowiri.par_data.csv'
+...header line: TYPE,ID,PARNME,PARLBND,PARVAL1,PARUBND,PARTRANS,PARCHGLIM,PARGP,SCALE,OFFSET,DERCOM
+...read 12 lines from external file
+...reading external file 'otorowiri.obs_data.csv'
+...header line: MODEL_TIMESTAMP,BOREID,OBSVAL,OBSNME,OBGNME,WEIGHT
+...read 1064 lines from external file
+...reading external file 'otorowiri.tplfile_data.csv'
+...header line: PEST_FILE,MODEL_FILE
+...read 2 lines from external file
+...reading external file 'otorowiri.insfile_data.csv'
+...header line: PEST_FILE,MODEL_FILE
+...read 2 lines from external file
+
+    This software has been approved for release by the
+    U.S.Geological Survey(USGS).Although the software has 
+    been subjected to rigorous review, the USGS reserves the
+    right to update the software as needed pursuant to further
+    analysisand review.No warranty, expressed or implied, is 
+    made by the USGS or the U.S.Government as to the
+    functionality of the softwareand related material nor shall
+    the fact of release constitute any such warranty.
+    Furthermore, the software is released on condition that
+    neither the USGS nor the U.S.Government shall be held
+    liable for any damages resulting from its authorized 
+    or unauthorized use.
+
+
+Case dimensions:- 
+    Number of parameters = 11
+    Number of adjustable parameters = 11
+    Number of observations = 1063
+    Number of non-zero weighted observations = 1063
+    Number of prior estimates = 0
+
+PEST Control Information
+    relparmax = 1
+    facparmax = 1.1
+    facorig = 0.001
+    phiredswh = 0.1
+    noptmax = 5
+    phiredstp = 0.01
+    nphistp = 2
+    nphinored = 2
+    relparstp = 0.01
+    nrelpar = 3
+
+
+    PEST++ OPTIONS: 
+
+...general options (used in multiple tools): 
+svd_pack: redsvd
+lambda_scale_fac: 0.75,1,1.1,
+forgive_unknown_args: 0
+max_run_fail: 3
+panther_poll_interval: 1
+parameter_covariance: 
+observation_covariance: 
+hotstart_resfile: 
+overdue_resched_fac: 1.15
+overdue_giveup_fac: 100
+overdue_giveup_minutes: 1e+30
+condor_submit_file: 
+tie_by_group: 0
+par_sigma_range: 4
+enforce_tied_bounds: 0
+debug_parse_only: 0
+check_tplins: 1
+fill_tpl_zeros: 0
+tpl_force_decimal: 0
+additional_ins_delimiters: 
+random_seed: 358183147
+num_tpl_ins_threads: 1
+save_binary: 0
+save_dense: 0
+ensemble_output_precision: 20
+panther_echo: 1
+panther_agent_restart_on_error: 0
+panther_agent_no_ping_timeout_secs: -1
+panther_debug_loop: 0
+debug_check_par_en_consistency: 0
+panther_agent_freeze_on_fail: 0
+panther_transfer_on_finish: 
+panther_transfer_on_fail: 
+panther_timeout_milliseconds: -999
+panther_echo_interval_milliseconds: 1000
+panther_persistent_workers: 1
+
+...pestpp-glm specific options:
+max_n_super: 1000000
+super_eigthresh: 1e-06
+n_iter_base: 1000000
+n_iter_super: 0
+super_relparmax: 0.1
+max_super_frz_iter: 20
+max_reg_iter: 20
+lambdas: 0.1,1,10,100,
+iteration_summary: 0
+der_forgive: 1
+uncertainty: 1
+forecasts: 
+base_jacobian: 
+glm_num_reals: 0
+jac_scale: 1
+glm_normal_form: DIAG
+glm_debug_der_fail: 0
+glm_debug_lamb_fail: 0
+glm_debug_real_fail: 0
+glm_accept_mc_phi: 0
+glm_rebase_super: 0
+glm_iter_mc: 0
+glm_high_2nd_iter_phi: 0
+
+...pestpp-swp options:
+sweep_parameter_csv_file: 
+sweep_output_csv_file: sweep_out.csv
+sweep_chunk: 500
+sweep_forgive: 0
+sweep_base_run: 0
+sweep_include_regul_phi: 0
+
+...pestpp-opt options:
+opt_objective_function: 
+opt_coin_log: 1
+opt_skip_final: 0
+opt_std_weights: 0
+opt_stack_size: 0
+opt_par_stack: 
+opt_obs_stack: 
+opt_decision_variable_groups: 
+opt_external_variable_groups: 
+opt_constraint_groups: 
+opt_risk: 0.5
+opt_iter_derinc_fac: 1
+opt_direction: 1
+opt_iter_tol: 0.001
+opt_recalc_fosm_every: 1
+opt_chance_points: SINGLE
+opt_chance_schedule: 
+
+...pestpp-sqp options:
+sqp_dv_en: 
+sqp_obs_restart_en: 
+sqp_num_reals: -1
+sqp_update_hessian: 0
+sqp_scale_facs:
+  1e-05
+  0.0001
+  0.0005
+  0.001
+  0.0025
+  0.005
+  0.01
+  0.05
+  0.075
+  0.1
+  0.25
+  0.5
+  1
+  2
+  5
+  10
+
+...pestpp-mou options:
+mou_generator: PSO
+mou_population_size: 100
+mou_dv_population_file: 
+mou_obs_population_restart_file: 
+mou_objectives: 
+mou_max_archive_size: 500
+mou_risk_objective: 0
+mou_verbose_level: 1
+mou_env_selector: NSGA
+mou_mating_selector: TOURNAMENT
+mou_crossover_prob: 0.75
+mou_mutation_prob: -999
+mou_de_f: 0.8
+mou_save_population_every: -1
+mou_pso_omega: 0.7
+mou_pso_inertia (IINER, FINERT, INITER): 
+ 0.7  0.4  0 
+mou_pso_social_const: 
+ 2
+mou_pso_cognitive: 
+ 2
+mou_pso_alpha: 1
+mou_pso_rramp: -500
+mou_pso_rfit: 2
+mou_pso_vmax_factor: 0.8
+mou_pso_dv_bound_handling: CLAMP
+mou_ppd_beta: 0.5
+mou_fit_gamma: 0.25
+mou_fit_epsilon: 0.05
+mou_population_schedule: 
+mou_simplex_reflections:10
+mou_simplex_factors: 
+ 0.5
+ 0.6
+ 0.7
+ 0.8
+mou_simplex_mutation: 0
+mou_use_multigen:0
+mou_shuffle_fixed_pars: 0
+mou_debug_dv_handling: 0
+
+...shared pestpp-ies/pestpp-da options:
+(note: 'da' args override 'ies' args when using pestpp-da)
+ies_parameter_ensemble: 
+ies_observation_ensemble: 
+ies_weights_ensemble: 
+ies_restart_parameter_ensemble: 
+ies_restart_observation_ensemble: 
+ies_use_approximate_solution: 1
+ies_lambda_mults: 0.1,1,10,
+ies_initial_lambda: 0
+ies_use_approx: 1
+ies_subset_size: -10
+ies_reg_factor: 0
+ies_verbose_level: 3
+ies_use_prior_scaling: 0
+ies_num_reals: 3
+ies_bad_phi: 1.79769e+308
+ies_bad_phi_sigma: 1.79769e+308
+ies_include_base: 1
+ies_use_empirical_prior: 0
+ies_group_draws: 1
+ies_enforce_bounds: 1
+ies_localizer: 
+ies_accept_phi_fac: 1.05
+ies_lambda_inc_fac: 10
+ies_lambda_dec_fac: 0.75
+ies_save_lambda_ensembles: 0
+ies_subset_how: RANDOM
+ies_localize_how: PARAMETERS
+ies_num_threads: -1
+ies_debug_fail_subset: 0
+ies_debug_fail_remainder: 0
+ies_debug_bad_phi: 0
+ies_debug_upgrade_only: 0
+ies_debug_high_subset_phi: 0
+ies_debug_high_upgrade_phi: 0
+ies_csv_by_reals: 1
+ies_autoadaloc: 0
+ies_autoadaloc_sigma_dist: 1
+ies_enforce_chglim: 0
+ies_center_on: 
+ies_no_noise: 0
+ies_drop_conflicts: 0
+ies_save_rescov:0
+ies_pdc_sigma_distance: -1
+ies_use_mda: 0
+ies_mda_init_fac: 10
+ies_mda_dec_fac: 0.5
+ies_localization_type: LOCAL
+ies_upgrades_in_memory: 1
+ies_ordered_binary: 1
+ies_multimodal_alpha: 1
+ies_localizer_forgive_extra: 0
+ies_phi_factors_file: 
+ies_phi_factors_by_real: 0
+ies_n_iter_reinflate: 
+0,
+ies_reinflate_factor: 
+1,
+ies_updatebyreals: 0
+ies_autoadaloc_indicator_pars: 
+
+ies_run_realname: ies_reinflate_num_reals: 
+0,
+
+pestpp-sen options: 
+gsa_method: MORRIS
+gsa_morris_pooled_obs: 0
+gsa_morris_obs_sen: 1
+gsa_morris_p: 4
+gsa_morris_r: 4
+gsa_morris_delta: 0.6666
+gsa_sobol_samples: 4
+gsa_sobol_par_dist: norm
+
+pestpp-da options (those not shared with pestpp-ies):
+da_parameter_cycle_table: 
+da_observation_cycle_table: 
+da_hotstart_cycle: 0
+da_stop_cycle: 1000000000
+da_use_simulated_states: 1
+da_noptmax_schedule: 
+
+
+
+Model command line(s):- 
+    Otorowiri_run_model.bat
+
+Model interface files:-
+    template files:
+      parameters.tpl
+    model input files:
+      parameters.par
+
+    instruction files:
+      observations.ins
+    model output files:
+      observations.txt
+
+
+Parameter group information
+NAME          INCREMENT TYPE     DERIVATIVE INCREMENT    INCREMENT LOWER BOUND  FORCE CENTRAL     INCREMENT MULTIPLIER
+evt                 RELATIVE                     0.01                        0         SWITCH                        2
+rch                 RELATIVE                     0.01                        0         SWITCH                        2
+hk                  RELATIVE                     0.01                        0         SWITCH                        2
+sy                  RELATIVE                     0.01                        0         SWITCH                        2
+vk                  RELATIVE                     0.01                        0         SWITCH                        2
+ss                  RELATIVE                     0.01                        0         SWITCH                        2
+drn                 RELATIVE                     0.01                        0         SWITCH                        2
+
+
+
+Parameter information
+NAME                    TRANSFORMATION        CHANGE LIMIT  INITIAL VALUE    LOWER BOUND    UPPER BOUND        GROUP          SCALE         OFFSET  DERIVATIVE COMMAND
+k_kp                    log                     FACTOR              8              1            100           hk              1              0                   1
+vk_kp                   log                     FACTOR            0.1           0.01             10           vk              1              0                   1
+sy                      none                    FACTOR            0.1           0.05            0.5           sy              1              0                   1
+ss                      none                    FACTOR         0.0001          1e-05          0.001           ss              1              0                   1
+rch_woody_coeff         none                    FACTOR           0.01          0.005           0.05          rch              1              0                   1
+rch_nonwoody_coeff      none                    FACTOR           0.06           0.01            0.1          rch              1              0                   1
+evt_woody_multiplier    none                    FACTOR            0.6            0.1              1          evt              1              0                   1
+evt_nonwoody_multiplier none                    FACTOR            1.3            0.8            1.8          evt              1              0                   1
+evt_woody_depth         none                    FACTOR              5              3             10          evt              1              0                   1
+evt_nonwoody_depth      none                    FACTOR              2            0.1              5          evt              1              0                   1
+river_cond              none                    FACTOR            300             10           1000          drn              1              0                   1
+
+
+
+Observation information
+NAME                                VALUE                GROUP              WEIGHT
+61718118_8840                     217.945                 head                   1
+61718118_9020                     217.849                 head                   1
+61718118_9264                     217.893                 head                   1
+61718118_9839                     218.004                 head                   1
+61718118_10202                    218.124                 head                   1
+61718118_10323                    218.219                 head                   1
+61718118_10565                    218.229                 head                   1
+61718118_10656                    218.239                 head                   1
+61718118_10898                    218.296                 head                   1
+61718118_11020                    218.329                 head                   1
+61718118_11261                    218.366                 head                   1
+61718118_11383                    218.409                 head                   1
+61718118_11655                    218.499                 head                   1
+61718118_11776                    218.549                 head                   1
+61718118_12018                    218.569                 head                   1
+61718118_12139                    218.784                 head                   1
+61718118_12290                    218.784                 head                   1
+61718118_12442                    218.834                 head                   1
+61718118_12775                    218.967                 head                   1
+61718118_12836                    219.079                 head                   1
+61718118_13077                    219.151                 head                   1
+61718118_13199                    219.349                 head                   1
+61718118_13471                    219.437                 head                   1
+61718118_13562                    219.549                 head                   1
+61718118_13774                    219.657                 head                   1
+61718118_13926                    219.801                 head                   1
+61718118_14167                    220.099                 head                   1
+61718118_14410                    220.204                 head                   1
+61718118_14713                    220.484                 head                   1
+61718118_14924                    220.719                 head                   1
+61718118_15227                    220.904                 head                   1
+61718118_15409                    221.049                 head                   1
+61718118_15620                    221.144                 head                   1
+61718118_15742                    221.379                 head                   1
+61718118_15983                    221.459                 head                   1
+61718118_16105                    221.674                 head                   1
+61718118_16741                    221.969                 head                   1
+61718118_16862                    222.169                 head                   1
+61718118_17043                    222.319                 head                   1
+61718118_17225                    222.499                 head                   1
+61718118_17436                    222.759                 head                   1
+61718118_17527                    222.999                 head                   1
+61718118_17738                    223.079                 head                   1
+61718118_18102                    223.639                 head                   1
+61718118_18526                    224.209                 head                   1
+61718118_19768                    225.039                 head                   1
+61718118_19979                    225.119                 head                   1
+61718118_20131                    225.224                 head                   1
+61718118_20768                    225.539                 head                   1
+61718118_21102                    225.679                 head                   1
+61718118_21434                    225.789                 head                   1
+61718118_21919                    225.929                 head                   1
+61718118_22160                    226.069                 head                   1
+61718118_22555                    226.099                 head                   1
+61718118_22676                    226.209                 head                   1
+61718118_23039                    226.344                 head                   1
+61718118_23402                    226.629                 head                   1
+61718118_23644                    226.956                 head                   1
+61718118_23947                    227.164                 head                   1
+61718118_24099                    227.229                 head                   1
+61718118_24401                    227.344                 head                   1
+61718118_24703                    227.534                 head                   1
+61718118_25097                    227.714                 head                   1
+61718118_25461                    227.906                 head                   1
+61718118_25704                    228.189                 head                   1
+61718118_25976                    228.194                 head                   1
+61718118_26217                    228.419                 head                   1
+61718118_26550                    228.859                 head                   1
+61718118_26914                    229.129                 head                   1
+61718118_27246                    229.285                 head                   1
+61718120_8657                     219.091                 head                   1
+61718120_8840                     219.326                 head                   1
+61718120_9020                     219.558                 head                   1
+61718120_9264                     219.552                 head                   1
+61718120_9839                     219.603                 head                   1
+61718120_10202                    220.213                 head                   1
+61718120_10565                    219.795                 head                   1
+61718120_10656                    219.798                 head                   1
+61718120_10898                    219.811                 head                   1
+61718120_11020                    219.878                 head                   1
+61718120_11261                    219.875                 head                   1
+61718120_11383                    219.948                 head                   1
+61718120_11655                    219.991                 head                   1
+61718120_11776                    220.038                 head                   1
+61718120_12018                    220.028                 head                   1
+61718120_12139                    220.203                 head                   1
+61718120_12290                    220.143                 head                   1
+61718120_12442                    220.478                 head                   1
+61718120_12775                     220.34                 head                   1
+61718120_12836                    220.468                 head                   1
+61718120_13077                    220.486                 head                   1
+61718120_13199                     220.65                 head                   1
+61718120_13471                    220.651                 head                   1
+61718120_13562                    220.803                 head                   1
+61718120_13774                    220.886                 head                   1
+61718120_13926                    221.018                 head                   1
+61718120_14167                    221.263                 head                   1
+61718120_14410                    221.348                 head                   1
+61718120_14713                    221.601                 head                   1
+61718120_14924                    221.888                 head                   1
+61718120_15227                    222.046                 head                   1
+61718120_15409                    222.188                 head                   1
+61718120_15620                    222.271                 head                   1
+61718120_15742                    222.478                 head                   1
+61718120_15983                    222.538                 head                   1
+61718120_16105                    222.728                 head                   1
+61718120_16741                    223.028                 head                   1
+61718120_16862                    223.208                 head                   1
+61718120_17043                    223.338                 head                   1
+61718120_17225                    223.518                 head                   1
+61718120_17436                    223.738                 head                   1
+61718120_17527                    223.988                 head                   1
+61718120_17738                    224.068                 head                   1
+61718120_18102                    224.548                 head                   1
+61718120_18526                    225.063                 head                   1
+61718120_19768                    225.818                 head                   1
+61718120_19979                    225.868                 head                   1
+61718120_20131                    225.998                 head                   1
+61718120_20768                    226.353                 head                   1
+61718120_21102                    226.553                 head                   1
+61718120_21434                    226.698                 head                   1
+61718120_21919                    226.908                 head                   1
+61718120_22160                    225.873                 head                   1
+61718120_22555                    225.715                 head                   1
+61718120_22676                    226.268                 head                   1
+61718120_23039                    226.733                 head                   1
+61718120_23402                    227.688                 head                   1
+61718120_23644                    227.928                 head                   1
+61718120_23947                    228.148                 head                   1
+61718120_24099                    227.878                 head                   1
+61718120_24401                    227.538                 head                   1
+61718120_24703                    226.523                 head                   1
+61718120_25097                    226.923                 head                   1
+61718120_25461                    226.738                 head                   1
+61718120_25704                    227.008                 head                   1
+61718120_25976                    227.133                 head                   1
+61718120_26217                    227.268                 head                   1
+61718120_26550                    227.763                 head                   1
+61718120_26914                    228.173                 head                   1
+61718120_27246                    226.568                 head                   1
+61718121_8657                     223.434                 head                   1
+61718121_8840                     222.065                 head                   1
+61718121_9020                     221.919                 head                   1
+61718121_9264                     221.937                 head                   1
+61718121_9839                     221.954                 head                   1
+61718121_10202                    222.014                 head                   1
+61718121_10323                    222.039                 head                   1
+61718121_10565                    221.842                 head                   1
+61718121_10656                    222.129                 head                   1
+61718121_10898                    221.319                 head                   1
+61718121_11020                    222.079                 head                   1
+61718121_11261                    222.142                 head                   1
+61718121_11383                    220.709                 head                   1
+61718121_11655                    222.179                 head                   1
+61718121_11776                    222.219                 head                   1
+61718121_12018                    222.229                 head                   1
+61718121_12139                    222.339                 head                   1
+61718121_12290                    222.324                 head                   1
+61718121_12442                    222.349                 head                   1
+61718121_12775                    222.437                 head                   1
+61718121_12836                    222.259                 head                   1
+61718121_13077                    222.494                 head                   1
+61718121_13199                    222.632                 head                   1
+61718121_13471                    222.641                 head                   1
+61718121_13562                    222.649                 head                   1
+61718121_13774                    222.795                 head                   1
+61718121_13926                    222.829                 head                   1
+61718121_14167                    223.089                 head                   1
+61718121_14410                    223.119                 head                   1
+61718121_14713                    222.614                 head                   1
+61718121_14924                    223.549                 head                   1
+61718121_15227                    223.649                 head                   1
+61718121_15409                    223.799                 head                   1
+61718121_15620                    223.816                 head                   1
+61718121_15742                    223.959                 head                   1
+61718121_15983                    224.039                 head                   1
+61718121_16105                    224.209                 head                   1
+61718121_16741                    224.439                 head                   1
+61718121_16862                    224.499                 head                   1
+61718121_17043                    224.664                 head                   1
+61718121_17225                    224.789                 head                   1
+61718121_17436                    225.009                 head                   1
+61718121_17527                    225.149                 head                   1
+61718121_17738                    225.239                 head                   1
+61718121_18102                    225.649                 head                   1
+61718121_18526                    226.099                 head                   1
+61718121_19768                    226.639                 head                   1
+61718121_19979                    226.779                 head                   1
+61718121_20131                    226.929                 head                   1
+61718121_20768                    227.334                 head                   1
+61718121_21102                    227.609                 head                   1
+61718121_21434                    227.839                 head                   1
+61718121_21919                    228.089                 head                   1
+61718121_22160                    228.284                 head                   1
+61718121_22555                    228.371                 head                   1
+61718121_22676                    228.439                 head                   1
+61718121_23039                    228.524                 head                   1
+61718121_23402                    228.739                 head                   1
+61718121_23644                    228.681                 head                   1
+61718121_23947                    229.244                 head                   1
+61718121_24099                    229.259                 head                   1
+61718121_24401                    229.449                 head                   1
+61718121_24703                    229.709                 head                   1
+61718121_25097                    229.884                 head                   1
+61718121_25461                    230.059                 head                   1
+61718121_25704                    230.129                 head                   1
+61718121_25976                    230.324                 head                   1
+61718121_26217                    230.419                 head                   1
+61718121_26550                    230.759                 head                   1
+61718121_26914                    231.099                 head                   1
+61718121_27246                    231.365                 head                   1
+61718124_8657                     220.968                 head                   1
+61718124_8840                     220.996                 head                   1
+61718124_9020                     221.473                 head                   1
+61718124_9264                     221.545                 head                   1
+61718124_9839                     220.733                 head                   1
+61718124_10202                    221.805                 head                   1
+61718124_10323                    221.844                 head                   1
+61718124_10565                    221.825                 head                   1
+61718124_10656                    221.921                 head                   1
+61718124_10898                    221.808                 head                   1
+61718124_11020                    221.863                 head                   1
+61718124_11261                    221.923                 head                   1
+61718124_11383                    221.893                 head                   1
+61718124_11655                    221.946                 head                   1
+61718124_11776                    221.993                 head                   1
+61718124_12018                    221.993                 head                   1
+61718124_12139                    222.058                 head                   1
+61718124_12290                    222.073                 head                   1
+61718124_12442                    222.078                 head                   1
+61718124_12775                    222.408                 head                   1
+61718124_13077                     221.91                 head                   1
+61718124_13199                    222.358                 head                   1
+61718124_13471                     222.45                 head                   1
+61718124_13562                    222.383                 head                   1
+61718124_13774                    222.853                 head                   1
+61718124_13926                    222.673                 head                   1
+61718124_14167                    222.833                 head                   1
+61718124_14410                    222.853                 head                   1
+61718124_14713                    223.106                 head                   1
+61718124_14924                    223.533                 head                   1
+61718124_15227                    223.623                 head                   1
+61718124_15409                    223.733                 head                   1
+61718124_15620                    223.771                 head                   1
+61718124_15742                    223.863                 head                   1
+61718124_15983                    223.933                 head                   1
+61718124_16105                    224.053                 head                   1
+61718124_16741                    224.273                 head                   1
+61718124_16862                    224.323                 head                   1
+61718124_17043                    224.493                 head                   1
+61718124_17225                    224.613                 head                   1
+61718124_17436                    224.803                 head                   1
+61718124_17527                    224.943                 head                   1
+61718124_17738                    225.023                 head                   1
+61718124_18102                    225.323                 head                   1
+61718124_18526                    225.663                 head                   1
+61718124_19768                    225.453                 head                   1
+61718124_19979                    225.523                 head                   1
+61718124_20131                    225.633                 head                   1
+61718124_20768                    225.993                 head                   1
+61718124_21102                    226.243                 head                   1
+61718124_21434                    226.463                 head                   1
+61718124_21919                    226.683                 head                   1
+61718124_22160                    226.938                 head                   1
+61718124_22555                    227.138                 head                   1
+61718124_22676                    227.233                 head                   1
+61718124_23039                    227.348                 head                   1
+61718124_23402                    227.503                 head                   1
+61718124_23644                    227.703                 head                   1
+61718124_23947                    227.918                 head                   1
+61718124_24099                    227.853                 head                   1
+61718124_24401                    228.031                 head                   1
+61718124_24703                    228.251                 head                   1
+61718124_25097                    228.403                 head                   1
+61718124_25461                    228.528                 head                   1
+61718124_25704                    228.463                 head                   1
+61718124_25976                    228.803                 head                   1
+61718124_26217                    228.843                 head                   1
+61718124_26550                    228.988                 head                   1
+61718124_26914                    229.138                 head                   1
+61718124_27246                    229.301                 head                   1
+61718126_8507                     220.036                 head                   1
+61718126_8657                     220.725                 head                   1
+61718126_8840                     220.966                 head                   1
+61718126_9020                     221.136                 head                   1
+61718126_9264                     221.392                 head                   1
+61718126_9537                     221.578                 head                   1
+61718126_9628                     221.546                 head                   1
+61718126_9839                     221.684                 head                   1
+61718126_9930                     221.713                 head                   1
+61718126_10202                    221.707                 head                   1
+61718126_10323                    221.671                 head                   1
+61718126_10565                    221.677                 head                   1
+61718126_10656                    221.722                 head                   1
+61718126_10898                    221.718                 head                   1
+61718126_11020                    221.675                 head                   1
+61718126_11261                    221.696                 head                   1
+61718126_11383                    221.701                 head                   1
+61718126_11655                    221.734                 head                   1
+61718126_11776                    221.768                 head                   1
+61718126_12018                     221.82                 head                   1
+61718126_12139                    221.868                 head                   1
+61718126_12290                    221.916                 head                   1
+61718126_12442                    221.986                 head                   1
+61718126_12775                    222.273                 head                   1
+61718126_13077                    221.693                 head                   1
+61718126_13199                    221.686                 head                   1
+61718126_13471                    222.773                 head                   1
+61718126_13562                    222.786                 head                   1
+61718126_13774                    222.943                 head                   1
+61718126_13926                    222.956                 head                   1
+61718126_14167                    223.201                 head                   1
+61718126_14410                    223.266                 head                   1
+61718126_14713                    223.474                 head                   1
+61718126_14924                    223.616                 head                   1
+61718126_15227                    223.651                 head                   1
+61718126_15409                    223.761                 head                   1
+61718126_15620                    223.861                 head                   1
+61718126_15742                    224.046                 head                   1
+61718126_15983                    224.206                 head                   1
+61718126_16105                    224.396                 head                   1
+61718126_16741                    224.616                 head                   1
+61718126_16862                    224.706                 head                   1
+61718126_17043                    224.896                 head                   1
+61718126_17225                    225.076                 head                   1
+61718126_17436                    225.366                 head                   1
+61718126_17527                    225.501                 head                   1
+61718126_17738                    225.566                 head                   1
+61718126_18102                    226.026                 head                   1
+61718126_18526                    226.666                 head                   1
+61718126_18920                    226.576                 head                   1
+61718126_19011                    226.716                 head                   1
+61718126_19252                    226.906                 head                   1
+61718126_19616                    226.906                 head                   1
+61718126_19768                    226.966                 head                   1
+61718126_19979                    227.036                 head                   1
+61718126_20131                    227.101                 head                   1
+61718126_20768                    227.376                 head                   1
+61718126_21102                    227.481                 head                   1
+61718126_21434                    227.551                 head                   1
+61718126_21919                    227.616                 head                   1
+61718126_22160                    228.181                 head                   1
+61718126_22555                    228.229                 head                   1
+61718126_22676                    228.276                 head                   1
+61718126_23039                    228.311                 head                   1
+61718126_23402                    228.466                 head                   1
+61718126_23644                    228.591                 head                   1
+61718126_23947                    228.816                 head                   1
+61718126_24099                    228.831                 head                   1
+61718126_24401                    229.054                 head                   1
+61718126_24703                    229.346                 head                   1
+61718126_25097                    229.541                 head                   1
+61718126_25461                    230.226                 head                   1
+61718126_25704                    229.776                 head                   1
+61718126_25976                    229.941                 head                   1
+61718126_26217                    230.036                 head                   1
+61718126_26550                    230.416                 head                   1
+61718126_26914                    230.786                 head                   1
+61718126_27246                    230.966                 head                   1
+61719111_7750                     170.676                 head                   1
+61719111_9264                     162.371                 head                   1
+61719111_9537                     165.421                 head                   1
+61719111_9628                     165.014                 head                   1
+61719111_9839                     165.761                 head                   1
+61719111_10202                    172.651                 head                   1
+61719111_10323                    171.651                 head                   1
+61719111_10565                    170.685                 head                   1
+61719111_10656                    170.721                 head                   1
+61719111_10898                    169.051                 head                   1
+61719111_11020                    166.259                 head                   1
+61719111_11261                    166.606                 head                   1
+61719111_11383                    164.671                 head                   1
+61719111_11655                    165.465                 head                   1
+61719111_11776                    166.298                 head                   1
+61719111_12018                    164.881                 head                   1
+61719111_12139                    161.596                 head                   1
+61719111_12290                    161.311                 head                   1
+61719111_12442                    162.971                 head                   1
+61719111_12775                    162.519                 head                   1
+61719111_12836                    164.441                 head                   1
+61719111_13077                    165.021                 head                   1
+61719111_13199                    164.121                 head                   1
+61719111_13471                    166.926                 head                   1
+61719111_13562                    162.611                 head                   1
+61719111_13774                    164.517                 head                   1
+61719111_13926                    161.549                 head                   1
+61719111_14167                    163.924                 head                   1
+61719111_14258                    165.826                 head                   1
+61719111_14410                    164.001                 head                   1
+61719111_14713                    169.158                 head                   1
+61719111_14924                    170.301                 head                   1
+61719112_7750                     154.071                 head                   1
+61719112_9264                     164.438                 head                   1
+61719112_9537                     166.979                 head                   1
+61719112_9628                     166.471                 head                   1
+61719112_9839                     166.754                 head                   1
+61719112_9930                     167.386                 head                   1
+61719112_10202                    168.711                 head                   1
+61719112_10323                    166.961                 head                   1
+61719112_10565                    167.025                 head                   1
+61719112_10656                    166.858                 head                   1
+61719112_10898                    166.411                 head                   1
+61719112_11020                    166.243                 head                   1
+61719112_11261                    165.969                 head                   1
+61719112_11383                    163.991                 head                   1
+61719112_11655                    164.126                 head                   1
+61719112_11776                    161.101                 head                   1
+61719112_12018                    164.395                 head                   1
+61719112_12139                    162.088                 head                   1
+61719112_12290                    162.331                 head                   1
+61719112_12442                    162.471                 head                   1
+61719112_12775                     161.07                 head                   1
+61719112_12836                    160.021                 head                   1
+61719112_13077                    161.705                 head                   1
+61719112_13199                    160.726                 head                   1
+61719112_13471                    162.334                 head                   1
+61719112_13562                    160.389                 head                   1
+61719112_13774                    160.843                 head                   1
+61719112_13926                    158.845                 head                   1
+61719112_14167                    157.519                 head                   1
+61719112_14713                    155.301                 head                   1
+61719112_14924                    161.301                 head                   1
+61819021_10202                    65.7993                 head                   1
+61819021_10323                     63.466                 head                   1
+61819021_10565                     65.066                 head                   1
+61819021_10656                     62.166                 head                   1
+61819021_10898                    68.0374                 head                   1
+61819021_11020                     69.341                 head                   1
+61819021_11261                     70.666                 head                   1
+61819021_11383                    75.1327                 head                   1
+61819021_11655                    73.0946                 head                   1
+61819021_11776                     59.416                 head                   1
+61819021_12018                    62.0827                 head                   1
+61819021_12139                     60.916                 head                   1
+61819021_12290                     60.016                 head                   1
+61819021_12442                     58.416                 head                   1
+61819021_12775                     57.091                 head                   1
+61819021_12836                     55.666                 head                   1
+61819021_13077                    69.8049                 head                   1
+61819021_13199                    67.9143                 head                   1
+61819021_13471                     71.086                 head                   1
+61819021_13562                     67.911                 head                   1
+61819021_13774                     70.911                 head                   1
+61819021_13926                     71.811                 head                   1
+61819021_14167                    67.8396                 head                   1
+61819021_14258                     66.661                 head                   1
+61819021_14410                     66.161                 head                   1
+61819021_14713                     72.911                 head                   1
+61819021_14924                     65.286                 head                   1
+61819021_14984                     65.911                 head                   1
+61819021_15227                     64.536                 head                   1
+61819021_15409                     66.911                 head                   1
+61819021_15620                    72.2443                 head                   1
+61819021_15742                     66.911                 head                   1
+61819021_15983                    73.5777                 head                   1
+61819021_16105                     77.911                 head                   1
+61819021_16346                     66.911                 head                   1
+61819021_16741                     78.911                 head                   1
+61819021_17043                     71.911                 head                   1
+61819021_17225                     71.911                 head                   1
+61819021_17436                    76.5777                 head                   1
+61819021_17527                     78.911                 head                   1
+61819023_9264                     219.996                 head                   1
+61819023_10202                     21.496                 head                   1
+61819023_10565                     17.996                 head                   1
+61819023_10898                     21.496                 head                   1
+70118002_5449                     212.151                 head                   1
+70118002_6266                      214.81                 head                   1
+70118002_6509                     214.933                 head                   1
+70118002_6691                     215.086                 head                   1
+70118002_6993                     215.806                 head                   1
+70118002_7265                     215.518                 head                   1
+70118002_7417                     215.542                 head                   1
+70118002_7567                     215.499                 head                   1
+70118002_7750                      215.59                 head                   1
+70118002_8023                     215.744                 head                   1
+70118002_8114                     215.943                 head                   1
+70118002_8355                     215.836                 head                   1
+70118002_8507                     215.974                 head                   1
+70118002_8657                     216.044                 head                   1
+70118002_8840                     216.094                 head                   1
+70118002_9020                     216.346                 head                   1
+70118002_9264                     216.616                 head                   1
+70118002_9537                     216.801                 head                   1
+70118002_9628                     216.778                 head                   1
+70118002_9839                       216.9                 head                   1
+70118002_9930                     217.001                 head                   1
+70118002_10202                    216.951                 head                   1
+70118002_10323                    217.046                 head                   1
+70118002_10565                    217.119                 head                   1
+70118002_10656                    217.261                 head                   1
+70118002_10898                    217.316                 head                   1
+70118002_11020                    217.356                 head                   1
+70118002_11261                    217.439                 head                   1
+70118002_11383                    217.556                 head                   1
+70118002_11655                    217.566                 head                   1
+70118002_11776                    217.751                 head                   1
+70118002_12018                    217.756                 head                   1
+70118002_12139                    217.921                 head                   1
+70118002_12290                    218.073                 head                   1
+70118002_12442                    218.011                 head                   1
+70118002_12775                    218.545                 head                   1
+70118002_12836                    218.646                 head                   1
+70118002_13077                    218.674                 head                   1
+70118002_13199                    218.876                 head                   1
+70118002_13471                     218.94                 head                   1
+70118002_13562                    219.391                 head                   1
+70118002_13774                    219.418                 head                   1
+70118002_13926                    219.591                 head                   1
+70118002_14167                    219.541                 head                   1
+70118002_14258                    219.676                 head                   1
+70118002_14410                    219.836                 head                   1
+70118002_14713                    219.915                 head                   1
+70118002_15227                    220.265                 head                   1
+70118002_15409                    220.489                 head                   1
+70118002_15620                    220.466                 head                   1
+70118002_15742                    220.696                 head                   1
+70118002_15983                    220.781                 head                   1
+70118002_16105                    220.916                 head                   1
+70118002_16346                    220.956                 head                   1
+70118002_19252                    223.526                 head                   1
+70118002_19616                    223.726                 head                   1
+70118002_19979                    223.886                 head                   1
+70118002_20768                    224.196                 head                   1
+70118002_21919                    224.346                 head                   1
+70118002_22160                    224.346                 head                   1
+70118002_22312                     224.32                 head                   1
+70118002_22555                    224.321                 head                   1
+70118002_22826                    224.346                 head                   1
+70118002_23039                    224.346                 head                   1
+70118002_23220                    224.346                 head                   1
+70118002_23402                    224.346                 head                   1
+70118002_23644                    224.346                 head                   1
+70118002_23947                    224.346                 head                   1
+70118002_24401                    224.346                 head                   1
+70118002_24703                    224.346                 head                   1
+70118003_5571                     215.515                 head                   1
+70118003_6266                     215.442                 head                   1
+70118003_6509                     215.582                 head                   1
+70118003_6691                     215.652                 head                   1
+70118003_6993                     217.902                 head                   1
+70118003_7265                     217.888                 head                   1
+70118003_7417                     216.745                 head                   1
+70118003_7567                     216.292                 head                   1
+70118003_7750                     216.322                 head                   1
+70118003_8023                     216.422                 head                   1
+70118003_19252                    224.712                 head                   1
+70118003_19616                    224.912                 head                   1
+70118003_19979                    225.112                 head                   1
+70118003_20768                    225.422                 head                   1
+70118003_21919                    225.952                 head                   1
+70118003_22160                    226.022                 head                   1
+70118003_22312                    226.049                 head                   1
+70118003_22555                    226.164                 head                   1
+70118003_22826                    226.302                 head                   1
+70118003_23039                    226.337                 head                   1
+70118003_23220                    226.442                 head                   1
+70118003_23402                    226.492                 head                   1
+70118003_23644                    226.569                 head                   1
+70118003_23947                    226.722                 head                   1
+70118003_24401                    226.862                 head                   1
+70118003_24703                    227.032                 head                   1
+70118003_25097                    227.177                 head                   1
+70118003_25461                    227.392                 head                   1
+70118003_25704                    227.582                 head                   1
+70118003_25976                    227.732                 head                   1
+70118003_26217                    227.882                 head                   1
+70118003_26550                    228.127                 head                   1
+70118003_26914                    228.327                 head                   1
+70118003_27246                    228.582                 head                   1
+70118006_5449                     213.304                 head                   1
+70118006_6266                      212.88                 head                   1
+70118006_6509                     213.192                 head                   1
+70118006_6691                     213.115                 head                   1
+70118006_6993                     213.385                 head                   1
+70118006_7265                      213.32                 head                   1
+70118006_7417                     213.607                 head                   1
+70118006_7567                     213.825                 head                   1
+70118006_7750                     213.881                 head                   1
+70118006_8023                     214.035                 head                   1
+70118006_8114                     214.155                 head                   1
+70118006_8355                     214.237                 head                   1
+70118006_8507                      214.29                 head                   1
+70118006_8657                     214.431                 head                   1
+70118006_8840                     214.402                 head                   1
+70118006_9020                     214.783                 head                   1
+70118006_9264                     215.001                 head                   1
+70118006_9537                     215.249                 head                   1
+70118006_9628                      215.27                 head                   1
+70118006_9839                     215.097                 head                   1
+70118006_9930                     215.233                 head                   1
+70118006_10202                     215.39                 head                   1
+70118006_10323                     215.45                 head                   1
+70118006_10565                    215.535                 head                   1
+70118006_10656                    215.405                 head                   1
+70118006_10898                    215.575                 head                   1
+70118006_11020                     215.79                 head                   1
+70118006_11261                    215.802                 head                   1
+70118006_11383                    216.075                 head                   1
+70118006_11655                     216.15                 head                   1
+70118006_11776                    216.275                 head                   1
+70118006_12018                    215.461                 head                   1
+70118006_12139                    216.383                 head                   1
+70118006_12290                    216.515                 head                   1
+70118006_12442                     216.58                 head                   1
+70118006_12775                    216.856                 head                   1
+70118006_12836                    216.965                 head                   1
+70118006_13077                    216.887                 head                   1
+70118006_13199                    216.808                 head                   1
+70118006_13471                    216.976                 head                   1
+70118006_13562                    217.082                 head                   1
+70118006_13774                    217.241                 head                   1
+70118006_13926                    217.266                 head                   1
+70118006_14167                    217.723                 head                   1
+70118006_14258                    217.723                 head                   1
+70118006_14410                    217.844                 head                   1
+70118006_14713                    218.104                 head                   1
+70118006_15227                    218.485                 head                   1
+70118006_15409                    218.485                 head                   1
+70118006_15620                    218.851                 head                   1
+70118006_15742                    219.003                 head                   1
+70118006_15983                    219.247                 head                   1
+70118006_16105                    219.153                 head                   1
+70118006_16346                    219.865                 head                   1
+70118006_19252                    226.865                 head                   1
+70118006_19979                    222.965                 head                   1
+70118006_20768                    223.065                 head                   1
+70118006_21919                    223.265                 head                   1
+70118006_22160                    223.465                 head                   1
+70118006_22312                    223.465                 head                   1
+70118006_22555                    223.715                 head                   1
+70118006_22826                    223.665                 head                   1
+70118006_23039                    223.465                 head                   1
+70118006_23220                    223.665                 head                   1
+70118006_23644                    221.265                 head                   1
+70118006_23947                     221.59                 head                   1
+70118006_24401                    221.365                 head                   1
+70118006_24703                    220.965                 head                   1
+70118006_25097                    221.265                 head                   1
+70118006_25976                    221.565                 head                   1
+70118006_26217                    221.665                 head                   1
+70118006_26550                    222.065                 head                   1
+70118006_26914                    221.865                 head                   1
+70118006_27246                    221.165                 head                   1
+70118009_5571                     214.332                 head                   1
+70118009_6266                     213.541                 head                   1
+70118009_6509                     213.671                 head                   1
+70118009_6691                     213.891                 head                   1
+70118009_6993                     213.996                 head                   1
+70118009_7265                     214.048                 head                   1
+70118009_7417                     214.271                 head                   1
+70118009_7567                     214.251                 head                   1
+70118009_7750                     214.306                 head                   1
+70118009_8023                     214.381                 head                   1
+70118009_8114                     214.391                 head                   1
+70118009_8355                     214.498                 head                   1
+70118009_8507                     214.621                 head                   1
+70118009_8657                     214.741                 head                   1
+70118009_8840                     214.786                 head                   1
+70118009_9020                     214.926                 head                   1
+70118009_9264                     215.104                 head                   1
+70118009_9537                     215.271                 head                   1
+70118009_9628                     215.344                 head                   1
+70118009_9839                     215.372                 head                   1
+70118009_9930                     215.442                 head                   1
+70118009_10323                    215.601                 head                   1
+70118009_10565                    215.681                 head                   1
+70118009_10656                    215.731                 head                   1
+70118009_10898                    215.841                 head                   1
+70118009_11020                    215.891                 head                   1
+70118009_11261                    215.991                 head                   1
+70118009_11383                    216.096                 head                   1
+70118009_11655                    216.131                 head                   1
+70118009_11776                    216.261                 head                   1
+70118009_12018                    216.301                 head                   1
+70118009_12139                    216.396                 head                   1
+70118009_12290                    216.621                 head                   1
+70118009_12442                    216.721                 head                   1
+70118009_12775                    216.911                 head                   1
+70118009_13199                    217.211                 head                   1
+70118009_13471                    217.211                 head                   1
+70118009_13562                    217.671                 head                   1
+70118009_13774                    217.801                 head                   1
+70118009_14167                    218.061                 head                   1
+70118009_14410                    218.251                 head                   1
+70118009_14713                    218.386                 head                   1
+70118009_15227                    218.691                 head                   1
+70118009_15409                    218.876                 head                   1
+70118009_15620                    218.971                 head                   1
+70118009_15742                    219.121                 head                   1
+70118009_16105                    219.311                 head                   1
+70118009_19252                    222.291                 head                   1
+70118009_19616                    222.391                 head                   1
+70118009_19979                    222.671                 head                   1
+70118009_20768                    222.861                 head                   1
+70118009_21919                    223.021                 head                   1
+70118009_22160                    223.021                 head                   1
+70118009_22312                    223.021                 head                   1
+70118009_22555                    223.021                 head                   1
+70118009_22826                    223.021                 head                   1
+70118009_23039                    223.021                 head                   1
+70118009_23402                    223.021                 head                   1
+70118009_23644                    223.021                 head                   1
+70118009_25097                    223.021                 head                   1
+70118009_25976                    223.021                 head                   1
+70118010_5571                     213.183                 head                   1
+70118010_6266                     212.318                 head                   1
+70118010_6509                     212.453                 head                   1
+70118010_6691                     212.523                 head                   1
+70118010_6993                     212.783                 head                   1
+70118010_7265                     212.843                 head                   1
+70118010_7417                     212.968                 head                   1
+70118010_7567                     213.033                 head                   1
+70118010_7750                     213.068                 head                   1
+70118010_8023                     213.203                 head                   1
+70118010_8114                     213.033                 head                   1
+70118010_8355                      213.41                 head                   1
+70118010_8507                     213.483                 head                   1
+70118010_8657                     213.538                 head                   1
+70118010_8840                     213.643                 head                   1
+70118010_9020                     213.793                 head                   1
+70118010_9264                      214.05                 head                   1
+70118010_9537                     214.226                 head                   1
+70118010_9628                     214.332                 head                   1
+70118010_9839                     214.414                 head                   1
+70118010_9930                     214.455                 head                   1
+70118010_10323                    214.603                 head                   1
+70118010_10565                    214.718                 head                   1
+70118010_10656                    214.773                 head                   1
+70118010_10898                    214.783                 head                   1
+70118010_11020                    214.813                 head                   1
+70118010_11261                    214.893                 head                   1
+70118010_11383                    215.023                 head                   1
+70118010_11655                    215.148                 head                   1
+70118010_11776                    215.213                 head                   1
+70118010_12018                    215.333                 head                   1
+70118010_12139                    215.443                 head                   1
+70118010_12290                    215.523                 head                   1
+70118010_12442                    215.643                 head                   1
+70118010_12775                    215.973                 head                   1
+70118010_13199                    216.283                 head                   1
+70118010_13471                    216.288                 head                   1
+70118010_13562                    216.603                 head                   1
+70118010_13774                    216.783                 head                   1
+70118010_13926                    216.973                 head                   1
+70118010_14167                    217.073                 head                   1
+70118010_14410                    217.353                 head                   1
+70118010_14713                    217.578                 head                   1
+70118010_15227                    218.053                 head                   1
+70118010_15742                    218.523                 head                   1
+70118010_16105                    218.713                 head                   1
+70118010_16346                    218.908                 head                   1
+70118010_19252                    220.893                 head                   1
+70118010_19616                    221.063                 head                   1
+70118010_19979                    221.233                 head                   1
+70118010_20768                    221.503                 head                   1
+70118010_21919                    221.813                 head                   1
+70118010_22160                    221.943                 head                   1
+70118010_22312                    221.959                 head                   1
+70118010_22555                    221.973                 head                   1
+70118010_22826                    222.048                 head                   1
+70118010_23039                    222.108                 head                   1
+70118010_23220                    222.163                 head                   1
+70118010_23402                    222.113                 head                   1
+70118010_23644                    222.208                 head                   1
+70118010_23947                    222.293                 head                   1
+70118010_24401                    222.388                 head                   1
+70118010_24703                    222.448                 head                   1
+70118010_25097                    222.568                 head                   1
+70118010_25461                    222.743                 head                   1
+70118010_25704                    222.973                 head                   1
+70118010_25976                    223.168                 head                   1
+70118010_26217                    223.283                 head                   1
+70118010_26550                    223.758                 head                   1
+70118010_26914                    223.996                 head                   1
+70118010_27246                    224.163                 head                   1
+70118014_5843                     211.315                 head                   1
+70118014_6266                     212.505                 head                   1
+70118014_6509                      212.94                 head                   1
+70118014_6691                      213.29                 head                   1
+70118014_6993                       213.8                 head                   1
+70118014_7265                      214.11                 head                   1
+70118014_7417                     214.525                 head                   1
+70118014_7567                      214.75                 head                   1
+70118014_7750                      214.93                 head                   1
+70118014_8023                      215.22                 head                   1
+70118014_8114                      215.94                 head                   1
+70118014_8355                      215.69                 head                   1
+70118014_8507                      215.97                 head                   1
+70118014_8657                       216.1                 head                   1
+70118014_8840                      216.37                 head                   1
+70118014_9020                      216.58                 head                   1
+70118014_9264                      216.93                 head                   1
+70118014_9537                      217.44                 head                   1
+70118014_9839                     217.913                 head                   1
+70118014_9930                     218.178                 head                   1
+70118014_10202                     218.46                 head                   1
+70118014_10323                     218.63                 head                   1
+70118014_10565                     218.73                 head                   1
+70118014_10656                     218.92                 head                   1
+70118014_10898                        219                 head                   1
+70118014_11020                     219.03                 head                   1
+70118014_11261                     219.21                 head                   1
+70118014_11383                     219.37                 head                   1
+70118014_11655                      219.5                 head                   1
+70118014_11776                     219.54                 head                   1
+70118014_12018                     219.74                 head                   1
+70118014_12290                        220                 head                   1
+70118014_12442                     219.77                 head                   1
+70118014_12775                    220.555                 head                   1
+70118014_13199                     221.24                 head                   1
+70118014_13471                    221.245                 head                   1
+70118014_13562                     221.77                 head                   1
+70118014_13774                     222.08                 head                   1
+70118014_13926                     222.39                 head                   1
+70118014_14167                      222.6                 head                   1
+70118014_14410                     223.01                 head                   1
+70118014_14713                    223.478                 head                   1
+70118014_15227                     224.29                 head                   1
+70118014_15409                    224.555                 head                   1
+70118014_15620                    224.835                 head                   1
+70118014_15742                     225.09                 head                   1
+70118014_16105                     225.69                 head                   1
+70118014_16346                     225.98                 head                   1
+70118014_19252                     230.13                 head                   1
+70118014_19616                     230.22                 head                   1
+70118014_19979                     230.32                 head                   1
+70118014_20768                     230.54                 head                   1
+70118014_21919                     230.96                 head                   1
+70118014_22160                    226.885                 head                   1
+70118014_22555                    231.377                 head                   1
+70118014_22826                    231.545                 head                   1
+70118014_23039                     231.71                 head                   1
+70118014_23220                     231.75                 head                   1
+70118014_23402                     231.83                 head                   1
+70118014_23644                    232.005                 head                   1
+70118014_23947                      232.2                 head                   1
+70118014_24401                     232.25                 head                   1
+70118014_24703                    232.345                 head                   1
+70118014_25097                     232.39                 head                   1
+70118014_25461                    232.455                 head                   1
+70118014_25704                     232.62                 head                   1
+70118014_25976                    232.705                 head                   1
+70118014_26217                     232.75                 head                   1
+70118014_26550                    232.925                 head                   1
+70118014_26914                    233.185                 head                   1
+70118014_27246                    233.375                 head                   1
+70118016_6175                     213.181                 head                   1
+70118016_6266                     213.493                 head                   1
+70118016_6509                     213.623                 head                   1
+70118016_7265                     213.943                 head                   1
+70118016_7417                     214.063                 head                   1
+70118016_7567                     214.243                 head                   1
+70118016_7750                     214.303                 head                   1
+70118016_8023                     214.393                 head                   1
+70118016_8114                     214.493                 head                   1
+70118016_8355                     214.563                 head                   1
+70118016_8507                     214.703                 head                   1
+70118016_8657                     214.753                 head                   1
+70118016_8840                     214.893                 head                   1
+70118016_9020                     215.003                 head                   1
+70118016_9264                     215.193                 head                   1
+70118016_9537                     215.428                 head                   1
+70118016_9839                     215.657                 head                   1
+70118016_9930                     215.765                 head                   1
+70118016_10202                    216.413                 head                   1
+70118016_10323                    216.063                 head                   1
+70118016_10565                    216.183                 head                   1
+70118016_10656                    216.303                 head                   1
+70118016_10898                    216.353                 head                   1
+70118016_11020                    216.363                 head                   1
+70118016_11261                    216.523                 head                   1
+70118016_11383                    216.663                 head                   1
+70118016_19252                    223.143                 head                   1
+70118016_19616                    223.243                 head                   1
+70118016_19979                    223.363                 head                   1
+70118016_20768                    223.533                 head                   1
+70118016_21919                    223.973                 head                   1
+70118016_22160                    219.733                 head                   1
+70118016_22826                    224.353                 head                   1
+70118016_23039                    224.403                 head                   1
+70118016_23220                    224.513                 head                   1
+70118016_23402                    224.573                 head                   1
+70118016_23644                    224.693                 head                   1
+70118016_23947                    224.908                 head                   1
+70118016_24401                    225.038                 head                   1
+70118016_24703                    225.248                 head                   1
+70118016_25097                    225.418                 head                   1
+70118016_25461                    225.668                 head                   1
+70118016_25704                    225.923                 head                   1
+70118016_25976                    225.943                 head                   1
+70118016_26550                    226.463                 head                   1
+70118016_26914                    226.693                 head                   1
+70118016_27246                    227.008                 head                   1
+70118017_5934                     215.423                 head                   1
+70118017_6266                     213.684                 head                   1
+70118017_6509                     213.904                 head                   1
+70118017_6691                     214.114                 head                   1
+70118017_7265                     214.434                 head                   1
+70118017_7417                     214.639                 head                   1
+70118017_7567                     214.774                 head                   1
+70118017_7750                     214.854                 head                   1
+70118017_8023                     215.004                 head                   1
+70118017_8114                     215.004                 head                   1
+70118017_8355                     215.274                 head                   1
+70118017_8507                     215.524                 head                   1
+70118017_8657                     215.574                 head                   1
+70118017_9020                     215.924                 head                   1
+70118017_9264                     216.214                 head                   1
+70118017_9537                     216.534                 head                   1
+70118017_9839                     216.858                 head                   1
+70118017_9930                     217.089                 head                   1
+70118017_10202                    217.314                 head                   1
+70118017_10323                    217.514                 head                   1
+70118017_10565                    217.724                 head                   1
+70118017_10656                    217.894                 head                   1
+70118017_10898                    218.004                 head                   1
+70118017_11020                    218.144                 head                   1
+70118017_11261                    218.344                 head                   1
+70118017_11383                    218.544                 head                   1
+70118017_11655                    218.729                 head                   1
+70118017_11776                    218.764                 head                   1
+70118017_12018                    218.944                 head                   1
+70118017_12290                    219.174                 head                   1
+70118017_12442                    219.324                 head                   1
+70118017_12775                    219.559                 head                   1
+70118017_13199                    220.044                 head                   1
+70118017_13471                    220.194                 head                   1
+70118017_13562                    220.444                 head                   1
+70118017_13774                    220.744                 head                   1
+70118017_13926                    221.014                 head                   1
+70118017_14167                    221.222                 head                   1
+70118017_14410                    221.614                 head                   1
+70118017_14713                    222.064                 head                   1
+70118017_15227                    222.934                 head                   1
+70118017_15409                    223.194                 head                   1
+70118017_15620                    223.429                 head                   1
+70118017_15742                    223.644                 head                   1
+70118017_15983                    223.804                 head                   1
+70118017_16105                    223.934                 head                   1
+70118017_16346                    224.234                 head                   1
+70118017_19252                    227.764                 head                   1
+70118017_19616                    228.004                 head                   1
+70118017_19979                    228.334                 head                   1
+70118017_20768                    228.684                 head                   1
+70118017_21919                    229.234                 head                   1
+70118017_22160                    225.124                 head                   1
+70118017_22555                     229.55                 head                   1
+70118017_22826                    229.659                 head                   1
+70118017_23039                    229.774                 head                   1
+70118017_23220                    229.719                 head                   1
+70118017_23402                    229.744                 head                   1
+70118017_23644                    229.789                 head                   1
+70118017_23947                    229.767                 head                   1
+70118017_24401                    229.669                 head                   1
+70118017_24703                    229.514                 head                   1
+70118017_25097                    229.409                 head                   1
+70118017_25461                    229.249                 head                   1
+70118017_25704                    229.234                 head                   1
+70118017_25976                    229.179                 head                   1
+70118017_26217                    229.084                 head                   1
+70118017_26550                    229.109                 head                   1
+70118017_26914                    229.219                 head                   1
+70118017_27246                    229.494                 head                   1
+70119011_5571                     220.496                 head                   1
+70119011_9537                     116.886                 head                   1
+70119011_9930                     120.546                 head                   1
+70119011_10202                    119.921                 head                   1
+70119011_10323                    118.693                 head                   1
+70119011_10565                    118.979                 head                   1
+70119011_10656                    118.183                 head                   1
+70119011_10898                    118.331                 head                   1
+70119011_11020                    118.249                 head                   1
+70119011_11261                    118.503                 head                   1
+70119011_11383                    118.316                 head                   1
+70119011_11655                    118.295                 head                   1
+70119011_11776                    117.671                 head                   1
+70119011_12018                    99.9698                 head                   1
+70119011_12139                    117.744                 head                   1
+70119011_12290                    106.346                 head                   1
+70119011_12442                    92.4465                 head                   1
+70119011_12775                    88.9215                 head                   1
+70119011_12836                    73.5465                 head                   1
+70119011_13077                    89.7738                 head                   1
+70119011_13199                    145.966                 head                   1
+70119011_13471                    146.041                 head                   1
+70119011_13562                    125.216                 head                   1
+70119011_13774                    132.883                 head                   1
+70119012_5571                      228.38                 head                   1
+70119012_9537                     124.684                 head                   1
+70119012_9930                     128.644                 head                   1
+70119012_10202                    128.049                 head                   1
+70119012_10323                     126.59                 head                   1
+70119012_10565                    127.075                 head                   1
+70119012_10656                    126.287                 head                   1
+70119012_10898                    126.426                 head                   1
+70119012_11020                    126.636                 head                   1
+70119012_11261                    126.477                 head                   1
+70119012_11383                    126.331                 head                   1
+70119012_11655                     126.14                 head                   1
+70119012_11776                    124.544                 head                   1
+70119012_12018                    111.321                 head                   1
+70119012_12139                    125.796                 head                   1
+70119012_12290                    119.444                 head                   1
+70119012_12442                    102.115                 head                   1
+70119012_12775                    101.644                 head                   1
+70119012_12836                    77.1436                 head                   1
+70119012_13077                    122.859                 head                   1
+70119012_13199                     163.05                 head                   1
+70119012_13471                    145.384                 head                   1
+70119012_19252                    224.174                 head                   1
+70119012_19979                    224.574                 head                   1
+70119012_20768                    224.804                 head                   1
+70119012_21919                    225.214                 head                   1
+70119012_22160                    225.344                 head                   1
+70119012_22312                    225.348                 head                   1
+70119012_22555                    225.413                 head                   1
+70119012_22826                    225.444                 head                   1
+70119012_23039                    225.499                 head                   1
+70119012_23220                    225.574                 head                   1
+70119012_23402                    225.524                 head                   1
+70119012_23644                    225.606                 head                   1
+70119012_23947                    225.579                 head                   1
+70119012_24401                    225.744                 head                   1
+70119012_24703                    225.664                 head                   1
+70119012_25097                    225.664                 head                   1
+70119012_25461                    225.684                 head                   1
+70119012_25976                    225.749                 head                   1
+70119012_26217                    225.874                 head                   1
+70119012_26550                    226.019                 head                   1
+70119012_26914                    225.944                 head                   1
+70119012_27246                    226.149                 head                   1
+70119309_17436                    224.201                 head                   1
+70119309_17527                    224.431                 head                   1
+70119309_17738                    224.681                 head                   1
+70119309_18526                    225.991                 head                   1
+70119309_18678                    225.291                 head                   1
+70119309_19011                    225.841                 head                   1
+70119309_19252                    226.331                 head                   1
+70119309_19616                    226.711                 head                   1
+70119309_19768                    226.961                 head                   1
+70119309_19979                    227.091                 head                   1
+70119309_20131                    227.091                 head                   1
+70119309_20768                    228.016                 head                   1
+70119309_21102                    228.396                 head                   1
+70119309_21434                    228.796                 head                   1
+70119309_21797                    229.071                 head                   1
+70119309_22160                    229.441                 head                   1
+70119309_22555                    229.714                 head                   1
+70119309_22676                    229.716                 head                   1
+70119309_23039                    229.329                 head                   1
+70119309_23402                    228.941                 head                   1
+70119309_23644                    228.801                 head                   1
+70119309_23947                    228.664                 head                   1
+70119309_24401                    228.604                 head                   1
+70119309_24703                    228.526                 head                   1
+70119309_25097                    228.731                 head                   1
+70119309_25461                    228.599                 head                   1
+70119309_25704                    228.296                 head                   1
+70119309_25976                    228.516                 head                   1
+70119309_26550                    229.061                 head                   1
+70119309_26914                    229.711                 head                   1
+70119309_27246                    229.881                 head                   1
+
+
+
+Prior information
+
+   no prior information provided
+
+
+
+PEST SVD Information
+    maxsing = 10000000
+    eigthresh = 1e-06
+
+
+
+
+
+Parameter group information
+NAME          INCREMENT TYPE     DERIVATIVE INCREMENT    INCREMENT LOWER BOUND  FORCE CENTRAL     INCREMENT MULTIPLIER
+evt                 RELATIVE                     0.01                        0         SWITCH                        2
+rch                 RELATIVE                     0.01                        0         SWITCH                        2
+hk                  RELATIVE                     0.01                        0         SWITCH                        2
+sy                  RELATIVE                     0.01                        0         SWITCH                        2
+vk                  RELATIVE                     0.01                        0         SWITCH                        2
+ss                  RELATIVE                     0.01                        0         SWITCH                        2
+drn                 RELATIVE                     0.01                        0         SWITCH                        2
+
+
+
+Parameter information
+NAME                    TRANSFORMATION        CHANGE LIMIT  INITIAL VALUE    LOWER BOUND    UPPER BOUND        GROUP          SCALE         OFFSET  DERIVATIVE COMMAND
+k_kp                    log                     FACTOR              8              1            100           hk              1              0                   1
+vk_kp                   log                     FACTOR            0.1           0.01             10           vk              1              0                   1
+sy                      none                    FACTOR            0.1           0.05            0.5           sy              1              0                   1
+ss                      none                    FACTOR         0.0001          1e-05          0.001           ss              1              0                   1
+rch_woody_coeff         none                    FACTOR           0.01          0.005           0.05          rch              1              0                   1
+rch_nonwoody_coeff      none                    FACTOR           0.06           0.01            0.1          rch              1              0                   1
+evt_woody_multiplier    none                    FACTOR            0.6            0.1              1          evt              1              0                   1
+evt_nonwoody_multiplier none                    FACTOR            1.3            0.8            1.8          evt              1              0                   1
+evt_woody_depth         none                    FACTOR              5              3             10          evt              1              0                   1
+evt_nonwoody_depth      none                    FACTOR              2            0.1              5          evt              1              0                   1
+river_cond              none                    FACTOR            300             10           1000          drn              1              0                   1
+
+
+
+Observation information
+NAME                                VALUE                GROUP              WEIGHT
+61718118_8840                     217.945                 head                   1
+61718118_9020                     217.849                 head                   1
+61718118_9264                     217.893                 head                   1
+61718118_9839                     218.004                 head                   1
+61718118_10202                    218.124                 head                   1
+61718118_10323                    218.219                 head                   1
+61718118_10565                    218.229                 head                   1
+61718118_10656                    218.239                 head                   1
+61718118_10898                    218.296                 head                   1
+61718118_11020                    218.329                 head                   1
+61718118_11261                    218.366                 head                   1
+61718118_11383                    218.409                 head                   1
+61718118_11655                    218.499                 head                   1
+61718118_11776                    218.549                 head                   1
+61718118_12018                    218.569                 head                   1
+61718118_12139                    218.784                 head                   1
+61718118_12290                    218.784                 head                   1
+61718118_12442                    218.834                 head                   1
+61718118_12775                    218.967                 head                   1
+61718118_12836                    219.079                 head                   1
+61718118_13077                    219.151                 head                   1
+61718118_13199                    219.349                 head                   1
+61718118_13471                    219.437                 head                   1
+61718118_13562                    219.549                 head                   1
+61718118_13774                    219.657                 head                   1
+61718118_13926                    219.801                 head                   1
+61718118_14167                    220.099                 head                   1
+61718118_14410                    220.204                 head                   1
+61718118_14713                    220.484                 head                   1
+61718118_14924                    220.719                 head                   1
+61718118_15227                    220.904                 head                   1
+61718118_15409                    221.049                 head                   1
+61718118_15620                    221.144                 head                   1
+61718118_15742                    221.379                 head                   1
+61718118_15983                    221.459                 head                   1
+61718118_16105                    221.674                 head                   1
+61718118_16741                    221.969                 head                   1
+61718118_16862                    222.169                 head                   1
+61718118_17043                    222.319                 head                   1
+61718118_17225                    222.499                 head                   1
+61718118_17436                    222.759                 head                   1
+61718118_17527                    222.999                 head                   1
+61718118_17738                    223.079                 head                   1
+61718118_18102                    223.639                 head                   1
+61718118_18526                    224.209                 head                   1
+61718118_19768                    225.039                 head                   1
+61718118_19979                    225.119                 head                   1
+61718118_20131                    225.224                 head                   1
+61718118_20768                    225.539                 head                   1
+61718118_21102                    225.679                 head                   1
+61718118_21434                    225.789                 head                   1
+61718118_21919                    225.929                 head                   1
+61718118_22160                    226.069                 head                   1
+61718118_22555                    226.099                 head                   1
+61718118_22676                    226.209                 head                   1
+61718118_23039                    226.344                 head                   1
+61718118_23402                    226.629                 head                   1
+61718118_23644                    226.956                 head                   1
+61718118_23947                    227.164                 head                   1
+61718118_24099                    227.229                 head                   1
+61718118_24401                    227.344                 head                   1
+61718118_24703                    227.534                 head                   1
+61718118_25097                    227.714                 head                   1
+61718118_25461                    227.906                 head                   1
+61718118_25704                    228.189                 head                   1
+61718118_25976                    228.194                 head                   1
+61718118_26217                    228.419                 head                   1
+61718118_26550                    228.859                 head                   1
+61718118_26914                    229.129                 head                   1
+61718118_27246                    229.285                 head                   1
+61718120_8657                     219.091                 head                   1
+61718120_8840                     219.326                 head                   1
+61718120_9020                     219.558                 head                   1
+61718120_9264                     219.552                 head                   1
+61718120_9839                     219.603                 head                   1
+61718120_10202                    220.213                 head                   1
+61718120_10565                    219.795                 head                   1
+61718120_10656                    219.798                 head                   1
+61718120_10898                    219.811                 head                   1
+61718120_11020                    219.878                 head                   1
+61718120_11261                    219.875                 head                   1
+61718120_11383                    219.948                 head                   1
+61718120_11655                    219.991                 head                   1
+61718120_11776                    220.038                 head                   1
+61718120_12018                    220.028                 head                   1
+61718120_12139                    220.203                 head                   1
+61718120_12290                    220.143                 head                   1
+61718120_12442                    220.478                 head                   1
+61718120_12775                     220.34                 head                   1
+61718120_12836                    220.468                 head                   1
+61718120_13077                    220.486                 head                   1
+61718120_13199                     220.65                 head                   1
+61718120_13471                    220.651                 head                   1
+61718120_13562                    220.803                 head                   1
+61718120_13774                    220.886                 head                   1
+61718120_13926                    221.018                 head                   1
+61718120_14167                    221.263                 head                   1
+61718120_14410                    221.348                 head                   1
+61718120_14713                    221.601                 head                   1
+61718120_14924                    221.888                 head                   1
+61718120_15227                    222.046                 head                   1
+61718120_15409                    222.188                 head                   1
+61718120_15620                    222.271                 head                   1
+61718120_15742                    222.478                 head                   1
+61718120_15983                    222.538                 head                   1
+61718120_16105                    222.728                 head                   1
+61718120_16741                    223.028                 head                   1
+61718120_16862                    223.208                 head                   1
+61718120_17043                    223.338                 head                   1
+61718120_17225                    223.518                 head                   1
+61718120_17436                    223.738                 head                   1
+61718120_17527                    223.988                 head                   1
+61718120_17738                    224.068                 head                   1
+61718120_18102                    224.548                 head                   1
+61718120_18526                    225.063                 head                   1
+61718120_19768                    225.818                 head                   1
+61718120_19979                    225.868                 head                   1
+61718120_20131                    225.998                 head                   1
+61718120_20768                    226.353                 head                   1
+61718120_21102                    226.553                 head                   1
+61718120_21434                    226.698                 head                   1
+61718120_21919                    226.908                 head                   1
+61718120_22160                    225.873                 head                   1
+61718120_22555                    225.715                 head                   1
+61718120_22676                    226.268                 head                   1
+61718120_23039                    226.733                 head                   1
+61718120_23402                    227.688                 head                   1
+61718120_23644                    227.928                 head                   1
+61718120_23947                    228.148                 head                   1
+61718120_24099                    227.878                 head                   1
+61718120_24401                    227.538                 head                   1
+61718120_24703                    226.523                 head                   1
+61718120_25097                    226.923                 head                   1
+61718120_25461                    226.738                 head                   1
+61718120_25704                    227.008                 head                   1
+61718120_25976                    227.133                 head                   1
+61718120_26217                    227.268                 head                   1
+61718120_26550                    227.763                 head                   1
+61718120_26914                    228.173                 head                   1
+61718120_27246                    226.568                 head                   1
+61718121_8657                     223.434                 head                   1
+61718121_8840                     222.065                 head                   1
+61718121_9020                     221.919                 head                   1
+61718121_9264                     221.937                 head                   1
+61718121_9839                     221.954                 head                   1
+61718121_10202                    222.014                 head                   1
+61718121_10323                    222.039                 head                   1
+61718121_10565                    221.842                 head                   1
+61718121_10656                    222.129                 head                   1
+61718121_10898                    221.319                 head                   1
+61718121_11020                    222.079                 head                   1
+61718121_11261                    222.142                 head                   1
+61718121_11383                    220.709                 head                   1
+61718121_11655                    222.179                 head                   1
+61718121_11776                    222.219                 head                   1
+61718121_12018                    222.229                 head                   1
+61718121_12139                    222.339                 head                   1
+61718121_12290                    222.324                 head                   1
+61718121_12442                    222.349                 head                   1
+61718121_12775                    222.437                 head                   1
+61718121_12836                    222.259                 head                   1
+61718121_13077                    222.494                 head                   1
+61718121_13199                    222.632                 head                   1
+61718121_13471                    222.641                 head                   1
+61718121_13562                    222.649                 head                   1
+61718121_13774                    222.795                 head                   1
+61718121_13926                    222.829                 head                   1
+61718121_14167                    223.089                 head                   1
+61718121_14410                    223.119                 head                   1
+61718121_14713                    222.614                 head                   1
+61718121_14924                    223.549                 head                   1
+61718121_15227                    223.649                 head                   1
+61718121_15409                    223.799                 head                   1
+61718121_15620                    223.816                 head                   1
+61718121_15742                    223.959                 head                   1
+61718121_15983                    224.039                 head                   1
+61718121_16105                    224.209                 head                   1
+61718121_16741                    224.439                 head                   1
+61718121_16862                    224.499                 head                   1
+61718121_17043                    224.664                 head                   1
+61718121_17225                    224.789                 head                   1
+61718121_17436                    225.009                 head                   1
+61718121_17527                    225.149                 head                   1
+61718121_17738                    225.239                 head                   1
+61718121_18102                    225.649                 head                   1
+61718121_18526                    226.099                 head                   1
+61718121_19768                    226.639                 head                   1
+61718121_19979                    226.779                 head                   1
+61718121_20131                    226.929                 head                   1
+61718121_20768                    227.334                 head                   1
+61718121_21102                    227.609                 head                   1
+61718121_21434                    227.839                 head                   1
+61718121_21919                    228.089                 head                   1
+61718121_22160                    228.284                 head                   1
+61718121_22555                    228.371                 head                   1
+61718121_22676                    228.439                 head                   1
+61718121_23039                    228.524                 head                   1
+61718121_23402                    228.739                 head                   1
+61718121_23644                    228.681                 head                   1
+61718121_23947                    229.244                 head                   1
+61718121_24099                    229.259                 head                   1
+61718121_24401                    229.449                 head                   1
+61718121_24703                    229.709                 head                   1
+61718121_25097                    229.884                 head                   1
+61718121_25461                    230.059                 head                   1
+61718121_25704                    230.129                 head                   1
+61718121_25976                    230.324                 head                   1
+61718121_26217                    230.419                 head                   1
+61718121_26550                    230.759                 head                   1
+61718121_26914                    231.099                 head                   1
+61718121_27246                    231.365                 head                   1
+61718124_8657                     220.968                 head                   1
+61718124_8840                     220.996                 head                   1
+61718124_9020                     221.473                 head                   1
+61718124_9264                     221.545                 head                   1
+61718124_9839                     220.733                 head                   1
+61718124_10202                    221.805                 head                   1
+61718124_10323                    221.844                 head                   1
+61718124_10565                    221.825                 head                   1
+61718124_10656                    221.921                 head                   1
+61718124_10898                    221.808                 head                   1
+61718124_11020                    221.863                 head                   1
+61718124_11261                    221.923                 head                   1
+61718124_11383                    221.893                 head                   1
+61718124_11655                    221.946                 head                   1
+61718124_11776                    221.993                 head                   1
+61718124_12018                    221.993                 head                   1
+61718124_12139                    222.058                 head                   1
+61718124_12290                    222.073                 head                   1
+61718124_12442                    222.078                 head                   1
+61718124_12775                    222.408                 head                   1
+61718124_13077                     221.91                 head                   1
+61718124_13199                    222.358                 head                   1
+61718124_13471                     222.45                 head                   1
+61718124_13562                    222.383                 head                   1
+61718124_13774                    222.853                 head                   1
+61718124_13926                    222.673                 head                   1
+61718124_14167                    222.833                 head                   1
+61718124_14410                    222.853                 head                   1
+61718124_14713                    223.106                 head                   1
+61718124_14924                    223.533                 head                   1
+61718124_15227                    223.623                 head                   1
+61718124_15409                    223.733                 head                   1
+61718124_15620                    223.771                 head                   1
+61718124_15742                    223.863                 head                   1
+61718124_15983                    223.933                 head                   1
+61718124_16105                    224.053                 head                   1
+61718124_16741                    224.273                 head                   1
+61718124_16862                    224.323                 head                   1
+61718124_17043                    224.493                 head                   1
+61718124_17225                    224.613                 head                   1
+61718124_17436                    224.803                 head                   1
+61718124_17527                    224.943                 head                   1
+61718124_17738                    225.023                 head                   1
+61718124_18102                    225.323                 head                   1
+61718124_18526                    225.663                 head                   1
+61718124_19768                    225.453                 head                   1
+61718124_19979                    225.523                 head                   1
+61718124_20131                    225.633                 head                   1
+61718124_20768                    225.993                 head                   1
+61718124_21102                    226.243                 head                   1
+61718124_21434                    226.463                 head                   1
+61718124_21919                    226.683                 head                   1
+61718124_22160                    226.938                 head                   1
+61718124_22555                    227.138                 head                   1
+61718124_22676                    227.233                 head                   1
+61718124_23039                    227.348                 head                   1
+61718124_23402                    227.503                 head                   1
+61718124_23644                    227.703                 head                   1
+61718124_23947                    227.918                 head                   1
+61718124_24099                    227.853                 head                   1
+61718124_24401                    228.031                 head                   1
+61718124_24703                    228.251                 head                   1
+61718124_25097                    228.403                 head                   1
+61718124_25461                    228.528                 head                   1
+61718124_25704                    228.463                 head                   1
+61718124_25976                    228.803                 head                   1
+61718124_26217                    228.843                 head                   1
+61718124_26550                    228.988                 head                   1
+61718124_26914                    229.138                 head                   1
+61718124_27246                    229.301                 head                   1
+61718126_8507                     220.036                 head                   1
+61718126_8657                     220.725                 head                   1
+61718126_8840                     220.966                 head                   1
+61718126_9020                     221.136                 head                   1
+61718126_9264                     221.392                 head                   1
+61718126_9537                     221.578                 head                   1
+61718126_9628                     221.546                 head                   1
+61718126_9839                     221.684                 head                   1
+61718126_9930                     221.713                 head                   1
+61718126_10202                    221.707                 head                   1
+61718126_10323                    221.671                 head                   1
+61718126_10565                    221.677                 head                   1
+61718126_10656                    221.722                 head                   1
+61718126_10898                    221.718                 head                   1
+61718126_11020                    221.675                 head                   1
+61718126_11261                    221.696                 head                   1
+61718126_11383                    221.701                 head                   1
+61718126_11655                    221.734                 head                   1
+61718126_11776                    221.768                 head                   1
+61718126_12018                     221.82                 head                   1
+61718126_12139                    221.868                 head                   1
+61718126_12290                    221.916                 head                   1
+61718126_12442                    221.986                 head                   1
+61718126_12775                    222.273                 head                   1
+61718126_13077                    221.693                 head                   1
+61718126_13199                    221.686                 head                   1
+61718126_13471                    222.773                 head                   1
+61718126_13562                    222.786                 head                   1
+61718126_13774                    222.943                 head                   1
+61718126_13926                    222.956                 head                   1
+61718126_14167                    223.201                 head                   1
+61718126_14410                    223.266                 head                   1
+61718126_14713                    223.474                 head                   1
+61718126_14924                    223.616                 head                   1
+61718126_15227                    223.651                 head                   1
+61718126_15409                    223.761                 head                   1
+61718126_15620                    223.861                 head                   1
+61718126_15742                    224.046                 head                   1
+61718126_15983                    224.206                 head                   1
+61718126_16105                    224.396                 head                   1
+61718126_16741                    224.616                 head                   1
+61718126_16862                    224.706                 head                   1
+61718126_17043                    224.896                 head                   1
+61718126_17225                    225.076                 head                   1
+61718126_17436                    225.366                 head                   1
+61718126_17527                    225.501                 head                   1
+61718126_17738                    225.566                 head                   1
+61718126_18102                    226.026                 head                   1
+61718126_18526                    226.666                 head                   1
+61718126_18920                    226.576                 head                   1
+61718126_19011                    226.716                 head                   1
+61718126_19252                    226.906                 head                   1
+61718126_19616                    226.906                 head                   1
+61718126_19768                    226.966                 head                   1
+61718126_19979                    227.036                 head                   1
+61718126_20131                    227.101                 head                   1
+61718126_20768                    227.376                 head                   1
+61718126_21102                    227.481                 head                   1
+61718126_21434                    227.551                 head                   1
+61718126_21919                    227.616                 head                   1
+61718126_22160                    228.181                 head                   1
+61718126_22555                    228.229                 head                   1
+61718126_22676                    228.276                 head                   1
+61718126_23039                    228.311                 head                   1
+61718126_23402                    228.466                 head                   1
+61718126_23644                    228.591                 head                   1
+61718126_23947                    228.816                 head                   1
+61718126_24099                    228.831                 head                   1
+61718126_24401                    229.054                 head                   1
+61718126_24703                    229.346                 head                   1
+61718126_25097                    229.541                 head                   1
+61718126_25461                    230.226                 head                   1
+61718126_25704                    229.776                 head                   1
+61718126_25976                    229.941                 head                   1
+61718126_26217                    230.036                 head                   1
+61718126_26550                    230.416                 head                   1
+61718126_26914                    230.786                 head                   1
+61718126_27246                    230.966                 head                   1
+61719111_7750                     170.676                 head                   1
+61719111_9264                     162.371                 head                   1
+61719111_9537                     165.421                 head                   1
+61719111_9628                     165.014                 head                   1
+61719111_9839                     165.761                 head                   1
+61719111_10202                    172.651                 head                   1
+61719111_10323                    171.651                 head                   1
+61719111_10565                    170.685                 head                   1
+61719111_10656                    170.721                 head                   1
+61719111_10898                    169.051                 head                   1
+61719111_11020                    166.259                 head                   1
+61719111_11261                    166.606                 head                   1
+61719111_11383                    164.671                 head                   1
+61719111_11655                    165.465                 head                   1
+61719111_11776                    166.298                 head                   1
+61719111_12018                    164.881                 head                   1
+61719111_12139                    161.596                 head                   1
+61719111_12290                    161.311                 head                   1
+61719111_12442                    162.971                 head                   1
+61719111_12775                    162.519                 head                   1
+61719111_12836                    164.441                 head                   1
+61719111_13077                    165.021                 head                   1
+61719111_13199                    164.121                 head                   1
+61719111_13471                    166.926                 head                   1
+61719111_13562                    162.611                 head                   1
+61719111_13774                    164.517                 head                   1
+61719111_13926                    161.549                 head                   1
+61719111_14167                    163.924                 head                   1
+61719111_14258                    165.826                 head                   1
+61719111_14410                    164.001                 head                   1
+61719111_14713                    169.158                 head                   1
+61719111_14924                    170.301                 head                   1
+61719112_7750                     154.071                 head                   1
+61719112_9264                     164.438                 head                   1
+61719112_9537                     166.979                 head                   1
+61719112_9628                     166.471                 head                   1
+61719112_9839                     166.754                 head                   1
+61719112_9930                     167.386                 head                   1
+61719112_10202                    168.711                 head                   1
+61719112_10323                    166.961                 head                   1
+61719112_10565                    167.025                 head                   1
+61719112_10656                    166.858                 head                   1
+61719112_10898                    166.411                 head                   1
+61719112_11020                    166.243                 head                   1
+61719112_11261                    165.969                 head                   1
+61719112_11383                    163.991                 head                   1
+61719112_11655                    164.126                 head                   1
+61719112_11776                    161.101                 head                   1
+61719112_12018                    164.395                 head                   1
+61719112_12139                    162.088                 head                   1
+61719112_12290                    162.331                 head                   1
+61719112_12442                    162.471                 head                   1
+61719112_12775                     161.07                 head                   1
+61719112_12836                    160.021                 head                   1
+61719112_13077                    161.705                 head                   1
+61719112_13199                    160.726                 head                   1
+61719112_13471                    162.334                 head                   1
+61719112_13562                    160.389                 head                   1
+61719112_13774                    160.843                 head                   1
+61719112_13926                    158.845                 head                   1
+61719112_14167                    157.519                 head                   1
+61719112_14713                    155.301                 head                   1
+61719112_14924                    161.301                 head                   1
+61819021_10202                    65.7993                 head                   1
+61819021_10323                     63.466                 head                   1
+61819021_10565                     65.066                 head                   1
+61819021_10656                     62.166                 head                   1
+61819021_10898                    68.0374                 head                   1
+61819021_11020                     69.341                 head                   1
+61819021_11261                     70.666                 head                   1
+61819021_11383                    75.1327                 head                   1
+61819021_11655                    73.0946                 head                   1
+61819021_11776                     59.416                 head                   1
+61819021_12018                    62.0827                 head                   1
+61819021_12139                     60.916                 head                   1
+61819021_12290                     60.016                 head                   1
+61819021_12442                     58.416                 head                   1
+61819021_12775                     57.091                 head                   1
+61819021_12836                     55.666                 head                   1
+61819021_13077                    69.8049                 head                   1
+61819021_13199                    67.9143                 head                   1
+61819021_13471                     71.086                 head                   1
+61819021_13562                     67.911                 head                   1
+61819021_13774                     70.911                 head                   1
+61819021_13926                     71.811                 head                   1
+61819021_14167                    67.8396                 head                   1
+61819021_14258                     66.661                 head                   1
+61819021_14410                     66.161                 head                   1
+61819021_14713                     72.911                 head                   1
+61819021_14924                     65.286                 head                   1
+61819021_14984                     65.911                 head                   1
+61819021_15227                     64.536                 head                   1
+61819021_15409                     66.911                 head                   1
+61819021_15620                    72.2443                 head                   1
+61819021_15742                     66.911                 head                   1
+61819021_15983                    73.5777                 head                   1
+61819021_16105                     77.911                 head                   1
+61819021_16346                     66.911                 head                   1
+61819021_16741                     78.911                 head                   1
+61819021_17043                     71.911                 head                   1
+61819021_17225                     71.911                 head                   1
+61819021_17436                    76.5777                 head                   1
+61819021_17527                     78.911                 head                   1
+61819023_9264                     219.996                 head                   1
+61819023_10202                     21.496                 head                   1
+61819023_10565                     17.996                 head                   1
+61819023_10898                     21.496                 head                   1
+70118002_5449                     212.151                 head                   1
+70118002_6266                      214.81                 head                   1
+70118002_6509                     214.933                 head                   1
+70118002_6691                     215.086                 head                   1
+70118002_6993                     215.806                 head                   1
+70118002_7265                     215.518                 head                   1
+70118002_7417                     215.542                 head                   1
+70118002_7567                     215.499                 head                   1
+70118002_7750                      215.59                 head                   1
+70118002_8023                     215.744                 head                   1
+70118002_8114                     215.943                 head                   1
+70118002_8355                     215.836                 head                   1
+70118002_8507                     215.974                 head                   1
+70118002_8657                     216.044                 head                   1
+70118002_8840                     216.094                 head                   1
+70118002_9020                     216.346                 head                   1
+70118002_9264                     216.616                 head                   1
+70118002_9537                     216.801                 head                   1
+70118002_9628                     216.778                 head                   1
+70118002_9839                       216.9                 head                   1
+70118002_9930                     217.001                 head                   1
+70118002_10202                    216.951                 head                   1
+70118002_10323                    217.046                 head                   1
+70118002_10565                    217.119                 head                   1
+70118002_10656                    217.261                 head                   1
+70118002_10898                    217.316                 head                   1
+70118002_11020                    217.356                 head                   1
+70118002_11261                    217.439                 head                   1
+70118002_11383                    217.556                 head                   1
+70118002_11655                    217.566                 head                   1
+70118002_11776                    217.751                 head                   1
+70118002_12018                    217.756                 head                   1
+70118002_12139                    217.921                 head                   1
+70118002_12290                    218.073                 head                   1
+70118002_12442                    218.011                 head                   1
+70118002_12775                    218.545                 head                   1
+70118002_12836                    218.646                 head                   1
+70118002_13077                    218.674                 head                   1
+70118002_13199                    218.876                 head                   1
+70118002_13471                     218.94                 head                   1
+70118002_13562                    219.391                 head                   1
+70118002_13774                    219.418                 head                   1
+70118002_13926                    219.591                 head                   1
+70118002_14167                    219.541                 head                   1
+70118002_14258                    219.676                 head                   1
+70118002_14410                    219.836                 head                   1
+70118002_14713                    219.915                 head                   1
+70118002_15227                    220.265                 head                   1
+70118002_15409                    220.489                 head                   1
+70118002_15620                    220.466                 head                   1
+70118002_15742                    220.696                 head                   1
+70118002_15983                    220.781                 head                   1
+70118002_16105                    220.916                 head                   1
+70118002_16346                    220.956                 head                   1
+70118002_19252                    223.526                 head                   1
+70118002_19616                    223.726                 head                   1
+70118002_19979                    223.886                 head                   1
+70118002_20768                    224.196                 head                   1
+70118002_21919                    224.346                 head                   1
+70118002_22160                    224.346                 head                   1
+70118002_22312                     224.32                 head                   1
+70118002_22555                    224.321                 head                   1
+70118002_22826                    224.346                 head                   1
+70118002_23039                    224.346                 head                   1
+70118002_23220                    224.346                 head                   1
+70118002_23402                    224.346                 head                   1
+70118002_23644                    224.346                 head                   1
+70118002_23947                    224.346                 head                   1
+70118002_24401                    224.346                 head                   1
+70118002_24703                    224.346                 head                   1
+70118003_5571                     215.515                 head                   1
+70118003_6266                     215.442                 head                   1
+70118003_6509                     215.582                 head                   1
+70118003_6691                     215.652                 head                   1
+70118003_6993                     217.902                 head                   1
+70118003_7265                     217.888                 head                   1
+70118003_7417                     216.745                 head                   1
+70118003_7567                     216.292                 head                   1
+70118003_7750                     216.322                 head                   1
+70118003_8023                     216.422                 head                   1
+70118003_19252                    224.712                 head                   1
+70118003_19616                    224.912                 head                   1
+70118003_19979                    225.112                 head                   1
+70118003_20768                    225.422                 head                   1
+70118003_21919                    225.952                 head                   1
+70118003_22160                    226.022                 head                   1
+70118003_22312                    226.049                 head                   1
+70118003_22555                    226.164                 head                   1
+70118003_22826                    226.302                 head                   1
+70118003_23039                    226.337                 head                   1
+70118003_23220                    226.442                 head                   1
+70118003_23402                    226.492                 head                   1
+70118003_23644                    226.569                 head                   1
+70118003_23947                    226.722                 head                   1
+70118003_24401                    226.862                 head                   1
+70118003_24703                    227.032                 head                   1
+70118003_25097                    227.177                 head                   1
+70118003_25461                    227.392                 head                   1
+70118003_25704                    227.582                 head                   1
+70118003_25976                    227.732                 head                   1
+70118003_26217                    227.882                 head                   1
+70118003_26550                    228.127                 head                   1
+70118003_26914                    228.327                 head                   1
+70118003_27246                    228.582                 head                   1
+70118006_5449                     213.304                 head                   1
+70118006_6266                      212.88                 head                   1
+70118006_6509                     213.192                 head                   1
+70118006_6691                     213.115                 head                   1
+70118006_6993                     213.385                 head                   1
+70118006_7265                      213.32                 head                   1
+70118006_7417                     213.607                 head                   1
+70118006_7567                     213.825                 head                   1
+70118006_7750                     213.881                 head                   1
+70118006_8023                     214.035                 head                   1
+70118006_8114                     214.155                 head                   1
+70118006_8355                     214.237                 head                   1
+70118006_8507                      214.29                 head                   1
+70118006_8657                     214.431                 head                   1
+70118006_8840                     214.402                 head                   1
+70118006_9020                     214.783                 head                   1
+70118006_9264                     215.001                 head                   1
+70118006_9537                     215.249                 head                   1
+70118006_9628                      215.27                 head                   1
+70118006_9839                     215.097                 head                   1
+70118006_9930                     215.233                 head                   1
+70118006_10202                     215.39                 head                   1
+70118006_10323                     215.45                 head                   1
+70118006_10565                    215.535                 head                   1
+70118006_10656                    215.405                 head                   1
+70118006_10898                    215.575                 head                   1
+70118006_11020                     215.79                 head                   1
+70118006_11261                    215.802                 head                   1
+70118006_11383                    216.075                 head                   1
+70118006_11655                     216.15                 head                   1
+70118006_11776                    216.275                 head                   1
+70118006_12018                    215.461                 head                   1
+70118006_12139                    216.383                 head                   1
+70118006_12290                    216.515                 head                   1
+70118006_12442                     216.58                 head                   1
+70118006_12775                    216.856                 head                   1
+70118006_12836                    216.965                 head                   1
+70118006_13077                    216.887                 head                   1
+70118006_13199                    216.808                 head                   1
+70118006_13471                    216.976                 head                   1
+70118006_13562                    217.082                 head                   1
+70118006_13774                    217.241                 head                   1
+70118006_13926                    217.266                 head                   1
+70118006_14167                    217.723                 head                   1
+70118006_14258                    217.723                 head                   1
+70118006_14410                    217.844                 head                   1
+70118006_14713                    218.104                 head                   1
+70118006_15227                    218.485                 head                   1
+70118006_15409                    218.485                 head                   1
+70118006_15620                    218.851                 head                   1
+70118006_15742                    219.003                 head                   1
+70118006_15983                    219.247                 head                   1
+70118006_16105                    219.153                 head                   1
+70118006_16346                    219.865                 head                   1
+70118006_19252                    226.865                 head                   1
+70118006_19979                    222.965                 head                   1
+70118006_20768                    223.065                 head                   1
+70118006_21919                    223.265                 head                   1
+70118006_22160                    223.465                 head                   1
+70118006_22312                    223.465                 head                   1
+70118006_22555                    223.715                 head                   1
+70118006_22826                    223.665                 head                   1
+70118006_23039                    223.465                 head                   1
+70118006_23220                    223.665                 head                   1
+70118006_23644                    221.265                 head                   1
+70118006_23947                     221.59                 head                   1
+70118006_24401                    221.365                 head                   1
+70118006_24703                    220.965                 head                   1
+70118006_25097                    221.265                 head                   1
+70118006_25976                    221.565                 head                   1
+70118006_26217                    221.665                 head                   1
+70118006_26550                    222.065                 head                   1
+70118006_26914                    221.865                 head                   1
+70118006_27246                    221.165                 head                   1
+70118009_5571                     214.332                 head                   1
+70118009_6266                     213.541                 head                   1
+70118009_6509                     213.671                 head                   1
+70118009_6691                     213.891                 head                   1
+70118009_6993                     213.996                 head                   1
+70118009_7265                     214.048                 head                   1
+70118009_7417                     214.271                 head                   1
+70118009_7567                     214.251                 head                   1
+70118009_7750                     214.306                 head                   1
+70118009_8023                     214.381                 head                   1
+70118009_8114                     214.391                 head                   1
+70118009_8355                     214.498                 head                   1
+70118009_8507                     214.621                 head                   1
+70118009_8657                     214.741                 head                   1
+70118009_8840                     214.786                 head                   1
+70118009_9020                     214.926                 head                   1
+70118009_9264                     215.104                 head                   1
+70118009_9537                     215.271                 head                   1
+70118009_9628                     215.344                 head                   1
+70118009_9839                     215.372                 head                   1
+70118009_9930                     215.442                 head                   1
+70118009_10323                    215.601                 head                   1
+70118009_10565                    215.681                 head                   1
+70118009_10656                    215.731                 head                   1
+70118009_10898                    215.841                 head                   1
+70118009_11020                    215.891                 head                   1
+70118009_11261                    215.991                 head                   1
+70118009_11383                    216.096                 head                   1
+70118009_11655                    216.131                 head                   1
+70118009_11776                    216.261                 head                   1
+70118009_12018                    216.301                 head                   1
+70118009_12139                    216.396                 head                   1
+70118009_12290                    216.621                 head                   1
+70118009_12442                    216.721                 head                   1
+70118009_12775                    216.911                 head                   1
+70118009_13199                    217.211                 head                   1
+70118009_13471                    217.211                 head                   1
+70118009_13562                    217.671                 head                   1
+70118009_13774                    217.801                 head                   1
+70118009_14167                    218.061                 head                   1
+70118009_14410                    218.251                 head                   1
+70118009_14713                    218.386                 head                   1
+70118009_15227                    218.691                 head                   1
+70118009_15409                    218.876                 head                   1
+70118009_15620                    218.971                 head                   1
+70118009_15742                    219.121                 head                   1
+70118009_16105                    219.311                 head                   1
+70118009_19252                    222.291                 head                   1
+70118009_19616                    222.391                 head                   1
+70118009_19979                    222.671                 head                   1
+70118009_20768                    222.861                 head                   1
+70118009_21919                    223.021                 head                   1
+70118009_22160                    223.021                 head                   1
+70118009_22312                    223.021                 head                   1
+70118009_22555                    223.021                 head                   1
+70118009_22826                    223.021                 head                   1
+70118009_23039                    223.021                 head                   1
+70118009_23402                    223.021                 head                   1
+70118009_23644                    223.021                 head                   1
+70118009_25097                    223.021                 head                   1
+70118009_25976                    223.021                 head                   1
+70118010_5571                     213.183                 head                   1
+70118010_6266                     212.318                 head                   1
+70118010_6509                     212.453                 head                   1
+70118010_6691                     212.523                 head                   1
+70118010_6993                     212.783                 head                   1
+70118010_7265                     212.843                 head                   1
+70118010_7417                     212.968                 head                   1
+70118010_7567                     213.033                 head                   1
+70118010_7750                     213.068                 head                   1
+70118010_8023                     213.203                 head                   1
+70118010_8114                     213.033                 head                   1
+70118010_8355                      213.41                 head                   1
+70118010_8507                     213.483                 head                   1
+70118010_8657                     213.538                 head                   1
+70118010_8840                     213.643                 head                   1
+70118010_9020                     213.793                 head                   1
+70118010_9264                      214.05                 head                   1
+70118010_9537                     214.226                 head                   1
+70118010_9628                     214.332                 head                   1
+70118010_9839                     214.414                 head                   1
+70118010_9930                     214.455                 head                   1
+70118010_10323                    214.603                 head                   1
+70118010_10565                    214.718                 head                   1
+70118010_10656                    214.773                 head                   1
+70118010_10898                    214.783                 head                   1
+70118010_11020                    214.813                 head                   1
+70118010_11261                    214.893                 head                   1
+70118010_11383                    215.023                 head                   1
+70118010_11655                    215.148                 head                   1
+70118010_11776                    215.213                 head                   1
+70118010_12018                    215.333                 head                   1
+70118010_12139                    215.443                 head                   1
+70118010_12290                    215.523                 head                   1
+70118010_12442                    215.643                 head                   1
+70118010_12775                    215.973                 head                   1
+70118010_13199                    216.283                 head                   1
+70118010_13471                    216.288                 head                   1
+70118010_13562                    216.603                 head                   1
+70118010_13774                    216.783                 head                   1
+70118010_13926                    216.973                 head                   1
+70118010_14167                    217.073                 head                   1
+70118010_14410                    217.353                 head                   1
+70118010_14713                    217.578                 head                   1
+70118010_15227                    218.053                 head                   1
+70118010_15742                    218.523                 head                   1
+70118010_16105                    218.713                 head                   1
+70118010_16346                    218.908                 head                   1
+70118010_19252                    220.893                 head                   1
+70118010_19616                    221.063                 head                   1
+70118010_19979                    221.233                 head                   1
+70118010_20768                    221.503                 head                   1
+70118010_21919                    221.813                 head                   1
+70118010_22160                    221.943                 head                   1
+70118010_22312                    221.959                 head                   1
+70118010_22555                    221.973                 head                   1
+70118010_22826                    222.048                 head                   1
+70118010_23039                    222.108                 head                   1
+70118010_23220                    222.163                 head                   1
+70118010_23402                    222.113                 head                   1
+70118010_23644                    222.208                 head                   1
+70118010_23947                    222.293                 head                   1
+70118010_24401                    222.388                 head                   1
+70118010_24703                    222.448                 head                   1
+70118010_25097                    222.568                 head                   1
+70118010_25461                    222.743                 head                   1
+70118010_25704                    222.973                 head                   1
+70118010_25976                    223.168                 head                   1
+70118010_26217                    223.283                 head                   1
+70118010_26550                    223.758                 head                   1
+70118010_26914                    223.996                 head                   1
+70118010_27246                    224.163                 head                   1
+70118014_5843                     211.315                 head                   1
+70118014_6266                     212.505                 head                   1
+70118014_6509                      212.94                 head                   1
+70118014_6691                      213.29                 head                   1
+70118014_6993                       213.8                 head                   1
+70118014_7265                      214.11                 head                   1
+70118014_7417                     214.525                 head                   1
+70118014_7567                      214.75                 head                   1
+70118014_7750                      214.93                 head                   1
+70118014_8023                      215.22                 head                   1
+70118014_8114                      215.94                 head                   1
+70118014_8355                      215.69                 head                   1
+70118014_8507                      215.97                 head                   1
+70118014_8657                       216.1                 head                   1
+70118014_8840                      216.37                 head                   1
+70118014_9020                      216.58                 head                   1
+70118014_9264                      216.93                 head                   1
+70118014_9537                      217.44                 head                   1
+70118014_9839                     217.913                 head                   1
+70118014_9930                     218.178                 head                   1
+70118014_10202                     218.46                 head                   1
+70118014_10323                     218.63                 head                   1
+70118014_10565                     218.73                 head                   1
+70118014_10656                     218.92                 head                   1
+70118014_10898                        219                 head                   1
+70118014_11020                     219.03                 head                   1
+70118014_11261                     219.21                 head                   1
+70118014_11383                     219.37                 head                   1
+70118014_11655                      219.5                 head                   1
+70118014_11776                     219.54                 head                   1
+70118014_12018                     219.74                 head                   1
+70118014_12290                        220                 head                   1
+70118014_12442                     219.77                 head                   1
+70118014_12775                    220.555                 head                   1
+70118014_13199                     221.24                 head                   1
+70118014_13471                    221.245                 head                   1
+70118014_13562                     221.77                 head                   1
+70118014_13774                     222.08                 head                   1
+70118014_13926                     222.39                 head                   1
+70118014_14167                      222.6                 head                   1
+70118014_14410                     223.01                 head                   1
+70118014_14713                    223.478                 head                   1
+70118014_15227                     224.29                 head                   1
+70118014_15409                    224.555                 head                   1
+70118014_15620                    224.835                 head                   1
+70118014_15742                     225.09                 head                   1
+70118014_16105                     225.69                 head                   1
+70118014_16346                     225.98                 head                   1
+70118014_19252                     230.13                 head                   1
+70118014_19616                     230.22                 head                   1
+70118014_19979                     230.32                 head                   1
+70118014_20768                     230.54                 head                   1
+70118014_21919                     230.96                 head                   1
+70118014_22160                    226.885                 head                   1
+70118014_22555                    231.377                 head                   1
+70118014_22826                    231.545                 head                   1
+70118014_23039                     231.71                 head                   1
+70118014_23220                     231.75                 head                   1
+70118014_23402                     231.83                 head                   1
+70118014_23644                    232.005                 head                   1
+70118014_23947                      232.2                 head                   1
+70118014_24401                     232.25                 head                   1
+70118014_24703                    232.345                 head                   1
+70118014_25097                     232.39                 head                   1
+70118014_25461                    232.455                 head                   1
+70118014_25704                     232.62                 head                   1
+70118014_25976                    232.705                 head                   1
+70118014_26217                     232.75                 head                   1
+70118014_26550                    232.925                 head                   1
+70118014_26914                    233.185                 head                   1
+70118014_27246                    233.375                 head                   1
+70118016_6175                     213.181                 head                   1
+70118016_6266                     213.493                 head                   1
+70118016_6509                     213.623                 head                   1
+70118016_7265                     213.943                 head                   1
+70118016_7417                     214.063                 head                   1
+70118016_7567                     214.243                 head                   1
+70118016_7750                     214.303                 head                   1
+70118016_8023                     214.393                 head                   1
+70118016_8114                     214.493                 head                   1
+70118016_8355                     214.563                 head                   1
+70118016_8507                     214.703                 head                   1
+70118016_8657                     214.753                 head                   1
+70118016_8840                     214.893                 head                   1
+70118016_9020                     215.003                 head                   1
+70118016_9264                     215.193                 head                   1
+70118016_9537                     215.428                 head                   1
+70118016_9839                     215.657                 head                   1
+70118016_9930                     215.765                 head                   1
+70118016_10202                    216.413                 head                   1
+70118016_10323                    216.063                 head                   1
+70118016_10565                    216.183                 head                   1
+70118016_10656                    216.303                 head                   1
+70118016_10898                    216.353                 head                   1
+70118016_11020                    216.363                 head                   1
+70118016_11261                    216.523                 head                   1
+70118016_11383                    216.663                 head                   1
+70118016_19252                    223.143                 head                   1
+70118016_19616                    223.243                 head                   1
+70118016_19979                    223.363                 head                   1
+70118016_20768                    223.533                 head                   1
+70118016_21919                    223.973                 head                   1
+70118016_22160                    219.733                 head                   1
+70118016_22826                    224.353                 head                   1
+70118016_23039                    224.403                 head                   1
+70118016_23220                    224.513                 head                   1
+70118016_23402                    224.573                 head                   1
+70118016_23644                    224.693                 head                   1
+70118016_23947                    224.908                 head                   1
+70118016_24401                    225.038                 head                   1
+70118016_24703                    225.248                 head                   1
+70118016_25097                    225.418                 head                   1
+70118016_25461                    225.668                 head                   1
+70118016_25704                    225.923                 head                   1
+70118016_25976                    225.943                 head                   1
+70118016_26550                    226.463                 head                   1
+70118016_26914                    226.693                 head                   1
+70118016_27246                    227.008                 head                   1
+70118017_5934                     215.423                 head                   1
+70118017_6266                     213.684                 head                   1
+70118017_6509                     213.904                 head                   1
+70118017_6691                     214.114                 head                   1
+70118017_7265                     214.434                 head                   1
+70118017_7417                     214.639                 head                   1
+70118017_7567                     214.774                 head                   1
+70118017_7750                     214.854                 head                   1
+70118017_8023                     215.004                 head                   1
+70118017_8114                     215.004                 head                   1
+70118017_8355                     215.274                 head                   1
+70118017_8507                     215.524                 head                   1
+70118017_8657                     215.574                 head                   1
+70118017_9020                     215.924                 head                   1
+70118017_9264                     216.214                 head                   1
+70118017_9537                     216.534                 head                   1
+70118017_9839                     216.858                 head                   1
+70118017_9930                     217.089                 head                   1
+70118017_10202                    217.314                 head                   1
+70118017_10323                    217.514                 head                   1
+70118017_10565                    217.724                 head                   1
+70118017_10656                    217.894                 head                   1
+70118017_10898                    218.004                 head                   1
+70118017_11020                    218.144                 head                   1
+70118017_11261                    218.344                 head                   1
+70118017_11383                    218.544                 head                   1
+70118017_11655                    218.729                 head                   1
+70118017_11776                    218.764                 head                   1
+70118017_12018                    218.944                 head                   1
+70118017_12290                    219.174                 head                   1
+70118017_12442                    219.324                 head                   1
+70118017_12775                    219.559                 head                   1
+70118017_13199                    220.044                 head                   1
+70118017_13471                    220.194                 head                   1
+70118017_13562                    220.444                 head                   1
+70118017_13774                    220.744                 head                   1
+70118017_13926                    221.014                 head                   1
+70118017_14167                    221.222                 head                   1
+70118017_14410                    221.614                 head                   1
+70118017_14713                    222.064                 head                   1
+70118017_15227                    222.934                 head                   1
+70118017_15409                    223.194                 head                   1
+70118017_15620                    223.429                 head                   1
+70118017_15742                    223.644                 head                   1
+70118017_15983                    223.804                 head                   1
+70118017_16105                    223.934                 head                   1
+70118017_16346                    224.234                 head                   1
+70118017_19252                    227.764                 head                   1
+70118017_19616                    228.004                 head                   1
+70118017_19979                    228.334                 head                   1
+70118017_20768                    228.684                 head                   1
+70118017_21919                    229.234                 head                   1
+70118017_22160                    225.124                 head                   1
+70118017_22555                     229.55                 head                   1
+70118017_22826                    229.659                 head                   1
+70118017_23039                    229.774                 head                   1
+70118017_23220                    229.719                 head                   1
+70118017_23402                    229.744                 head                   1
+70118017_23644                    229.789                 head                   1
+70118017_23947                    229.767                 head                   1
+70118017_24401                    229.669                 head                   1
+70118017_24703                    229.514                 head                   1
+70118017_25097                    229.409                 head                   1
+70118017_25461                    229.249                 head                   1
+70118017_25704                    229.234                 head                   1
+70118017_25976                    229.179                 head                   1
+70118017_26217                    229.084                 head                   1
+70118017_26550                    229.109                 head                   1
+70118017_26914                    229.219                 head                   1
+70118017_27246                    229.494                 head                   1
+70119011_5571                     220.496                 head                   1
+70119011_9537                     116.886                 head                   1
+70119011_9930                     120.546                 head                   1
+70119011_10202                    119.921                 head                   1
+70119011_10323                    118.693                 head                   1
+70119011_10565                    118.979                 head                   1
+70119011_10656                    118.183                 head                   1
+70119011_10898                    118.331                 head                   1
+70119011_11020                    118.249                 head                   1
+70119011_11261                    118.503                 head                   1
+70119011_11383                    118.316                 head                   1
+70119011_11655                    118.295                 head                   1
+70119011_11776                    117.671                 head                   1
+70119011_12018                    99.9698                 head                   1
+70119011_12139                    117.744                 head                   1
+70119011_12290                    106.346                 head                   1
+70119011_12442                    92.4465                 head                   1
+70119011_12775                    88.9215                 head                   1
+70119011_12836                    73.5465                 head                   1
+70119011_13077                    89.7738                 head                   1
+70119011_13199                    145.966                 head                   1
+70119011_13471                    146.041                 head                   1
+70119011_13562                    125.216                 head                   1
+70119011_13774                    132.883                 head                   1
+70119012_5571                      228.38                 head                   1
+70119012_9537                     124.684                 head                   1
+70119012_9930                     128.644                 head                   1
+70119012_10202                    128.049                 head                   1
+70119012_10323                     126.59                 head                   1
+70119012_10565                    127.075                 head                   1
+70119012_10656                    126.287                 head                   1
+70119012_10898                    126.426                 head                   1
+70119012_11020                    126.636                 head                   1
+70119012_11261                    126.477                 head                   1
+70119012_11383                    126.331                 head                   1
+70119012_11655                     126.14                 head                   1
+70119012_11776                    124.544                 head                   1
+70119012_12018                    111.321                 head                   1
+70119012_12139                    125.796                 head                   1
+70119012_12290                    119.444                 head                   1
+70119012_12442                    102.115                 head                   1
+70119012_12775                    101.644                 head                   1
+70119012_12836                    77.1436                 head                   1
+70119012_13077                    122.859                 head                   1
+70119012_13199                     163.05                 head                   1
+70119012_13471                    145.384                 head                   1
+70119012_19252                    224.174                 head                   1
+70119012_19979                    224.574                 head                   1
+70119012_20768                    224.804                 head                   1
+70119012_21919                    225.214                 head                   1
+70119012_22160                    225.344                 head                   1
+70119012_22312                    225.348                 head                   1
+70119012_22555                    225.413                 head                   1
+70119012_22826                    225.444                 head                   1
+70119012_23039                    225.499                 head                   1
+70119012_23220                    225.574                 head                   1
+70119012_23402                    225.524                 head                   1
+70119012_23644                    225.606                 head                   1
+70119012_23947                    225.579                 head                   1
+70119012_24401                    225.744                 head                   1
+70119012_24703                    225.664                 head                   1
+70119012_25097                    225.664                 head                   1
+70119012_25461                    225.684                 head                   1
+70119012_25976                    225.749                 head                   1
+70119012_26217                    225.874                 head                   1
+70119012_26550                    226.019                 head                   1
+70119012_26914                    225.944                 head                   1
+70119012_27246                    226.149                 head                   1
+70119309_17436                    224.201                 head                   1
+70119309_17527                    224.431                 head                   1
+70119309_17738                    224.681                 head                   1
+70119309_18526                    225.991                 head                   1
+70119309_18678                    225.291                 head                   1
+70119309_19011                    225.841                 head                   1
+70119309_19252                    226.331                 head                   1
+70119309_19616                    226.711                 head                   1
+70119309_19768                    226.961                 head                   1
+70119309_19979                    227.091                 head                   1
+70119309_20131                    227.091                 head                   1
+70119309_20768                    228.016                 head                   1
+70119309_21102                    228.396                 head                   1
+70119309_21434                    228.796                 head                   1
+70119309_21797                    229.071                 head                   1
+70119309_22160                    229.441                 head                   1
+70119309_22555                    229.714                 head                   1
+70119309_22676                    229.716                 head                   1
+70119309_23039                    229.329                 head                   1
+70119309_23402                    228.941                 head                   1
+70119309_23644                    228.801                 head                   1
+70119309_23947                    228.664                 head                   1
+70119309_24401                    228.604                 head                   1
+70119309_24703                    228.526                 head                   1
+70119309_25097                    228.731                 head                   1
+70119309_25461                    228.599                 head                   1
+70119309_25704                    228.296                 head                   1
+70119309_25976                    228.516                 head                   1
+70119309_26550                    229.061                 head                   1
+70119309_26914                    229.711                 head                   1
+70119309_27246                    229.881                 head                   1
+
+
+...resetting max_run_fail to 1
+...resetting overdue_giveup_fac to 2.0
+...resetting overdue_resched_fac to 1.15
+
+  ---  initializing  ---  
+...using glm algorithm
+...using REDSVD for truncated svd solve
+...maxsing: 10000000
+...eigthresh:  1e-06
+...initializing localizer
+...not using localization
+...using lambda multipliers: 0.1 , 1 , 10 , 
+...using lambda scaling factors: 0.75 , 1 , 1.1 , 
+...acceptable phi factor:  1.05
+...lambda increase factor:  10
+...lambda decrease factor:  0.75
+...max run fail:  1
+
+  ---  sanity_check warnings  ---  
+...ies_num_reals < 10, this is prob too few
+...continuing initialization...
+...initializing prior parameter covariance matrix
+...parcov loaded  from parameter bounds, using par_sigma_range 4
+...initializing observation noise covariance matrix
+...obscov loaded  from observation weights
+...drawing parameter realizations:  3
+...not using prior parameter covariance matrix scaling
+
+  ---  NOTE: no obs-noise-specific options have been passed, resetting to `ies_no_noise` to true  ---  
+...initializing no-noise observation ensemble of :  3
+...setting weights ensemble from control file weights
+...saved weight ensemble to  Otorowiri.weights.csv
+checking for denormal values in weights ensemble
+...adding 'base' parameter values to ensemble
+...adding 'base' observation values to ensemble
+...adding 'base' weight values to weight ensemble
+checking for denormal values in pe
+...saved initial parameter ensemble to  Otorowiri.0.par.csv
+checking for denormal values in obs + noise ensemble
+...saved obs+noise observation ensemble (obsval + noise realizations) to  Otorowiri.obs+noise.csv
+...using subset in lambda testing, percentage of realizations used in subset testing:  10
+...subset how:  RANDOM
+...centering on ensemble mean vector
+...running initial ensemble of size 3

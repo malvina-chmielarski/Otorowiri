@@ -1,8 +1,10 @@
 import sys
 import os
+import pandas as pd
 import geopandas as gpd
+import numpy as np
 from shapely.ops import unary_union
-from shapely.geometry import Polygon,MultiPolygon
+from shapely.geometry import LineString, Polygon, MultiPolygon
 import matplotlib.pyplot as plt
 import glob
 from pathlib import Path
@@ -114,3 +116,71 @@ def project_veg_onto_mesh(mesh, model_boundary):
         plt.close(fig)
 
         print(f"Saved: {fig_path}")'''
+
+def process_drn_linestrings(spatial):
+
+    gdf = gpd.read_file('../data/data_shp/Model_Streams.shp')
+    gdf.to_crs(epsg=28350, inplace=True)
+    gdf = gpd.clip(gdf, spatial.model_boundary_poly).reset_index(drop=True)
+
+    ##Arrowsmith River polygons
+    Arrowsmith_gdf = gdf[((gdf['something'] == 'Arrowsmith_1') | (gdf['something'] == 'Arrowsmith_2') | (gdf['something'] == 'Arrowsmith_3'))]
+    ls1 = Arrowsmith_gdf.iloc[0].geometry
+    ls2 = Arrowsmith_gdf.iloc[1].geometry
+    ls3 = Arrowsmith_gdf.iloc[2].geometry
+
+    linestrings = [ls1, ls2, ls3] 
+    labels = ['ls1', 'ls2', 'ls3']
+    def plot_linestrings(lines, labels):
+        fig, ax = plt.subplots() 
+        for line, label in zip(lines, labels):
+            x, y = line.xy
+            ax.plot(x, y, '-o', ms = 2, label = label)  # You can set color, linestyle, etc.
+
+        ax.set_aspect('equal')
+        ax.legend()
+        plt.show()
+    plot_linestrings(linestrings, labels)
+
+    print("the lengths of the linestrings are:", sum([line.length for line in linestrings]))
+    return linestrings
+
+def get_drain_cells(linestrings, geomodel):
+    outfile = '../data/data_specialcells/drain_cells.xlsx'
+    ixs = flopy.utils.GridIntersect(geomodel.vgrid, method="vertex")
+    cellids = []
+    for seg in linestrings:
+        v = ixs.intersect(seg, sort_by_cellid=True)
+        cellids += v["cellids"].tolist()
+    intersection_rg = np.zeros(geomodel.vgrid.shape[1:])
+    for loc in cellids:
+        intersection_rg[loc] = 1
+
+    # intersect stream segs to simulate as drains
+    ixs = flopy.utils.GridIntersect(geomodel.vgrid, method="vertex")
+    drn_cellids = []
+    drn_lengths = []
+    i = 0
+    for seg in linestrings:
+        v = ixs.intersect(LineString(seg), sort_by_cellid=True)
+        drn_cellids += v["cellids"].tolist()
+        drn_lengths += v["lengths"].tolist()
+        i+=1
+    print('Number of drain cells = ', len(drn_cellids))
+
+    ibd = np. zeros((geomodel.ncpl), dtype=int)
+    for i, cellid in enumerate(drn_cellids):
+        ibd[cellid] = 1
+
+    print('the drain lengths are ', drn_lengths)
+    print('the sum of the drain lengths is ', sum(drn_lengths))
+
+    df = pd.DataFrame({
+        "cell_id": drn_cellids,
+        "drain_length": drn_lengths,
+        "ibd_flag": [ibd[c] for c in drn_cellids]
+    })
+
+    # Write to Excel
+    df.to_excel(outfile, index=False)
+    print(f"Excel file written to: {outfile}")

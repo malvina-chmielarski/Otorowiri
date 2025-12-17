@@ -91,3 +91,12 @@ def reformat_obs_for_pest():
     output_path = '../data/data_pest/measured_groundwater.xlsx'
     
     wide_df.to_excel(output_path, index=False)
+
+def write_initial_pars(parameters_spreadsheet, fname_params):
+    pars_df = pd.read_excel(parameters_spreadsheet, sheet_name = 'pars')
+    values = pars_df.parval1.tolist()
+
+    with open(fname_params, 'w+') as f:
+        for i in range(len(pars_df.parval1)):
+            f.write(f'{str(values[i])}\n')
+    print(f'Mean parameters written as a list to {fname_params}\n')

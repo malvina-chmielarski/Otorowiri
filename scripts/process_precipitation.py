@@ -1,8 +1,10 @@
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import timedelta
 from pandas.tseries.offsets import MonthEnd
+from scipy.spatial import KDTree
 import os
 
 def clean_precipitation():
@@ -371,3 +373,41 @@ def create_transient_precipitation(csv_path='../data/data_precipitation/precipit
 
     plt.tight_layout()
     plt.show()'''
+
+def slope_factor(mesh, geomodel):
+    from scipy.spatial import KDTree
+
+    #create slope for each cell
+    # x and y are stored in mesh as xc and yc
+    centroids = np.array([mesh.xc, mesh.yc]).T  # shape (ncpl, 2)
+    cell_elevation = geomodel.top_geo  # shape (ncpl,)
+    tree = KDTree(centroids)
+    distances, _ = tree.query(centroids, k=2)
+    avg_spacing = np.mean(distances[:, 1])  # average cell spacing
+    neighbors = [tree.query_ball_point(c, r=avg_spacing * 1.5) for c in centroids] # Get neighbors within 1.5× spacing
+    slopes = np.zeros_like(cell_elevation)
+    for i, elev_i in enumerate(cell_elevation):
+        neigh_ids = neighbors[i]
+        if len(neigh_ids) <= 1:
+            continue
+        slope_sum = 0
+        count = 0
+        for j in neigh_ids:
+            if j == i:
+                continue
+            elev_j = cell_elevation[j]
+            dx = np.linalg.norm(centroids[i] - centroids[j])
+            if dx > 0:
+                slope_sum += abs(elev_i - elev_j) / dx
+                count += 1
+        slopes[i] = slope_sum / count if count > 0 else 0
+    slope_factor = 1 - (slopes / slopes.max()) * 0.5 # Normalize slopes to range [0.5, 1.0] as a factor
+
+    print("slope factor is:", slope_factor)
+    print("slopes are:", slopes)
+    len(slope_factor)
+
+    cell_ids = np.arange(len(slopes))
+    output_array = np.column_stack([cell_ids, slopes, slope_factor])
+    output_file = '../data/data_precipitation/slope_factor.csv'
+    np.savetxt(output_file, output_array, delimiter=',', header='cell_ID,slope,slope_Factor', comments='', fmt=['%d', '%.6f', '%.6f'])
