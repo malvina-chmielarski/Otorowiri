@@ -495,7 +495,7 @@ class Data:
         return linestrings
 
     def get_drain_cells(self, linestrings, geomodel):
-        ixs = flopy.utils.GridIntersect(geomodel.vgrid, method="vertex")
+        ixs = flopy.utils.GridIntersect(geomodel.vgrid,)# method="vertex")
         cellids = []
         for seg in linestrings:
             v = ixs.intersect(seg, sort_by_cellid=True)
@@ -505,7 +505,7 @@ class Data:
             intersection_rg[loc] = 1
 
         # intersect stream segs to simulate as drains
-        ixs = flopy.utils.GridIntersect(geomodel.vgrid, method="vertex")
+        ixs = flopy.utils.GridIntersect(geomodel.vgrid)#, method="vertex")
         drn_cellids = []
         drn_lengths = []
         i = 0
