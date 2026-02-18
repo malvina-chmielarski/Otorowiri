@@ -9,7 +9,7 @@ import pickle
 #import disv2disu
 
 #unpickle (scenario, project, data, observations, mesh, geomodel) except scenario
-
+'''
 class geomodel:
     pass
 
@@ -49,7 +49,7 @@ with open(fname, 'rb') as f:
 fname = '../modelfiles/otorowiri_project.pkl'
 print('Importing inputs from ', fname)
 with open(fname, 'rb') as f:
-    project = pickle.load(f)
+    project = pickle.load(f)'''
 
 class Flowmodel:
     
@@ -464,7 +464,7 @@ class Flowmodel:
         plt.tight_layout()  
         plt.savefig('../figures/transect_%s.png' % array)
         plt.show()    
-    
+'''    
 scenario = 'steadymodel'
 #fm is object; Flowmodel is class
 fm = Flowmodel(scenario, project, data, observations, mesh, geomodel)
@@ -482,4 +482,4 @@ sim = fm.write_flowmodel(chd = False, #not necessary when all model boundaries h
                          staggered = False, # True made "fully connected". "False" is essentially DISV.
                         )
 
-fm.run_flowmodel(sim)
+fm.run_flowmodel(sim)'''
