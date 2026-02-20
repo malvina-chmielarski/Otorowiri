@@ -1,0 +1,4 @@
+Co-ordinate information was entered into the database in a non-spatial context and on occasion with no spatial accuracy verification. 
+It is known and accepted that a percentage of records contain inaccurate spatial co-ordinates.
+For further information, please refer to the Water Register:
+https://www.wa.gov.au/service/natural-resources/water-resources/water-register

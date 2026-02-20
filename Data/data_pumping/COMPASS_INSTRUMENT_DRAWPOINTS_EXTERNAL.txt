@@ -1,0 +1,224 @@
+DEPARTMENT OF WATER AND ENVIRONMENTAL REGULATION (DWER)
+Metadata and Data Dictionary Statement
+
+======================
+ CITATION INFORMATION 
+======================
+
+DATASET TITLE:  
+COMPASS - Instrument Drawpoints
+
+CUSTODIAN:		
+Department of Water and Environmental Regulation (DWER).
+
+JURISDICTION:		
+Western Australia.
+
+
+================================================================================
+
+=====================
+ TEXTUAL DESCRIPTION 
+=====================
+
+ABSTRACT: 
+Drawpoint related to a licence to take water from a watercourse, well and/or underground source in a proclaimed groundwater or surface water area, or as otherwise prescribed by regulations (section 5C). Instrument drawpoints may also be related to licences to construct or alter a well, including bores and soaks (section 26D); or to interfere with the waters, bed and banks of a watercourse on crown land; or any watercourse, race, drain, dam, reservoir or disused watercourse, race or drain on freehold land, or land granted or demised by the Crown (sections 11, 17 and 21A).
+
+The instrument drawpoint is the published location for a water abstraction point or location of interference to the bed and banks of a watercourse.
+
+
+ANZLIC SEARCH WORDS: 
+Water, Waterbore, Well, Bore, Licence, Soak, Crossing, Bed and Banks
+
+
+================================================================================
+
+================
+ SPATIAL EXTENT 
+================
+
+GEOGRAPHIC EXTENT:
+Western Australia
+
+GEOGRAPHIC BOUNDING BOX:
+(all coordinate values expressed in Decimal Degrees)
+
+North Bounding Latitude: -14.333973
+South Bounding Latitude: -35.096819
+East Bounding Longitude: 128.997231
+West Bounding Longitude: 113.423206
+
+The bounding box encloses the maximum extents of the dataset. There may be voids or gaps within the bounding box, depending on the defined coverage of the dataset. 
+
+HORIZONTAL COORDINATE SYSTEM: 
+Geographic System.
+
+GEODETIC MODEL: 
+Geocentric Datum of Australia 2020 (GDA2020)
+
+TRANSFORMATION METHOD: 
+Transformed coordinates (GDA94 to GDA2020) have had the following transformation methods applied depending on features position in realtion to NTv2 grid. 
+
+-- Conformal + Distortion [EPSG: 8447]: Within NTV2 grid, e.g. mainland Australia
+-- Conformal only [EPSG: 8444/8445]: Indian Ocean Territories
+-- 7-parameter [EPSG: 8048]: Areas outside of NTv2 grid and IOT grids. 
+
+See https://www.landgate.wa.gov.au/location-data-and-services/surveying/geodesy/horizontal-datum/ for further information.
+
+VERTICAL COORDINATE SYSTEM:
+Australian Height Datum (1971)
+
+
+================================================================================
+
+========================
+ DATA CURRENCY & STATUS
+========================
+
+BEGINNING DATE:
+June 2018
+
+ENDING DATE:
+N/A
+
+PROGRESS:
+Ongoing
+
+UPDATE FREQUENCY:	
+COMPASS is a live system and the spatial component is synchronized nightly
+
+METADATA DATE:
+30/05/2023, Updated 31/03/2025
+ 
+ADDITIONAL METADATA:	
+COMPASS metadata
+ 
+
+================================================================================
+
+==============
+ DATA STORAGE
+==============
+
+STORED DATA FORMAT:
+ArcSDE Layer 
+
+ACCESS CONSTRAINTS:
+Can be made available to external stakeholders on request as a spatial representation only. Data is published in the Water register and drawpoint co-ordinates are not permitted to be released. Drawpoint co-ordinates are often arbitrary in nature and the department does not guarantee the accuracy of the co-ordinates.
+
+RELEASABILITY:
+Refer to Access Constraints.
+
+
+================================================================================
+
+==============	
+ DATA QUALITY
+==============
+
+LINEAGE:
+Instrument drawpoints show the location of water source. Data sourced from the Departments COMPASS system. The Instrument drawpoint represents the discrete location of water source related to an inforce instrument. Instrument Drawpoints also show location of expired drawpoints.
+
+Updates:
+Compass was commissioned in June 2018 and is subject to regularly enhancements and bug fixes.
+
+POSITIONAL ACCURACY:
+Instrument drawpoints are provided as GDA2020 coordinates and represent a discrete location for location of water source, the instrument drawpoint represents the location of water source for an inforce instrument.
+
+ATTRIBUTE ACCURACY:
+Accurate, instrument drawpoint location is validated by the custodian and represent actual location of water source.
+
+LOGICAL CONSISTENCY:
+The instrument drawpoint represents the discrete location of a water source related to a licence/instrument.
+
+COMPLETENESS:
+Complete.
+
+
+================================================================================
+
+=====================	
+ CONTACT INFORMATION
+=====================
+
+DATA TRUSTEE:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: Program Manager - Systems Development 
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 6918 
+-- EMAIL ADDRESS: compass@dwer.wa.gov.au
+ 
+ 
+DATA CUSTODIAN:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: Geospatial and Data Services Manager
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 6764
+-- EMAIL ADDRESS: spatial.data@dwer.wa.gov.au
+
+
+DATA STEWARD:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: COMPASS - Systems Support
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027 
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 6918 
+-- EMAIL ADDRESS: compass@dwer.wa.gov.au 
+
+
+DATA EXCHANGE OFFICER:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: Geospatial and Data Services Manager
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 7000
+-- EMAIL ADDRESS: spatial.data@dwer.wa.gov.au
+
+
+================================================================================
+
+=================
+ DATA DICTIONARY 
+=================
+
+FIELD NAME: OBJECTID
+FIELD DESCRIPTION: ESRI database auto generated unique identifier
+CODE VALUES: Number
+
+FIELD NAME: Shape
+FIELD DESCRIPTION: Point
+CODE VALUES: Geometry
+
+FIELD NAME: WRI_NUMBER
+FIELD DESCRIPTION: Instrument number
+CODE VALUES: TEXT
+
+FIELD NAME: INSTRUMENT_TYPE
+FIELD DESCRIPTION: Instrument Type
+CODE VALUES: TEXT
+
+
+================================================================================
+
+========================
+ ADDITIONAL INFORMATION
+========================
+
