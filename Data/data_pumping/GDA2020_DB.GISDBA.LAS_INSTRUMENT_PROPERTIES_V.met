@@ -1,0 +1,323 @@
+DEPARTMENT OF WATER AND ENVIRONMENTAL REGULATION (DWER)
+Metadata and Data Dictionary Statement
+
+======================
+ CITATION INFORMATION 
+======================
+
+DATASET TITLE:  
+COMPASS - Instrument Properties
+
+CUSTODIAN:		
+Department of Water and Environmental Regulation (DWER).
+
+JURISDICTION:		
+Western Australia.
+
+
+================================================================================
+
+=====================
+ TEXTUAL DESCRIPTION 
+=====================
+
+ABSTRACT: 
+This dataset represents property locations of Licenses and/or Permits issued under the Rights in Water and Irrigation Act 1914 (the Act). The Department of Water and Environmental Regulation manages Western Australia's water resources on behalf of the Minister for Water. 
+
+The Act states that a person must have a water licence or permit to; take water from a watercourse, well and/or underground source in a proclaimed groundwater or surface water area, or as otherwise prescribed by regulations (section 5C); construct or alter a well, including bores and soaks (section 26D); interfere with the waters, bed and banks of a watercourse on crown land; or any watercourse, race, drain, dam, reservoir or disused watercourse, race or drain on freehold land, or land granted or demised by the Crown (section 11, 17 and 21A).
+
+
+ANZLIC SEARCH WORDS: 
+Groundwater licences, Surfacewater licences, Bed and Banks permits, Drawpoints, Bore
+
+
+================================================================================
+
+================
+ SPATIAL EXTENT 
+================
+
+GEOGRAPHIC EXTENT:
+Western Australia
+
+GEOGRAPHIC BOUNDING BOX:
+(all coordinate values expressed in Decimal Degrees)
+
+North Bounding Latitude: -13.900571 
+South Bounding Latitude: -35.118764 
+East Bounding Longitude: 129.001918  
+West Bounding Longitude: 113.305682	
+
+The bounding box encloses the maximum extents of the dataset. There may be voids or gaps within the bounding box, depending on the defined coverage of the dataset. 
+
+HORIZONTAL COORDINATE SYSTEM: 
+Geographic System.
+
+GEODETIC MODEL: 
+Geocentric Datum of Australia 2020 (GDA2020)
+
+TRANSFORMATION METHOD: 
+Transformed coordinates (GDA94 to GDA2020) have had the following transformation methods applied depending on features position in realtion to NTv2 grid. 
+
+-- Conformal + Distortion [EPSG: 8447]: Within NTV2 grid, e.g. mainland Australia
+-- Conformal only [EPSG: 8444/8445]: Indian Ocean Territories
+-- 7-parameter [EPSG: 8048]: Areas outside of NTv2 grid and IOT grids. 
+
+See https://www.landgate.wa.gov.au/location-data-and-services/surveying/geodesy/horizontal-datum/ for further information.
+
+VERTICAL COORDINATE SYSTEM:
+Australian Height Datum (1971)
+
+
+================================================================================
+
+========================
+ DATA CURRENCY & STATUS
+========================
+
+BEGINNING DATE:
+June 2018
+
+ENDING DATE:
+N/A
+
+PROGRESS:
+Ongoing
+
+UPDATE FREQUENCY:	
+COMPASS is a live system and the spatial component is synchronized nightly
+
+METADATA DATE:
+30/05/2023, Updated 31/03/2025
+ 
+ADDITIONAL METADATA:	
+COMPASS Instrument Drawpoints
+ 
+
+================================================================================
+
+==============
+ DATA STORAGE
+==============
+
+STORED DATA FORMAT:
+ArcSDE Layer 
+
+ACCESS CONSTRAINTS:
+Internal Dataset. Data available through the Water Register and by direct request to data Custodian.
+
+RELEASABILITY:
+Refer to Access Constraints.
+
+
+================================================================================
+
+==============	
+ DATA QUALITY
+==============
+
+LINEAGE:
+COMPASS Instrument Properties represent properties with inforce Licences and/or Permits issued under the Rights in Water and Irrigation Act 1914. The underlaying layer is determined by the property type and is sourced from Cadastre property boundary provided by Landgate; Current (Live and Pending) Mining Tenements comprising surveyed and unsurveyed tenements managed by Department of Mines industry Regulation and Safety; and spatially linked database of agricultural and other properties maintained by the Department of Primary Industries and Regional Development (DPIRD). Property boundaries may also be based on property types not listed above managed by respective property custodians. 
+
+The Cadastre dataset is maintained and updated from accurate survey information lodged in digital form and stored in the Spatial Cadastral Database(SCDB). It combines polygons of the same land+AF8-id and pi+AF8-parcel (land parcel identifier) into single multi-polygon "land" features. ie:pi-parcel += one "land" += one record in the data. LAND refers to an area of land that the State has an interest in administering. As well as lots created on freehold or crown survey plans, it also covers other land of interest such as reserves, leases, road isolations, unallocated crown land and stock routes. Land areas may comprise more than one polygon and may be over lapping - e.g. a parcel of land that is a crown lot covered by a timber reserve as well as State Forest.
+
+
+Updates:
+Compass was commissioned in June 2018 and is subject to regularly enhancements and bug fixes.
+
+POSITIONAL ACCURACY:
+Accurate representation of License and/or Permit properties issued under the Rights in Water and Irrigation Act 1914. COMPASS Instrument Properties are consistent with property boundaries of land types listed above as of date of Licence/Permit issue. Changes made to underlaying land boundaries may occur during licence duration. Digitised data is accurate to 1mm at source map scale (Landgate).
+
+ATTRIBUTE ACCURACY:
+COMPASS Instrument Properties are validated by the custodian and represent the accurate location of properties associated with Licence and/or Permits issued under the Rights in Water and Irrigation Act 1914 at the time of issue.
+
+LOGICAL CONSISTENCY:
+Polygon dataset, based on Cadastral property boundaries.
+
+COMPLETENESS:
+Complete.
+
+
+================================================================================
+
+=====================	
+ CONTACT INFORMATION
+=====================
+
+DATA TRUSTEE:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: Program Manager - Systems Development (Anthea Scanlon) 
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 6918 
+-- EMAIL ADDRESS: compass@dwer.wa.gov.au
+ 
+ 
+DATA CUSTODIAN:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: Geospatial and Data Services Manager (Tim Fardon)
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 6764
+-- EMAIL ADDRESS: spatial.data@dwer.wa.gov.au
+
+
+DATA STEWARD:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: COMPASS - Systems Support (Anthea Scanlon) 
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027 
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 6918 
+-- EMAIL ADDRESS: compass@dwer.wa.gov.au 
+
+
+DATA EXCHANGE OFFICER:
+
+-- CONTACT ORGANISATION: Department of Water and Environmental Regulation
+-- CONTACT POSITION: Geospatial and Data Services Manager
+-- POSTAL ADDRESS: Prime House, 8 Davidson Terrace, Joondalup, 6027
+-- LOCALITY: Joondalup
+-- STATE: Western Australia
+-- COUNTRY: Australia
+-- POSTCODE: 6027
+-- TELEPHONE: (08) 6364 7000
+-- EMAIL ADDRESS: spatial.data@dwer.wa.gov.au
+
+
+================================================================================
+
+=================
+ DATA DICTIONARY 
+=================
+
+FIELD NAME: ObjectID
+FIELD DESCRIPTION: ESRI database generated unique identifer
+CODE VALUES: Integer
+
+FIELD NAME: Shape
+FIELD DESCRIPTION: Polygon
+CODE VALUES: Geometry
+
+FIELD NAME:InstrumentNumber 
+FIELD DESCRIPTION: Instrument Number
+CODE VALUES:TEXT 
+
+FIELD NAME: VersionNumber
+FIELD DESCRIPTION: Instrument version number
+CODE VALUES: Integer
+
+FIELD NAME: InstrumentType
+FIELD DESCRIPTION: Instrument type
+CODE VALUES: TEXT
+
+FIELD NAME: InstrumentTypeCode
+FIELD DESCRIPTION: Instrument Type code
+CODE VALUES: TEXT, GWL-Ground Water Licence, SWL-Surface Water Licence
+
+FIELD NAME: InstrumentStatus
+FIELD DESCRIPTION: Instrument Status
+CODE VALUES: Text
+
+FIELD NAME: PrimaryParty
+FIELD DESCRIPTION: Instrument primary party 
+CODE VALUES: TEXT
+
+FIELD NAME: AdditionalParties
+FIELD DESCRIPTION: Additional parties
+CODE VALUES: TEXT
+
+FIELD NAME: IssueDate
+FIELD DESCRIPTION: Instrument issue date
+CODE VALUES: Date
+
+FIELD NAME: ExpiryDate
+FIELD DESCRIPTION: Instrument expiry date
+CODE VALUES: Date
+
+FIELD NAME: IssueDate_TEXT
+FIELD DESCRIPTION: Issue date
+CODE VALUES: Text
+
+FIELD NAME: ExpiryDate_TEXT
+FIELD DESCRIPTION: Expiry date
+CODE VALUES: Text
+
+FIELD NAME: Reserve
+FIELD DESCRIPTION: reserved allocation against the instrument 
+CODE VALUES: Integer
+
+FIELD NAME: Resource
+FIELD DESCRIPTION: Resource name
+CODE VALUES: Text
+
+FIELD NAME: Area
+FIELD DESCRIPTION: Groundwater area name
+CODE VALUES: Text
+
+FIELD NAME: SubArea
+FIELD DESCRIPTION: Subarea name
+CODE VALUES: Text
+
+FIELD NAME: Aquifer
+FIELD DESCRIPTION: Aquifer type
+CODE VALUES: Text
+
+FIELD NAME: Division
+FIELD DESCRIPTION: Surface Water Division
+CODE VALUES: Text
+
+FIELD NAME: Basin
+FIELD DESCRIPTION: Basin
+CODE VALUES: Text
+
+FIELD NAME: Component
+FIELD DESCRIPTION: Resource component
+CODE VALUES: Text
+
+FIELD NAME: PropertyName
+FIELD DESCRIPTION: Instrument property name
+CODE VALUES: Text
+
+FIELD NAME: ColloquialName
+FIELD DESCRIPTION: Instrument colloquial name 
+CODE VALUES: Text
+
+FIELD NAME: PostalAddress
+FIELD DESCRIPTION: Party postal address
+CODE VALUES: Text
+
+FIELD NAME: TrimContainer
+FIELD DESCRIPTION: DWER Trim Container ID
+CODE VALUES: Text
+
+FIELD NAME: InstrumentId
+FIELD DESCRIPTION: DWER internal system use reference for data capturing purpose
+CODE VALUES: Guid
+
+FIELD NAME: LGA
+FIELD DESCRIPTION: Local Government Authority the licence is located in
+CODE VALUES: Text
+
+FIELD NAME: Entitlement
+FIELD DESCRIPTION: Licenced entitlement (expressed as kL/a)
+CODE VALUES: Number
+
+
+================================================================================
+
+========================
+ ADDITIONAL INFORMATION
+========================
+
